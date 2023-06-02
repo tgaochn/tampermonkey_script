@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.3
+// @version     0.1.4
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
 // @grant       none
 // @license     GPL
-// @updateURL       https://github.com/tgaochn/tampermonkey_script/blob/master/chatGPT_add_buttons/chatGPT_add_buttons.js
-// @downloadURL     https://github.com/tgaochn/tampermonkey_script/blob/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.4: 优化按钮功能
 // 0.1.3: debug
 // 0.1.2: 测试自动更新
 // 0.1.1: 测试自动更新
@@ -55,7 +56,7 @@
                 textArea.value = 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."'
                 textArea.focus();
 
-                // this code block is to send a enter
+                // this code block is to send a enter -- not working now
                 // const keyDownEvent = new KeyboardEvent('keydown', {
                 //     key: 'Enter',
                 //     keyCode: 13,
@@ -71,43 +72,47 @@
             })
         );
 
+        // button: Rewrite
+        buttonContainer.append(
+            createButton('Rewrite⏎', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'Rewrite the response';
+                textArea.focus();
+            })
+        );       
+
         // button: repeat the response in chinese
         buttonContainer.append(
-            createButton('Chinese⏎', function () {
+            createButton('解释翻译⏎', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'repeat the response in chinese and explain in details what it implies';
                 textArea.focus();
-
-                // this code block is to send a enter
-                // const keyDownEvent = new KeyboardEvent('keydown', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyDownEvent);
-                // const keyUpEvent = new KeyboardEvent('keyup', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyUpEvent);
             })                
         );
 
+        // button: Example
+        buttonContainer.append(
+            createButton('Example⏎', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'give me more examples to explain the response';
+                textArea.focus();
+            })
+        );
+ 
         // button: 改写
         buttonContainer.append(
             createButton('改写', function () {
                 const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the following text in tones of project documents, daily messages between colleagues, and formal emails: ';
+                textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, daily messages between colleagues, or formal emails: ';
                 textArea.focus();
             })
         );
 
         // button: 翻译
         buttonContainer.append(
-            createButton('翻译', function () {
+            createButton('解释翻译', function () {
                 const textArea = document.querySelector('textarea');
-                textArea.value = 'For the following test, explain in details what it implies in English. Then, translate it and do the explanation again in Chinese:  ';
+                textArea.value = 'For the following test, explain in details what it implies in English. Then, translate it and do the explanation again in Chinese: ';
                 textArea.focus();
             })
         );
@@ -117,42 +122,6 @@
             createButton('总结', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: ';
-                textArea.focus();
-            })
-        );
-
-        // button: 翻译
-        buttonContainer.append(
-            createButton('Example', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'give me more examples to explain the response';
-                textArea.focus();
-            })
-        );
-
-        // button: Explain
-        buttonContainer.append(
-            createButton('Explain', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'explain the response in English and Chinese and explain in details what it implies';
-                textArea.focus();
-            })
-        );
-
-        // button: Rewrite
-        buttonContainer.append(
-            createButton('Rewrite', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the response in tones of project documents, daily messages between colleagues, and formal emails';
-                textArea.focus();
-            })
-        );
-
-        // button: Summarize
-        buttonContainer.append(
-            createButton('Summarize', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Summarize the response in a paragraph then reformat it in some key bullets';
                 textArea.focus();
             })
         );
