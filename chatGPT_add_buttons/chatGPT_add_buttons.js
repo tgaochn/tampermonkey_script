@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.0.2
+// @version     0.1.0
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.0: 优化按钮功能
 // 0.0.2: 添加自动更新
 // 0.0.1: init, 添加若干按钮
 
@@ -44,39 +45,62 @@
         buttonContainer.style.marginBottom = '10px';
         buttonContainer.style.marginLeft = '10px';
 
-        // button 1: continue
+        // button: continue
         buttonContainer.append(
             createButton('Continue⏎', function () {
                 const textArea = document.querySelector('textarea');
-                // textArea.value = '回答结束了？未结束，请接着回答。如果是代码截断，不要重头输出，着输出剩余代码到代码框内。已经结束的话，回复“回答已经结束”。';
-                textArea.value = 'continue';
+                textArea.value = 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."'
                 textArea.focus();
 
-                // const keyDownEvent = new KeyboardEvent('keydown', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyDownEvent);
-                // const keyUpEvent = new KeyboardEvent('keyup', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyUpEvent);
+                // this code block is to send a enter
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13
+                });
+                textArea.dispatchEvent(keyDownEvent);
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13
+                });
+                textArea.dispatchEvent(keyUpEvent);
             })
         );
 
-        // button 2: Chinese
+        // button: repeat the response in chinese
         buttonContainer.append(
-            createButton('Chinese', function () {
+            createButton('Chinese⏎', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'repeat the response in chinese and explain in details what it implies';
                 textArea.focus();
+
+                // this code block is to send a enter
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13
+                });
+                textArea.dispatchEvent(keyDownEvent);
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13
+                });
+                textArea.dispatchEvent(keyUpEvent);
+            })                
+        );
+
+        // button: 改写
+        buttonContainer.append(
+            createButton('改写', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'Rewrite the following text in tones of project documents, daily messages between colleagues, and formal emails:\n';
+                textArea.focus();
             })
         );
 
-        // button 3: Example
+        // button: Example
         buttonContainer.append(
             createButton('Example', function () {
                 const textArea = document.querySelector('textarea');
@@ -85,7 +109,7 @@
             })
         );
 
-        // button 4: Explain
+        // button: Explain
         buttonContainer.append(
             createButton('Explain', function () {
                 const textArea = document.querySelector('textarea');
@@ -94,7 +118,7 @@
             })
         );
 
-        // button 5: Rewrite
+        // button: Rewrite
         buttonContainer.append(
             createButton('Rewrite', function () {
                 const textArea = document.querySelector('textarea');
@@ -103,7 +127,7 @@
             })
         );
 
-        // button 6: Summarize
+        // button: Summarize
         buttonContainer.append(
             createButton('Summarize', function () {
                 const textArea = document.querySelector('textarea');
