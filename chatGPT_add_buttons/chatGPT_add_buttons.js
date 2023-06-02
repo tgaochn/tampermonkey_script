@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.2
+// @version     0.1.3
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/blob/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.3: debug
 // 0.1.2: 测试自动更新
 // 0.1.1: 测试自动更新
 // 0.1.0: 优化按钮功能
@@ -55,18 +56,18 @@
                 textArea.focus();
 
                 // this code block is to send a enter
-                const keyDownEvent = new KeyboardEvent('keydown', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13
-                });
-                textArea.dispatchEvent(keyDownEvent);
-                const keyUpEvent = new KeyboardEvent('keyup', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13
-                });
-                textArea.dispatchEvent(keyUpEvent);
+                // const keyDownEvent = new KeyboardEvent('keydown', {
+                //     key: 'Enter',
+                //     keyCode: 13,
+                //     which: 13
+                // });
+                // textArea.dispatchEvent(keyDownEvent);
+                // const keyUpEvent = new KeyboardEvent('keyup', {
+                //     key: 'Enter',
+                //     keyCode: 13,
+                //     which: 13
+                // });
+                // textArea.dispatchEvent(keyUpEvent);
             })
         );
 
@@ -78,18 +79,18 @@
                 textArea.focus();
 
                 // this code block is to send a enter
-                const keyDownEvent = new KeyboardEvent('keydown', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13
-                });
-                textArea.dispatchEvent(keyDownEvent);
-                const keyUpEvent = new KeyboardEvent('keyup', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13
-                });
-                textArea.dispatchEvent(keyUpEvent);
+                // const keyDownEvent = new KeyboardEvent('keydown', {
+                //     key: 'Enter',
+                //     keyCode: 13,
+                //     which: 13
+                // });
+                // textArea.dispatchEvent(keyDownEvent);
+                // const keyUpEvent = new KeyboardEvent('keyup', {
+                //     key: 'Enter',
+                //     keyCode: 13,
+                //     which: 13
+                // });
+                // textArea.dispatchEvent(keyUpEvent);
             })                
         );
 
@@ -97,12 +98,30 @@
         buttonContainer.append(
             createButton('改写', function () {
                 const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the following text in tones of project documents, daily messages between colleagues, and formal emails:\n';
+                textArea.value = 'Rewrite the following text in tones of project documents, daily messages between colleagues, and formal emails: ';
                 textArea.focus();
             })
         );
 
-        // button: Example
+        // button: 翻译
+        buttonContainer.append(
+            createButton('翻译', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'For the following test, explain in details what it implies in English. Then, translate it and do the explanation again in Chinese:  ';
+                textArea.focus();
+            })
+        );
+
+        // button: 总结
+        buttonContainer.append(
+            createButton('总结', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: ';
+                textArea.focus();
+            })
+        );
+
+        // button: 翻译
         buttonContainer.append(
             createButton('Example', function () {
                 const textArea = document.querySelector('textarea');
