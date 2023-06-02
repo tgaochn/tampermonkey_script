@@ -16,5 +16,8 @@
         "**/node_modules": true,
         ".vscode": true
     },
-    "explorerExclude.backup": {}
+    "explorerExclude.backup": {},
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
 }
