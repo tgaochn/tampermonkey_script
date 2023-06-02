@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.0
+// @version     0.1.1
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
 // @grant       none
 // @license     GPL
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/blob/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/blob/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.1: 测试自动更新
 // 0.1.0: 优化按钮功能
 // 0.0.2: 添加自动更新
 // 0.0.1: init, 添加若干按钮
