@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.4
+// @version     0.1.5
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.5: 优化按钮功能, 可以直接send msg
 // 0.1.4: 优化按钮功能
 // 0.1.3: debug
 // 0.1.2: 测试自动更新
@@ -56,19 +57,9 @@
                 textArea.value = 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."'
                 textArea.focus();
 
-                // this code block is to send a enter -- not working now
-                // const keyDownEvent = new KeyboardEvent('keydown', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyDownEvent);
-                // const keyUpEvent = new KeyboardEvent('keyup', {
-                //     key: 'Enter',
-                //     keyCode: 13,
-                //     which: 13
-                // });
-                // textArea.dispatchEvent(keyUpEvent);
+                // Trigger the input event to make the textarea send the message
+                const inputEvent = new Event('input', { bubbles: true });
+                textArea.dispatchEvent(inputEvent);
             })
         );
 
@@ -78,15 +69,23 @@
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'Rewrite the response';
                 textArea.focus();
+
+                // Trigger the input event to make the textarea send the message
+                const inputEvent = new Event('input', { bubbles: true });
+                textArea.dispatchEvent(inputEvent);
             })
         );       
 
         // button: repeat the response in chinese
         buttonContainer.append(
-            createButton('解释翻译⏎', function () {
+            createButton('Chinese⏎', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'repeat the response in chinese and explain in details what it implies';
                 textArea.focus();
+
+                // Trigger the input event to make the textarea send the message
+                const inputEvent = new Event('input', { bubbles: true });
+                textArea.dispatchEvent(inputEvent);
             })                
         );
 
@@ -96,6 +95,10 @@
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'give me more examples to explain the response';
                 textArea.focus();
+                
+                // Trigger the input event to make the textarea send the message
+                const inputEvent = new Event('input', { bubbles: true });
+                textArea.dispatchEvent(inputEvent);
             })
         );
  
@@ -103,7 +106,7 @@
         buttonContainer.append(
             createButton('改写', function () {
                 const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, daily messages between colleagues, or formal emails: ';
+                textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, daily messages between colleagues, and formal emails: ';
                 textArea.focus();
             })
         );
@@ -112,7 +115,7 @@
         buttonContainer.append(
             createButton('解释翻译', function () {
                 const textArea = document.querySelector('textarea');
-                textArea.value = 'For the following test, explain in details what it implies in English. Then, translate it and do the explanation again in Chinese: ';
+                textArea.value = 'For the following test, explain in detail what it implies in English. Then, translate it and do the explanation again in Chinese: ';
                 textArea.focus();
             })
         );
