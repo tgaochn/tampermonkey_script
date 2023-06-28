@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.5
+// @version     0.1.6
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.6: 增加新按钮
 // 0.1.5: 优化按钮功能, 可以直接send msg
 // 0.1.4: 优化按钮功能
 // 0.1.3: debug
@@ -99,6 +100,15 @@
                 // Trigger the input event to make the textarea send the message
                 const inputEvent = new Event('input', { bubbles: true });
                 textArea.dispatchEvent(inputEvent);
+            })
+        );
+ 
+        // button: 中翻英
+        buttonContainer.append(
+            createButton('中翻英', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'translate the following Chinese text into English in a conversational tone: ';
+                textArea.focus();
             })
         );
  
