@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.4
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*
@@ -16,7 +16,9 @@
 // https://greasyfork.org/scripts/461157-%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8/code/%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8.user.js
 
 // test the script in:
-// https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_html_click
+// https://www.w3schools.com/html/tryit.asp?filename=tryhtml_links_w3schools
+// magnet:?xt=urn:btih:43d9faa3365df9b286d4c14c23b2e83a5e763f07&XXX
+// magnet:?xt=urn:btih:NN7VYFLE2EDDM5YUYWVFAZNGSL3DPQ7H&dn=%5Bb
 
 (function () {
     'use strict';
@@ -24,15 +26,22 @@
     // 提取磁力链接并显示在弹出窗口中
     function extractMagnetLinks() {
         var magnetLinks = [];
+        const regex = /&.*/; // Match everything after "&"
 
         // 遍历所有链接
         var linkElements = document.getElementsByTagName('a');
         for (var i = 0; i < linkElements.length; i++) {
             var linkElement = linkElements[i];
             var link = linkElement.href;
-            if (link.startsWith('magnet:') || link.startsWith('ed2k:')) {
+
+            if (link.startsWith('magnet:')) {
+                link = link.replace(regex, "");
                 magnetLinks.push(link);
-            }
+            };
+
+            if (link.startsWith('ed2k:')) {
+                magnetLinks.push(link);
+            }            
         }
 
         // 遍历所有文本节点
@@ -40,9 +49,15 @@
         while (walker.nextNode()) {
             var node = walker.currentNode;
             var text = node.textContent.trim();
-            if (link.startsWith('magnet:') || link.startsWith('ed2k:')) {
+
+            if (link.startsWith('magnet:')) {
+                link = link.replace(regex, "");
                 magnetLinks.push(link);
-            }
+            };
+
+            if (link.startsWith('ed2k:')) {
+                magnetLinks.push(link);
+            }    
         }
 
         // 过滤太短的string, 去重
