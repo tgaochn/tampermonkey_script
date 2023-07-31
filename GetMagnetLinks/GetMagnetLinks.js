@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.hacg.sbs/*
 // @match        http*://www.javbus.com/*
+// @match        http*://www.w3schools.com/*
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/GetMagnetLinks/GetMagnetLinks.js
@@ -12,6 +13,9 @@
 // ==/UserScript==
 // forked from:
 // https://greasyfork.org/scripts/461157-%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8/code/%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8.user.js
+
+// test the script in:
+// https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_html_click
 
 (function () {
     'use strict';
