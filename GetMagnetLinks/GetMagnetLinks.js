@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.1.3
 // @description  提取该网页的所有磁力链接
+// @match        http*://www.w3schools.com/*
+// @match        http*://nutbread.github.io/t2m/*
 // @match        http*://www.hacg.sbs/*
 // @match        http*://www.javbus.com/*
-// @match        http*://www.w3schools.com/*
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/GetMagnetLinks/GetMagnetLinks.js
