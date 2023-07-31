@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.hacg.sbs/*
 // @match        http*://www.javbus.com/*
@@ -29,14 +29,6 @@
         for (var i = 0; i < linkElements.length; i++) {
             var linkElement = linkElements[i];
             var link = linkElement.href;
-            // if (link.startsWith('magnet:')) {
-            //     magnetLinks.push(link);
-            // };
-            // if (link.startsWith('ed2k:')) {
-            //     magnetLinks.push(link);
-            // }
-
-            // magnet or ed2k link:
             if (link.startsWith('magnet:') || link.startsWith('ed2k:')) {
                 magnetLinks.push(link);
             }
@@ -47,20 +39,13 @@
         while (walker.nextNode()) {
             var node = walker.currentNode;
             var text = node.textContent.trim();
-            // if (text.startsWith('magnet:')) {
-            //     magnetLinks.push(text);
-            // }
-            // if (text.startsWith('ed2k:')) {
-            //     magnetLinks.push(text);
-            // }
-
-            // magnet or ed2k link:
             if (link.startsWith('magnet:') || link.startsWith('ed2k:')) {
                 magnetLinks.push(link);
-            }            
+            }
         }
 
-        // unique element in magnetLinks:
+        // 过滤太短的string, 去重
+        magnetLinks = magnetLinks.filter((str) => str.length >= 10);
         magnetLinks = [...new Set(magnetLinks)];
 
         return magnetLinks;
