@@ -4,7 +4,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  Add three button to copy the jira id and summary and link
 // @author       Andy
-// @version      0.3
+// @version      0.3.1
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -128,6 +128,9 @@ function addCopyBtn() {
     idHypertextBtn.id = "copy_text_link";
     idHypertextBtn.onclick = (e) => {
         var idCont = document.querySelector("a.issue-link");
+        // idCont.textContent += '123'; // this is an example to change text/link in a hyperText
+        // idCont.href += '123';
+
         var range = document.createRange();
         range.selectNode(idCont);
         var selection = window.getSelection();
