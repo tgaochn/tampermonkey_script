@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.2.0
+// @version 0.3.0
 // @license MIT
 // @match https://store.steampowered.com/app/*
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
@@ -11,13 +11,29 @@
 // forked from "Steam Search For SkidrowReloaded, IGG-Games, and x1337x."
 // added gamer520
 // improved the way to fetch game name
-
+// add workshop/nexusmods link
 
 (function () {
     'use strict';
 
     const appid = (window.location.pathname.match(/\/app\/(\d+)/) ?? [null, null])[1];
     if (appid === null) { return; }
+
+    // Create a new button element for workshop
+    var buttonWorkshop = document.createElement("a");
+    buttonWorkshop.className = "btnv6_blue_hoverfade btn_medium";
+    buttonWorkshop.style.marginLeft = "2px";
+    buttonWorkshop.innerHTML = '<span>mods - workshop</span>';
+    buttonWorkshop.style.backgroundColor = "#902600";
+    buttonWorkshop.onclick = function () {
+        window.open("https://steamcommunity.com/workshop/browse/?appid=" + (appid));
+    };
+
+    //Find the ignore button and insert the new buttons near it
+    var ignoreButton = document.querySelector("#ignoreBtn");
+    if (ignoreButton) {
+        ignoreButton.parentNode.insertBefore(buttonWorkshop, ignoreButton.nextSibling);
+    }
 
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
         .then(async (response) => {
@@ -41,7 +57,7 @@
                 buttonSkidrow.className = "btnv6_blue_hoverfade btn_medium";
                 buttonSkidrow.style.marginLeft = "2px";
                 buttonSkidrow.innerHTML = '<span>SkidrowReloaded</span>';
-                buttonSkidrow.style.backgroundColor = "#0B0C10";
+                buttonSkidrow.style.backgroundColor = "#007037";
 
                 buttonSkidrow.onclick = function () {
                     window.open("https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName));
@@ -63,18 +79,29 @@
                 buttonTorrent.className = "btnv6_blue_hoverfade btn_medium";
                 buttonTorrent.style.marginLeft = "2px";
                 buttonTorrent.innerHTML = '<span>x1337x</span>';
-                buttonTorrent.style.backgroundColor = "#902600";
+                buttonTorrent.style.backgroundColor = "#3B3B3B";
 
                 buttonTorrent.onclick = function () {
                     window.open("https://x1337x.ws/srch?search=" + encodeURIComponent(gameName));
                 };
 
+                // Create a new button element for nexusmods
+                var buttonNexusmods = document.createElement("a");
+                buttonNexusmods.className = "btnv6_blue_hoverfade btn_medium";
+                buttonNexusmods.style.marginLeft = "2px";
+                buttonNexusmods.innerHTML = '<span>mods - nexusmods</span>';
+                buttonNexusmods.style.backgroundColor = "#902600";
+                buttonNexusmods.onclick = function () {
+                    window.open("https://www.google.com/search?q=nexusmods+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                };
+
                 //Find the ignore button and insert the new buttons near it
-                var ignoreButton = document.querySelector("#ignoreBtn");
+                // var ignoreButton = document.querySelector("#ignoreBtn");
                 if (ignoreButton) {
                     ignoreButton.parentNode.insertBefore(buttonSkidrow, ignoreButton.nextSibling);
                     ignoreButton.parentNode.insertBefore(buttonIGG, buttonSkidrow.nextSibling);
                     ignoreButton.parentNode.insertBefore(buttonTorrent, buttonIGG.nextSibling);
+                    ignoreButton.parentNode.insertBefore(buttonNexusmods, buttonTorrent.nextSibling);
                 }
             }
         })
@@ -101,14 +128,14 @@
                 button520.className = "btnv6_blue_hoverfade btn_medium";
                 button520.style.marginLeft = "2px";
                 button520.innerHTML = '<span>gamer520</span>';
-                button520.style.backgroundColor = "#0B0C10";
+                button520.style.backgroundColor = "#007037";
 
                 button520.onclick = function () {
                     window.open("https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
                 };
 
                 //Find the ignore button and insert the new buttons near it
-                var ignoreButton = document.querySelector("#ignoreBtn");
+                // var ignoreButton = document.querySelector("#ignoreBtn");
                 if (ignoreButton) {
                     ignoreButton.parentNode.insertBefore(button520, ignoreButton.nextSibling);
                 }
