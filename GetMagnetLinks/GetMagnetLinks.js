@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.2.0
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*
@@ -25,46 +25,39 @@
 
     // 提取磁力链接并显示在弹出窗口中
     function extractMagnetLinks() {
-        var magnetLinks = [];
+        const magnetLinks = [];
         const regex = /&.*/; // Match everything after "&"
 
+        // Extracts and possibly trims a link or text starting with a specific prefix
+        const processLinkOrText = (str, prefix) => {
+            if (str.startsWith(prefix)) {
+                if (prefix === 'magnet:') {
+                    str = str.trim().slice(0, 60).replace(regex, "");
+                }
+                magnetLinks.push(str);
+            }
+        };
+
         // 遍历所有链接
-        var linkElements = document.getElementsByTagName('a');
-        for (var i = 0; i < linkElements.length; i++) {
-            var linkElement = linkElements[i];
-            var link = linkElement.href;
-
-            if (link.startsWith('magnet:')) {
-                link = link.replace(regex, "");
-                magnetLinks.push(link);
-            };
-
-            if (link.startsWith('ed2k:')) {
-                magnetLinks.push(link);
-            }            
+        const linkElements = document.getElementsByTagName('a');
+        for (const linkElement of linkElements) {
+            const link = linkElement.href;
+            processLinkOrText(link, 'magnet:');
+            processLinkOrText(link, 'ed2k:');
         }
 
         // 遍历所有文本节点
-        var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
-            var node = walker.currentNode;
-            var text = node.textContent.trim();
-
-            if (link.startsWith('magnet:')) {
-                link = link.replace(regex, "");
-                magnetLinks.push(link);
-            };
-
-            if (link.startsWith('ed2k:')) {
-                magnetLinks.push(link);
-            }    
+            const node = walker.currentNode;
+            const text = node.textContent.trim();
+            processLinkOrText(text, 'magnet:');
+            processLinkOrText(text, 'ed2k:');
         }
 
         // 过滤太短的string, 去重
-        magnetLinks = magnetLinks.filter((str) => str.length >= 10);
-        magnetLinks = [...new Set(magnetLinks)];
-
-        return magnetLinks;
+        const filteredMagnetLinks = magnetLinks.filter((str) => str.length >= 10);
+        return [...new Set(filteredMagnetLinks)];
     }
 
     function displayMagnetLinks(magnetLinks) {
