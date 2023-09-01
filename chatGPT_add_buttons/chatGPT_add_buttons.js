@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.6
+// @version     0.1.7
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -79,7 +79,7 @@
 
         // button: repeat the response in chinese
         buttonContainer.append(
-            createButton('Chinese⏎', function () {
+            createButton('中文⏎', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'repeat the response in chinese and explain in details what it implies';
                 textArea.focus();
