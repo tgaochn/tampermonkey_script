@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
+// @version      0.3.0
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*
-// @match        http*://www.hacg.sbs/*
 // @match        http*://www.javbus.com/*
+// @include      /https?:\/\/www\.hacg\..*\/wp\/.*/
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/GetMagnetLinks/GetMagnetLinks.js
@@ -51,34 +51,51 @@
         while (walker.nextNode()) {
             const node = walker.currentNode;
             const text = node.textContent.trim();
-            processLinkOrText(text, 'magnet:');
-            processLinkOrText(text, 'ed2k:');
+            // 磁力链接 hash
+            if(text.length == 40 && text.match(/[0-9a-zA-Z]+/)[0] == text){
+                let magnetLink = 'magnet:?xt=urn:btih:' + text;
+                magnetLinks.push(magnetLink);
+            }
+            else {
+                processLinkOrText(text, 'magnet:');
+                processLinkOrText(text, 'ed2k:');
+            }
         }
 
         // 过滤太短的string, 去重
-        const filteredMagnetLinks = magnetLinks.filter((str) => str.length >= 10);
+        const filteredMagnetLinks = magnetLinks.filter((link) => link.length >= 10 && !link.endsWith(":btih:"));
         return [...new Set(filteredMagnetLinks)];
     }
 
     function displayMagnetLinks(magnetLinks) {
         var popup = window.open('', 'magnetLinksPopup', 'width=800,height=600,scrollbars=yes,resizable=yes');
-        popup.document.write('<html><head><title>磁力链接列表</title>');
-        popup.document.write('<style>body {font-family: Arial, sans-serif; font-size: 14px; margin: 0; padding: 20px;}');
-        popup.document.write('h1 {font-size: 24px; margin: 0 0 20px; padding: 0;}');
-        popup.document.write('ul {margin: 0; padding: 0;}');
-        popup.document.write('li {list-style-type: none; margin: 0 0 10px; padding: 0;}');
-        popup.document.write('a {text-decoration: none; color: #333; font-weight: bold;}');
-        popup.document.write('a:hover {color: #007bff;}</style>');
-        popup.document.write('</head><body>');
-        // popup.document.write('<h1>磁力链接列表</h1>');
-        popup.document.write('<ul>');
+        var popupDoc = popup.document
+        popupDoc.write('<html><head><title>磁力链接列表</title>');
+        popupDoc.write('<style>body {font-family: Arial, sans-serif; font-size: 14px; margin: 0; padding: 20px;}');
+        popupDoc.write('h1 {font-size: 24px; margin: 0 0 20px; padding: 0;}');
+        popupDoc.write('ul {margin: 0; padding: 0;}');
+        popupDoc.write('li {list-style-type: none; margin: 0 0 10px; padding: 0;}');
+        popupDoc.write('a {text-decoration: none; color: #333; font-weight: bold;}');
+        popupDoc.write('a:hover {color: #007bff;}</style>');
+        popupDoc.write('</head><body>');
+        // popupDoc.write('<h1>磁力链接列表</h1>');
+        popupDoc.write('<ul>');
 
         magnetLinks.forEach(function (link) {
-            popup.document.write('<li><a href="' + link + '">' + link + '</a></li>');
+            popupDoc.write('<li><a href="' + link + '">' + link + '</a></li>');
         });
-        popup.document.write('</ul>');
-        popup.document.write('</body></html>');
-        popup.document.close();
+        popupDoc.write('</ul>');
+        popupDoc.write('</body></html>');
+
+        // 选择全部文本, 写入剪切板
+        var range = popupDoc.createRange();
+        range.selectNodeContents(popupDoc.body);
+        var selection = popup.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        navigator.clipboard.writeText(popupDoc.body.innerText)      
+
+        popupDoc.close();
     }
 
     // 创建提取磁力链接按钮
