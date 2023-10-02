@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.3.1
+// @version      0.3.2
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*
@@ -52,7 +52,7 @@
             const node = walker.currentNode;
             const text = node.textContent.trim();
             // 磁力链接 hash
-            if (text.length == 40 && text.match(/[0-9a-zA-Z]+/)[0] == text) {
+            if (text.length == 40 && text.match(/[0-9a-zA-Z]+/) != null && text.match(/[0-9a-zA-Z]+/)[0] == text) {
                 let magnetLink = 'magnet:?xt=urn:btih:' + text;
                 magnetLinks.push(magnetLink);
             }
