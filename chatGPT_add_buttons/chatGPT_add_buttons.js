@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.1.7
+// @version     0.1.8
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.1.8: 修改某些按钮, 现在可以配合 Superpower ChatGPT 插件使用
 // 0.1.6: 增加新按钮
 // 0.1.5: 优化按钮功能, 可以直接send msg
 // 0.1.4: 优化按钮功能
@@ -90,6 +91,19 @@
             })                
         );
 
+        // button: repeat the response in chinese
+        buttonContainer.append(
+            createButton('markdown⏎', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = 'Reformat the response in markdown code format so I can copy and paste.';
+                textArea.focus();
+
+                // Trigger the input event to make the textarea send the message
+                const inputEvent = new Event('input', { bubbles: true });
+                textArea.dispatchEvent(inputEvent);
+            })                
+        );
+
         // button: Example
         buttonContainer.append(
             createButton('Example⏎', function () {
@@ -103,41 +117,50 @@
             })
         );
  
-        // button: 中翻英
-        buttonContainer.append(
-            createButton('中翻英', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'translate the following Chinese text into English in a conversational tone: ';
-                textArea.focus();
-            })
-        );
+        // // button: 解释, 英翻中
+        // buttonContainer.append(
+        //     createButton('解释, 英翻中', function () {
+        //         const textArea = document.querySelector('textarea');
+        //         textArea.value = 'What is "XXX". What does the term "XXX" mean in this content. Give me a detailed explanation and some examples in English. Then translate the response into Chinese.';
+        //         textArea.focus();
+        //     })
+        // );
  
-        // button: 改写
-        buttonContainer.append(
-            createButton('改写', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, daily messages between colleagues, and formal emails: ';
-                textArea.focus();
-            })
-        );
+        // // button: 中翻英
+        // buttonContainer.append(
+        //     createButton('中翻英', function () {
+        //         const textArea = document.querySelector('textarea');
+        //         textArea.value = 'translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: ';
+        //         textArea.focus();
+        //     })
+        // );
+ 
+        // // button: 改写
+        // buttonContainer.append(
+        //     createButton('改写', function () {
+        //         const textArea = document.querySelector('textarea');
+        //         textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, messages between colleagues, and formal emails: ';
+        //         textArea.focus();
+        //     })
+        // );
 
-        // button: 翻译
-        buttonContainer.append(
-            createButton('解释翻译', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'For the following test, explain in detail what it implies in English. Then, translate it and do the explanation again in Chinese: ';
-                textArea.focus();
-            })
-        );
+        // // button: 翻译
+        // buttonContainer.append(
+        //     createButton('解释翻译', function () {
+        //         const textArea = document.querySelector('textarea');
+        //         textArea.value = 'For the following test, explain in detail what it means and what it may possibly imply (in English). Then, translate it and do the explanation again in Chinese: ';
+        //         textArea.focus();
+        //     })
+        // );
 
-        // button: 总结
-        buttonContainer.append(
-            createButton('总结', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: ';
-                textArea.focus();
-            })
-        );
+        // // button: 总结
+        // buttonContainer.append(
+        //     createButton('总结', function () {
+        //         const textArea = document.querySelector('textarea');
+        //         textArea.value = 'Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: ';
+        //         textArea.focus();
+        //     })
+        // );
 
         textBox.appendChild(buttonContainer);
         textBox.style.display = 'inline';
