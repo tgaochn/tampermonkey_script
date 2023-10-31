@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.2.0
+// @version     0.2.1
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -170,10 +170,17 @@
             })
         );
 
-
         textBox.appendChild(buttonContainer);
         textBox.style.display = 'inline-block';
         textBox.parentNode.insertBefore(buttonContainer2, textBox.nextSibling);
+
+        // !! not a good way to make the textarea higher
+        // textBox.appendChild(buttonContainer2);
+        // textBox.append(buttonContainer);
+        // textBox.style.display = 'inline-block';
+        // textBox.style.height = '100px';
+        // const textArea = document.querySelector('textarea');
+        // textArea.style.minHeight = '80px';
 
         const divElements = textBox.querySelectorAll('div');
         for (let i = 0; i < divElements.length; i++) {
