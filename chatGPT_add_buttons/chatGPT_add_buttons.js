@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.3.2
+// @version     0.3.3
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,7 +11,8 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
-// 0.3.2: bug fix
+// 0.3.3: 增加了几个重要prompt
+// 0.3.3: bug fix
 // 0.3.0: 增加了几个重要prompt
 // 0.2.0: 优化按钮位置, 优化输入框位置
 // 0.1.8: 修改某些按钮, 现在可以配合 Superpower ChatGPT 插件使用
@@ -172,15 +173,29 @@
             })
         );
 
-        // button: 解释-MLE
+        // button: what-MLE
         buttonContainer2.append(
-            createButton('解释-MLE', function () {
+            createButton('what-MLE', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = `Give me a detailed intro about "XXX" following these backgrounds and instructions:
 
                     1. You need to act as a very senior machine learning engineer in Indeed. 
                     2. The task is to make some explanations to the newbie interns. 
                     3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.
+                `;
+                textArea.focus();
+            })
+        );
+
+        // button: how-MLE
+        buttonContainer2.append(
+            createButton('how-MLE', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = `Give me a detailed instruction about "how to XXX" following these backgrounds and instructions:
+
+                    1. You need to act as a very senior machine learning engineer in Indeed. 
+                    2. The task is to make some explanations to the newbie interns. 
+                    3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.
                 `;
                 textArea.focus();
             })
