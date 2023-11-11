@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.3.0
+// @version     0.3.1
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
+// 0.3.1: bug fix
 // 0.3.0: 增加了几个重要prompt
 // 0.2.0: 优化按钮位置, 优化输入框位置
 // 0.1.8: 修改某些按钮, 现在可以配合 Superpower ChatGPT 插件使用
@@ -187,7 +188,7 @@
 
         // button: 比较-MLE
         buttonContainer2.append(
-            createButton('中翻英', function () {
+            createButton('比较-MLE', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = `
                     For "XXX" and "YYY", give me a detailed relationship explanation and comparison following these backgrounds and instructions:
