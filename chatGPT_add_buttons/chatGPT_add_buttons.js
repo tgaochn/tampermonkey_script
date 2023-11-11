@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        chatGPT_add_buttons 
 // @namespace   https://chat.openai.com/
-// @version     0.3.3
+// @version     0.3.4
 // @description Adds more buttons for chatGPT; modified from "Add continue button (页面优化) v1.2.1"
 // @author      gtfish
 // @match       https://chat.openai.com/*
@@ -169,6 +169,20 @@
             createButton('中翻英', function () {
                 const textArea = document.querySelector('textarea');
                 textArea.value = 'translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n';
+                textArea.focus();
+            })
+        );
+
+        // button: fix-OCR
+        buttonContainer2.append(
+            createButton('fix-OCR', function () {
+                const textArea = document.querySelector('textarea');
+                textArea.value = `Response based on the given content obtained from OCR softwares following these backgrounds and instructions:
+
+                    1. You need to act as a very senior machine learning engineer in a OCR software developing company.
+                    2. The task is to manually improve the raw results from OCR softwares.
+                    3. The content could be a piece of code or some plaintext. It may include some errors or formatting issues due to the inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation about the content.
+                `
                 textArea.focus();
             })
         );
