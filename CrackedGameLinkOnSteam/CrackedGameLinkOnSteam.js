@@ -1,12 +1,15 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.3.0
+// @version 0.3.1
 // @license MIT
 // @match https://store.steampowered.com/app/*
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
 // ==/UserScript==
+
+// changelog:
+// 0.3.1: update searching keyword in google for nexusmods 
 
 // forked from "Steam Search For SkidrowReloaded, IGG-Games, and x1337x."
 // added gamer520
@@ -92,7 +95,7 @@
                 buttonNexusmods.innerHTML = '<span>mods - nexusmods</span>';
                 buttonNexusmods.style.backgroundColor = "#902600";
                 buttonNexusmods.onclick = function () {
-                    window.open("https://www.google.com/search?q=nexusmods+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    window.open("https://www.google.com/search?q=nexusmods+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")) + "+mods+download";
                 };
 
                 //Find the ignore button and insert the new buttons near it
