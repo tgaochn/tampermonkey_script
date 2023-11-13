@@ -39,63 +39,65 @@
     }
 
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
-        .then(async (response) => {
-            if (response.ok) {
-                // load game name in English from steampowered
-                const json = await response.json();
-                const data = json[appid];
-                var gameName;
-                if (data.success !== true) {
-                    // Get the game name from the URL after /app/number/
-                    gameName = window.location.pathname.split("/")[3];
-                } else {
-                    gameName = data.data.name;
-                }
+        .then(
+            async (response) => {
+                if (response.ok) {
+                    // load game name in English from steampowered
+                    const json = await response.json();
+                    const data = json[appid];
+                    var gameName;
+                    if (data.success !== true) {
+                        // Get the game name from the URL after /app/number/
+                        gameName = window.location.pathname.split("/")[3];
+                    } else {
+                        gameName = data.data.name;
+                    }
 
-                // Modified game name for IGG-Games
-                var modifiedGameName = gameName.replace(/_/g, "+");
+                    // Modified game name for IGG-Games
+                    var modifiedGameName = gameName.replace(/_/g, "+");
 
-                // Create a new button element for SkidrowReloaded
-                var buttonSkidrow = document.createElement("a");
-                buttonSkidrow.className = "btnv6_blue_hoverfade btn_medium";
-                buttonSkidrow.style.marginLeft = "2px";
-                buttonSkidrow.innerHTML = '<span>SkidrowReloaded</span>';
-                buttonSkidrow.style.backgroundColor = "#007037";
+                    // Create a new button element for SkidrowReloaded
+                    var buttonSkidrow = document.createElement("a");
+                    buttonSkidrow.className = "btnv6_blue_hoverfade btn_medium";
+                    buttonSkidrow.style.marginLeft = "2px";
+                    buttonSkidrow.innerHTML = '<span>SkidrowReloaded</span>';
+                    buttonSkidrow.style.backgroundColor = "#007037";
 
-                buttonSkidrow.onclick = function () {
-                    window.open("https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName));
-                };
+                    buttonSkidrow.onclick = function () {
+                        window.open("https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName));
+                    };
 
-                // Create a new button element for IGG-Games
-                var buttonIGG = document.createElement("a");
-                buttonIGG.className = "btnv6_blue_hoverfade btn_medium";
-                buttonIGG.style.marginLeft = "2px";
-                buttonIGG.innerHTML = '<span>IGG</span>';
-                buttonIGG.style.backgroundColor = "#3B3B3B";
+                    // Create a new button element for IGG-Games
+                    var buttonIGG = document.createElement("a");
+                    buttonIGG.className = "btnv6_blue_hoverfade btn_medium";
+                    buttonIGG.style.marginLeft = "2px";
+                    buttonIGG.innerHTML = '<span>IGG</span>';
+                    buttonIGG.style.backgroundColor = "#3B3B3B";
 
-                buttonIGG.onclick = function () {
-                    window.open("https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
-                };
+                    buttonIGG.onclick = function () {
+                        window.open("https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    };
 
-                // Create a new button element for x1337x
-                var buttonTorrent = document.createElement("a");
-                buttonTorrent.className = "btnv6_blue_hoverfade btn_medium";
-                buttonTorrent.style.marginLeft = "2px";
-                buttonTorrent.innerHTML = '<span>x1337x</span>';
-                buttonTorrent.style.backgroundColor = "#3B3B3B";
+                    // Create a new button element for x1337x
+                    var buttonTorrent = document.createElement("a");
+                    buttonTorrent.className = "btnv6_blue_hoverfade btn_medium";
+                    buttonTorrent.style.marginLeft = "2px";
+                    buttonTorrent.innerHTML = '<span>x1337x</span>';
+                    buttonTorrent.style.backgroundColor = "#3B3B3B";
 
-                buttonTorrent.onclick = function () {
-                    window.open("https://x1337x.ws/srch?search=" + encodeURIComponent(gameName));
-                };
+                    buttonTorrent.onclick = function () {
+                        window.open("https://x1337x.ws/srch?search=" + encodeURIComponent(gameName));
+                    };
 
-                // Create a new button element for nexusmods
-                var buttonNexusmods = document.createElement("a");
-                buttonNexusmods.className = "btnv6_blue_hoverfade btn_medium";
-                buttonNexusmods.style.marginLeft = "2px";
-                buttonNexusmods.innerHTML = '<span>mods - nexusmods</span>';
-                buttonNexusmods.style.backgroundColor = "#902600";
-                buttonNexusmods.onclick = function () {
-                    window.open("https://www.google.com/search?q=nexusmods+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")) + "+mods+download";
+                    // Create a new button element for nexusmods
+                    var buttonNexusmods = document.createElement("a");
+                    buttonNexusmods.className = "btnv6_blue_hoverfade btn_medium";
+                    buttonNexusmods.style.marginLeft = "2px";
+                    buttonNexusmods.innerHTML = '<span>mods - nexusmods</span>';
+                    buttonNexusmods.style.backgroundColor = "#902600";
+                    buttonNexusmods.onclick = function () {
+                        window.open("https://www.google.com/search?q=nexusmods+mods+download+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    };
                 };
 
                 //Find the ignore button and insert the new buttons near it
@@ -107,41 +109,42 @@
                     ignoreButton.parentNode.insertBefore(buttonNexusmods, buttonTorrent.nextSibling);
                 }
             }
-        })
+        )
 
-        fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=chinese`)
-        .then(async (response) => {
-            if (response.ok) {
-                // load game name in Chinese from steampowered
-                const json = await response.json();
-                const data = json[appid];
-                var gameName;
-                if (data.success !== true) {
-                    // Get the game name from the URL after /app/number/
-                    gameName = window.location.pathname.split("/")[3];
-                } else {
-                    gameName = data.data.name;
+    fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=chinese`)
+        .then(
+            async (response) => {
+                if (response.ok) {
+                    // load game name in Chinese from steampowered
+                    const json = await response.json();
+                    const data = json[appid];
+                    var gameName;
+                    if (data.success !== true) {
+                        // Get the game name from the URL after /app/number/
+                        gameName = window.location.pathname.split("/")[3];
+                    } else {
+                        gameName = data.data.name;
+                    }
+
+                    // Modified game name for IGG-Games
+                    var modifiedGameName = gameName.replace(/_/g, "+");
+
+                    // Create a new button element for gamer520
+                    var button520 = document.createElement("a");
+                    button520.className = "btnv6_blue_hoverfade btn_medium";
+                    button520.style.marginLeft = "2px";
+                    button520.innerHTML = '<span>gamer520</span>';
+                    button520.style.backgroundColor = "#007037";
+
+                    button520.onclick = function () {
+                        window.open("https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    };
+
+                    //Find the ignore button and insert the new buttons near it
+                    // var ignoreButton = document.querySelector("#ignoreBtn");
+                    if (ignoreButton) {
+                        ignoreButton.parentNode.insertBefore(button520, ignoreButton.nextSibling);
+                    }
                 }
-
-                // Modified game name for IGG-Games
-                var modifiedGameName = gameName.replace(/_/g, "+");
-
-                // Create a new button element for gamer520
-                var button520 = document.createElement("a");
-                button520.className = "btnv6_blue_hoverfade btn_medium";
-                button520.style.marginLeft = "2px";
-                button520.innerHTML = '<span>gamer520</span>';
-                button520.style.backgroundColor = "#007037";
-
-                button520.onclick = function () {
-                    window.open("https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
-                };
-
-                //Find the ignore button and insert the new buttons near it
-                // var ignoreButton = document.querySelector("#ignoreBtn");
-                if (ignoreButton) {
-                    ignoreButton.parentNode.insertBefore(button520, ignoreButton.nextSibling);
-                }
-            }
-        })        
+            })
 })();
