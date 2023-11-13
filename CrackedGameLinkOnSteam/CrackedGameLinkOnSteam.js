@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.3.1
+// @version 0.3.2
 // @license MIT
 // @match https://store.steampowered.com/app/*
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 // changelog:
-// 0.3.1: update searching keyword in google for nexusmods 
+// 0.3.2: update searching keyword in google for nexusmods 
 
 // forked from "Steam Search For SkidrowReloaded, IGG-Games, and x1337x."
 // added gamer520
