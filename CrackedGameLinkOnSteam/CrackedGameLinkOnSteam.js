@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.3.2
+// @version 0.3.3
 // @license MIT
 // @match https://store.steampowered.com/app/*
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.3.3: update searching keyword for bilibili 
 // 0.3.2: update searching keyword in google for nexusmods 
 
 // forked from "Steam Search For SkidrowReloaded, IGG-Games, and x1337x."
@@ -56,7 +57,7 @@
                     // Modified game name for IGG-Games
                     var modifiedGameName = gameName.replace(/_/g, "+");
 
-                    // Create a new button element for SkidrowReloaded
+                    // !! Create a new button element for SkidrowReloaded
                     var buttonSkidrow = document.createElement("a");
                     buttonSkidrow.className = "btnv6_blue_hoverfade btn_medium";
                     buttonSkidrow.style.marginLeft = "2px";
@@ -67,7 +68,7 @@
                         window.open("https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName));
                     };
 
-                    // Create a new button element for IGG-Games
+                    // !! Create a new button element for IGG-Games
                     var buttonIGG = document.createElement("a");
                     buttonIGG.className = "btnv6_blue_hoverfade btn_medium";
                     buttonIGG.style.marginLeft = "2px";
@@ -78,7 +79,7 @@
                         window.open("https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
                     };
 
-                    // Create a new button element for x1337x
+                    // !! Create a new button element for x1337x
                     var buttonTorrent = document.createElement("a");
                     buttonTorrent.className = "btnv6_blue_hoverfade btn_medium";
                     buttonTorrent.style.marginLeft = "2px";
@@ -89,7 +90,7 @@
                         window.open("https://x1337x.ws/srch?search=" + encodeURIComponent(gameName));
                     };
 
-                    // Create a new button element for nexusmods
+                    // !! Create a new button element for nexusmods
                     var buttonNexusmods = document.createElement("a");
                     buttonNexusmods.className = "btnv6_blue_hoverfade btn_medium";
                     buttonNexusmods.style.marginLeft = "2px";
@@ -97,6 +98,16 @@
                     buttonNexusmods.style.backgroundColor = "#902600";
                     buttonNexusmods.onclick = function () {
                         window.open("https://www.google.com/search?q=nexusmods+mods+download+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    };
+
+                    // !! Create a new button element for bilibili
+                    var bilibili = document.createElement("a");
+                    bilibili.className = "btnv6_blue_hoverfade btn_medium";
+                    bilibili.style.marginLeft = "2px";
+                    bilibili.innerHTML = '<span>B站</span>';
+                    bilibili.style.backgroundColor = "#6f4e37";
+                    bilibili.onclick = function () {
+                        window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
                     };
                 };
 
@@ -107,6 +118,7 @@
                     ignoreButton.parentNode.insertBefore(buttonIGG, buttonSkidrow.nextSibling);
                     ignoreButton.parentNode.insertBefore(buttonTorrent, buttonIGG.nextSibling);
                     ignoreButton.parentNode.insertBefore(buttonNexusmods, buttonTorrent.nextSibling);
+                    ignoreButton.parentNode.insertBefore(bilibili, buttonNexusmods.nextSibling);
                 }
             }
         )
@@ -129,7 +141,7 @@
                     // Modified game name for IGG-Games
                     var modifiedGameName = gameName.replace(/_/g, "+");
 
-                    // Create a new button element for gamer520
+                    // !! Create a new button element for gamer520
                     var button520 = document.createElement("a");
                     button520.className = "btnv6_blue_hoverfade btn_medium";
                     button520.style.marginLeft = "2px";
