@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.3.3
+// @version 0.3.4
 // @license MIT
 // @match https://store.steampowered.com/app/*
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.3.4: update searching keyword for 风灵月影 
 // 0.3.3: update searching keyword for bilibili 
 // 0.3.2: update searching keyword in google for nexusmods 
 
@@ -109,6 +110,16 @@
                     bilibili.onclick = function () {
                         window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
                     };
+
+                    // !! Create a new button element for FLiNG
+                    var FLiNG = document.createElement("a");
+                    FLiNG.className = "btnv6_blue_hoverfade btn_medium";
+                    FLiNG.style.marginLeft = "2px";
+                    FLiNG.innerHTML = '<span>风灵月影</span>';
+                    FLiNG.style.backgroundColor = "#6f4e37";
+                    FLiNG.onclick = function () {
+                        window.open("https://flingtrainer.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                    };
                 };
 
                 //Find the ignore button and insert the new buttons near it
@@ -119,6 +130,7 @@
                     ignoreButton.parentNode.insertBefore(buttonTorrent, buttonIGG.nextSibling);
                     ignoreButton.parentNode.insertBefore(buttonNexusmods, buttonTorrent.nextSibling);
                     ignoreButton.parentNode.insertBefore(bilibili, buttonNexusmods.nextSibling);
+                    ignoreButton.parentNode.insertBefore(FLiNG, bilibili.nextSibling);
                 }
             }
         )
