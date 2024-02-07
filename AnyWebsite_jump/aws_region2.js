@@ -5,7 +5,6 @@
 // @description  任意网站跳转 - aws region1 跳转到 region2
 // @author       gtfish
 // @include      *://*.console.aws.amazon.com/*
-// @include      *
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AnyWebsite_jump/aws_region2.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AnyWebsite_jump/aws_region2.js
 
