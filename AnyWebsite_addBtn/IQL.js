@@ -6,8 +6,8 @@
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
 // @require      https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/addButtonOnAllWebsite/IQL.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/addButtonOnAllWebsite/IQL.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AnyWebsite_addBtn/IQL.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AnyWebsite_addBtn/IQL.js
 
 // ==/UserScript==
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
