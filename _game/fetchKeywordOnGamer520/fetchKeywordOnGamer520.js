@@ -7,8 +7,8 @@
 // @match        http*://xxxxx520.cam/*
 // @grant        none
 // @license      GPL-3.0 License
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetch_keyword/fetch_keyword.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetch_keyword/fetch_keyword.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
 // ==/UserScript==
 
 (function () {
