@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        claude_add_buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.0
+// @version     0.1.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -78,7 +78,7 @@ It may include some errors or formatting issues due to the inaccurate OCR result
 2. The task is to make some explanations to the newbie interns. \n
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
-5. The response need to be in Chinese.
+5. The response needs to be in Chinese.
 `
         },
 
@@ -89,7 +89,7 @@ It may include some errors or formatting issues due to the inaccurate OCR result
 2. The task is to make some explanations to the newbie interns. \n
 3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
-5. The response need to be in Chinese.
+5. The response needs to be in Chinese.
 `
         },
 
@@ -99,7 +99,7 @@ It may include some errors or formatting issues due to the inaccurate OCR result
 1. You need to act as a very senior machine learning engineer in Indeed.\n
 2. The task is to make some explanations to the newbie interns.\n
 3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
-4. The response need to be in Chinese.
+4. The response needs to be in Chinese.
 `
         },
 
