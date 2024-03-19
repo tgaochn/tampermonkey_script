@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name        claude_add_buttons 
+// @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.1
+// @version     0.1.2
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -162,7 +162,7 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             const inputNewCont = promptJson[promptKey].prompt;
             if (input && input instanceof HTMLElement) {
                 input.innerHTML = claudeLongStringProcessor(inputNewCont);
-                setSelection();
+                setSelection(input);
             }
 
             // TODO: add prompt submission
@@ -171,13 +171,13 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             // input.dispatchEvent(inputEvent);
             // input.focus();
             // const inputElement = document.getElementById('myInput');
-            sendEnterKey(input);
+            // sendEnterKey(input);
         };
 
         return button;
     }
 
-    function setSelection() {
+    function setSelection(input) {
         const range = document.createRange();
         range.selectNodeContents(input);
         range.collapse(false);
