@@ -7,8 +7,8 @@
 // @match       https://chat.openai.com/*
 // @grant       none
 // @license     GPL
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/chatGPT_add_buttons.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/chatGPT_add_buttons.js
 // ==/UserScript==
 
 // 0.3.3: 增加了几个重要prompt

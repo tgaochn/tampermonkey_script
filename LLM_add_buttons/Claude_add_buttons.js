@@ -2,292 +2,220 @@
 // @name        claude_add_buttons 
 // @namespace   https://claude.ai/
 // @version     0.0.1
-// @description Adds more buttons for Claude; modified from "Add continue button (页面优化) v1.2.1"
+// @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
 // @grant       none
 // @license     GPL
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/chatGPT_add_buttons/chatGPT_add_buttons.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
-
-(function () {
+(async function () {
     'use strict';
+    // ! define all the prompt
+    // 带下划线的会直接提交
+    const myPromptJson1 = {
+        "continue_": {
+            "btnNm": "Continue⏎",
+            "prompt": "Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with \"The answer is finished.\""
+        },
+        'chn_': {
+            'btnNm': '中文⏎',
+            'prompt': 'repeat the response in chinese and explain in details what it implies',
+        },
+        'md_': {
+            'btnNm': 'markdown⏎',
+            'prompt': 'Reformat the response in markdown code format so I can copy and paste.',
+        },
+        "example_": {
+            "btnNm": "加例子⏎",
+            "prompt": "give me more examples to explain the response"
+        },
+        "rewrite_": {
+            "btnNm": "改写⏎",
+            "prompt": "Rewrite the response and make the response more understandable."
+        },
+    };
 
-    const textbox = document.querySelector('.ProseMirror[contenteditable="true"]');
-    const button = document.getElementById('addContentButton');
-  
-    button.addEventListener('click', function() {
-      const newContent = 'New content to add';
-      textbox.innerHTML = '<p>' + newContent + '</p>';
-    });
-    
-    function createButton(text, handler) {
+    // 不带下划线的prompt会在输入框中显示并等待继续输入内容
+    const myPromptJson2 = {
+        'rewrite': {
+            'btnNm': '改写',
+            'prompt': 'Rewrite the following text in different tones, which will be used in project documents, messages between colleagues, and formal emails: \n',
+        },
+        "explain_translate": {
+            "btnNm": "解释翻译",
+            "prompt": "For the following test, explain in detail what it means and what it may possibly imply (in English). Then, translate it and do the explanation again in Chinese:\n "
+        },
+        "summarize": {
+            "btnNm": "总结",
+            "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: \n"
+        },
+        "explain_eng_chn": {
+            "btnNm": "解释, 英翻中",
+            "prompt": "What is \"XXX\". What does it mean in this content. Give me a detailed explanation and some examples in English. Then translate the response into Chinese."
+        },
+        "chn2eng": {
+            "btnNm": "中翻英",
+            "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
+        },
+        "fix_ocr": {
+            "btnNm": "fix-OCR",
+            "prompt": `Response based on the given content obtained from OCR softwares following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in a OCR software developing company.\n
+2. The task is to manually improve the raw results from OCR softwares.\n
+3. The content could be a piece of code or some plaintext. \n
+It may include some errors or formatting issues due to the inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation about the content.`
+        },
+
+        "what_mle": {
+            "btnNm": "what-MLE",
+            "prompt": `Give me a detailed intro about \"XXX\" following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in Indeed. \n
+2. The task is to make some explanations to the newbie interns. \n
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.`
+        },
+
+        "how_mle": {
+            "btnNm": "how-MLE",
+            "prompt": `Give me a detailed instruction about \"how to XXX\" following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in Indeed. \n
+2. The task is to make some explanations to the newbie interns. \n
+3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.`
+        },
+
+        "compare_mle": {
+            "btnNm": "比较-MLE",
+            "prompt": `For \"XXX\" and \"YYY\", give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in Indeed.\n
+2. The task is to make some explanations to the newbie interns.\n
+3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.`
+        },
+
+        "improve_code_mle": {
+            "btnNm": "改code-MLE",
+            "prompt": `Explain the given code and improve it following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in Indeed.\n
+2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
+3. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.`
+        }
+    };
+
+
+    // ! define the selectors
+    const inputBoxSelector = "div[enterkeyhint='enter']";
+    const btnContainerPosSelector = "div[class='relative z-10']";
+    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // ! function to create button/container/selection
+    function setBtnStyle(btn) {
+        btn.style.backgroundColor = '#009688';
+        btn.style.color = 'white';
+        btn.style.padding = '5px 5px';
+        btn.style.fontSize = '14px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.outline = 'none';
+        btn.style.boxSizing = 'border-box';
+    }
+
+    // claude need <p></p> tags to format the long string into multiple lines
+    function claudeLongStringProcessor(longString) {
+        let lines = longString.split('\n');
+        let formattedLines = lines.map(line => `<p>${line}</p>`);
+        let formattedString = formattedLines.join('');
+
+        return formattedString;
+    }
+
+    function sendEnterKey(element) {
+        const enterKeyEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+        });
+        element.dispatchEvent(enterKeyEvent);
+    }
+
+    function createButton(promptJson, promptKey) {
         const button = document.createElement('button');
-        button.className = 'custombtn btn relative btn-neutral border-0 md:border';
-        button.innerHTML = text;
-        button.onclick = handler;
+        setBtnStyle(button);
+        button.innerHTML = promptJson[promptKey].btnNm;
+        button.onclick = () => {
+            const input = document.querySelector(inputBoxSelector);
+            const inputNewCont = promptJson[promptKey].prompt;
+            if (input && input instanceof HTMLElement) {
+                input.innerHTML = claudeLongStringProcessor(inputNewCont);
+                setSelection();
+            }
+
+            // Trigger the input event to make the textarea send the message
+            // const inputEvent = new Event('input', { bubbles: true });
+            // input.dispatchEvent(inputEvent);
+            // input.focus();
+            // const inputElement = document.getElementById('myInput');
+            sendEnterKey(input);
+        };
+
         return button;
     }
 
-    function addButtonIfNotExists() {
-        if (document.querySelector('.custombtn')) {
-            return;
+    function setSelection() {
+        const range = document.createRange();
+        range.selectNodeContents(input);
+        range.collapse(false);
+        const sel = window.getSelection();
+        if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
         }
+    }
 
-        const textBox = document.querySelector('.ProseMirror[contenteditable="true"]');
-        if (!textBox) {
-            return;
-        }
-
+    function createButtonContainer() {
         const buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'inline-block';
         buttonContainer.style.justifyContent = 'center';
-        buttonContainer.style.marginBottom = '10px';
+        buttonContainer.style.marginTop = '10px';
+        // buttonContainer.style.marginBottom = '10px';
         buttonContainer.style.marginLeft = '10px';
 
-        const buttonContainer2 = document.createElement('div');
-        buttonContainer2.style.display = 'inline-block';
-        buttonContainer2.style.justifyContent = 'center';
-        buttonContainer2.style.marginBottom = '10px';
-        buttonContainer2.style.marginLeft = '10px';
+        return buttonContainer;
+    }
 
-        // button: continue
-        buttonContainer.append(
-            createButton('Continue⏎', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."'
-                textArea.focus();
-
-                // Trigger the input event to make the textarea send the message
-                const inputEvent = new Event('input', { bubbles: true });
-                textArea.dispatchEvent(inputEvent);
-            })
+    // ! add buttons in the containers
+    const buttonContainer1 = createButtonContainer();
+    const buttonContainer2 = createButtonContainer();
+    for (const promptKey in myPromptJson1) {
+        buttonContainer1.append(
+            createButton(myPromptJson1, promptKey)
         );
-
-        // button: Rewrite
-        buttonContainer.append(
-            createButton('Rewrite⏎', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the response';
-                textArea.focus();
-
-                // Trigger the input event to make the textarea send the message
-                const inputEvent = new Event('input', { bubbles: true });
-                textArea.dispatchEvent(inputEvent);
-            })
-        );
-
-        // button: repeat the response in chinese
-        buttonContainer.append(
-            createButton('中文⏎', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'repeat the response in chinese and explain in details what it implies';
-                textArea.focus();
-
-                // Trigger the input event to make the textarea send the message
-                const inputEvent = new Event('input', { bubbles: true });
-                textArea.dispatchEvent(inputEvent);
-            })
-        );
-
-        // button: repeat the response in chinese
-        buttonContainer.append(
-            createButton('markdown⏎', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Reformat the response in markdown code format so I can copy and paste.';
-                textArea.focus();
-
-                // Trigger the input event to make the textarea send the message
-                const inputEvent = new Event('input', { bubbles: true });
-                textArea.dispatchEvent(inputEvent);
-            })
-        );
-
-        // button: Example
-        buttonContainer.append(
-            createButton('Example⏎', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'give me more examples to explain the response';
-                textArea.focus();
-
-                // Trigger the input event to make the textarea send the message
-                const inputEvent = new Event('input', { bubbles: true });
-                textArea.dispatchEvent(inputEvent);
-            })
-        );
-
-        // button: 改写
+    }
+    for (const promptKey in myPromptJson2) {
         buttonContainer2.append(
-            createButton('改写', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Rewrite the following text in different tones, which will be used in project documents, messages between colleagues, and formal emails: \n';
-                textArea.focus();
-            })
+            createButton(myPromptJson2, promptKey)
         );
+    }
 
-        // button: 翻译
-        buttonContainer2.append(
-            createButton('解释翻译', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'For the following test, explain in detail what it means and what it may possibly imply (in English). Then, translate it and do the explanation again in Chinese:\n ';
-                textArea.focus();
-            })
-        );
+    // ! add containers on the page 
+    while (true) {
+        await delay(100);
+        const btnContainerPosElement = document.querySelector(btnContainerPosSelector);
+        if (btnContainerPosElement) {
+            // contrainer 上下排列
+            btnContainerPosElement.appendChild(buttonContainer1);
+            btnContainerPosElement.parentNode.insertBefore(buttonContainer2, btnContainerPosElement.nextSibling);
 
-        // button: 总结
-        buttonContainer2.append(
-            createButton('总结', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: \n';
-                textArea.focus();
-            })
-        );
-
-        // button: 解释, 英翻中
-        buttonContainer2.append(
-            createButton('解释, 英翻中', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'What is "XXX". What does it mean in this content. Give me a detailed explanation and some examples in English. Then translate the response into Chinese.';
-                textArea.focus();
-            })
-        );
-
-        // button: 中翻英
-        buttonContainer2.append(
-            createButton('中翻英', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = 'translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n';
-                textArea.focus();
-            })
-        );
-
-        // button: fix-OCR
-        buttonContainer2.append(
-            createButton('fix-OCR', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = `Response based on the given content obtained from OCR softwares following these backgrounds and instructions:
-
-                    1. You need to act as a very senior machine learning engineer in a OCR software developing company.
-                    2. The task is to manually improve the raw results from OCR softwares.
-                    3. The content could be a piece of code or some plaintext. It may include some errors or formatting issues due to the inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation about the content.
-                `
-                textArea.focus();
-            })
-        );
-
-        // button: what-MLE
-        buttonContainer2.append(
-            createButton('what-MLE', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = `Give me a detailed intro about "XXX" following these backgrounds and instructions:
-
-                    1. You need to act as a very senior machine learning engineer in Indeed. 
-                    2. The task is to make some explanations to the newbie interns. 
-                    3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.
-                `;
-                textArea.focus();
-            })
-        );
-
-        // button: how-MLE
-        buttonContainer2.append(
-            createButton('how-MLE', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = `Give me a detailed instruction about "how to XXX" following these backgrounds and instructions:
-
-                    1. You need to act as a very senior machine learning engineer in Indeed. 
-                    2. The task is to make some explanations to the newbie interns. 
-                    3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.
-                `;
-                textArea.focus();
-            })
-        );
-
-        // button: 比较-MLE
-        buttonContainer2.append(
-            createButton('比较-MLE', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = `For "XXX" and "YYY", give me a detailed relationship explanation and comparison following these backgrounds and instructions:
-
-                    1. You need to act as a very senior machine learning engineer in Indeed.
-                    2. The task is to make some explanations to the newbie interns.
-                    3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.
-                `;
-                textArea.focus();
-            })
-        );
-
-        // button: 改code-MLE
-        buttonContainer2.append(
-            createButton('改code-MLE', function () {
-                const textArea = document.querySelector('textarea');
-                textArea.value = `Explain the given code and improve it following these backgrounds and instructions:
-
-                    1. You need to act as a very senior machine learning engineer in Indeed.
-                    2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.
-                    3. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.
-                `;
-                textArea.focus();
-            })
-        );
-
-        textBox.appendChild(buttonContainer);
-        textBox.style.display = 'inline-block';
-        textBox.parentNode.insertBefore(buttonContainer2, textBox.nextSibling);
-
-        // !! not a good way to make the textarea higher
-        // textBox.appendChild(buttonContainer2);
-        // textBox.append(buttonContainer);
-        // textBox.style.display = 'inline-block';
-        // textBox.style.height = '100px';
-        // const textArea = document.querySelector('textarea');
-        // textArea.style.minHeight = '80px';
-
-        const divElements = textBox.querySelectorAll('div');
-        for (let i = 0; i < divElements.length; i++) {
-            divElements[i].style.display = 'inline-block';
+            // contrainer 左右排列
+            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer);
+            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer2);
+            break;
         }
     }
 
-    function disableJustifyCenterForBtn() {
-        const btnToCheck = document.getElementsByClassName('btn relative btn-neutral border-0 md:border');
-        if (btnToCheck.length === 0) {
-            return false;
-        }
-        for (let i = 0; i < btnToCheck.length; i++) {
-            const parentDiv = btnToCheck[i].parentNode;
-            parentDiv.classList.remove('justify-center');
-        }
-        return true;
-    }
-
-    function adjustModelSwitcher() {
-        const modelSwitcher = document.getElementById('chatgpt-model-switcher');
-        if (modelSwitcher) {
-            modelSwitcher.style.display = 'inline-block';
-            modelSwitcher.style.width = 'auto';
-            modelSwitcher.style.marginLeft = '10px';
-            return true;
-        }
-        return false;
-    }
-
-    const targetNode = document.body;
-    const config = { childList: true, subtree: true };
-    const observer = new MutationObserver((mutationsList, observer) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                const buttonAdded = addButtonIfNotExists();
-                const btnDisabled = disableJustifyCenterForBtn();
-                const modelSwitcherAdjusted = adjustModelSwitcher();
-                if (buttonAdded && btnDisabled && modelSwitcherAdjusted) {
-                    observer.disconnect();
-                }
-            }
-        }
-    });
-
-    observer.observe(targetNode, config);
 })();
