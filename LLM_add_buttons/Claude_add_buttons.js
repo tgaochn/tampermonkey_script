@@ -103,7 +103,6 @@ It may include some errors or formatting issues due to the inaccurate OCR result
         }
     };
 
-
     // ! define the selectors
     const inputBoxSelector = "div[enterkeyhint='enter']";
     const btnContainerPosSelector = "div[class='relative z-10']";
@@ -155,6 +154,7 @@ It may include some errors or formatting issues due to the inaccurate OCR result
                 setSelection();
             }
 
+            // TODO: add prompt submission
             // Trigger the input event to make the textarea send the message
             // const inputEvent = new Event('input', { bubbles: true });
             // input.dispatchEvent(inputEvent);
