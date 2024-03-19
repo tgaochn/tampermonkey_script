@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        claude_add_buttons 
 // @namespace   https://claude.ai/
-// @version     0.0.1
+// @version     0.1.0
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
 // 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
+// 0.1.0: 改进了prompt
 
 (async function () {
     'use strict';
@@ -23,15 +24,15 @@
         },
         'chn_': {
             'btnNm': '中文⏎',
-            'prompt': 'repeat the response in chinese and explain in details what it implies',
+            'prompt': 'repeat the response in chinese and explain in details what it implies. The explanation should be easy to understand.',
         },
         'md_': {
             'btnNm': 'markdown⏎',
-            'prompt': 'Reformat the response in markdown code format so I can copy and paste.',
+            'prompt': 'Reformat the response in format of raw markdown code so I can copy and paste in my markdown editor.',
         },
         "example_": {
             "btnNm": "加例子⏎",
-            "prompt": "give me more examples to explain the response"
+            "prompt": "give me more examples to explain the response. The examples should be easy to understand and explain why the example supports the response if applicable."
         },
         "rewrite_": {
             "btnNm": "改写⏎",
@@ -43,7 +44,7 @@
     const myPromptJson2 = {
         'rewrite': {
             'btnNm': '改写',
-            'prompt': 'Rewrite the following text in different tones, which will be used in project documents, messages between colleagues, and formal emails: \n',
+            'prompt': 'Rewrite the following text in different tones, which will be used in project documents (objective), messages between colleagues (informal), and emails (formal and polite): \n',
         },
         "explain_translate": {
             "btnNm": "解释翻译",
@@ -75,7 +76,10 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             "prompt": `Give me a detailed intro about \"XXX\" following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed. \n
 2. The task is to make some explanations to the newbie interns. \n
-3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.`
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
+5. The response need to be in Chinese.
+`
         },
 
         "how_mle": {
@@ -83,7 +87,10 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             "prompt": `Give me a detailed instruction about \"how to XXX\" following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed. \n
 2. The task is to make some explanations to the newbie interns. \n
-3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step. Also, you need to give some comparison with some similar or related tools/models/tech if applicable.`
+3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step.\n
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
+5. The response need to be in Chinese.
+`
         },
 
         "compare_mle": {
@@ -91,7 +98,9 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             "prompt": `For \"XXX\" and \"YYY\", give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed.\n
 2. The task is to make some explanations to the newbie interns.\n
-3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.`
+3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
+4. The response need to be in Chinese.
+`
         },
 
         "improve_code_mle": {
@@ -99,7 +108,9 @@ It may include some errors or formatting issues due to the inaccurate OCR result
             "prompt": `Explain the given code and improve it following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed.\n
 2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
-3. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.`
+3. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
+4. The explanation need to be in Chinese, but the comments in the code block should be in English.
+`
         }
     };
 
