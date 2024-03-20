@@ -1,16 +1,15 @@
 // ==UserScript==
-// @name         Copy motorola jira id and summary and link
-// @name:zh-CN   快速复制jira id和summary/link
-// @namespace    http://tampermonkey.net/
-// @description  Add three button to copy the jira id and summary and link
-// @author       Andy
-// @version      0.4.0
+// @name         jira_add_buttons
+// @description  Add buttons in JIRA
+// @author       gtfish
+// @version      0.1.0
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
-// 0.4.0: 优化了copy hypertext
+// 0.1.0: 优化了copy hypertext
+// 0.0.1: 修改部分btn
 
 
 (function () {
