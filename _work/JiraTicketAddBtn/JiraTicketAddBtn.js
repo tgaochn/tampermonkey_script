@@ -4,14 +4,13 @@
 // @namespace    http://tampermonkey.net/
 // @description  Add three button to copy the jira id and summary and link
 // @author       Andy
-// @version      0.3.1
+// @version      0.4.0
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
+// @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
+// @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
-
-// 1. 加入了copy超链接
-// 2. 修改了summary的格式
-// 3. 加了copy desc带格式
+// 0.4.0: 优化了copy hypertext
 
 
 (function () {
@@ -109,12 +108,12 @@ function addCopyBtn() {
         navigator.clipboard.writeText(id);
     };
 
-    const summaryBtn = document.createElement("a");
-    summaryBtn.innerHTML = "Copy summary";
-    summaryBtn.id = "copy_summary";
-    summaryBtn.onclick = (e) => {
-        navigator.clipboard.writeText(summary);
-    };
+    // const summaryBtn = document.createElement("a");
+    // summaryBtn.innerHTML = "Copy summary";
+    // summaryBtn.id = "copy_summary";
+    // summaryBtn.onclick = (e) => {
+    //     navigator.clipboard.writeText(summary);
+    // };
 
     const linkBtn = document.createElement("a");
     linkBtn.innerHTML = "Copy link";
@@ -124,29 +123,82 @@ function addCopyBtn() {
     };
 
     const idHypertextBtn = document.createElement("a");
-    idHypertextBtn.innerHTML = "Copy id (hypertext)";
+    idHypertextBtn.innerHTML = "hypertext: (id)";
     idHypertextBtn.id = "copy_text_link";
     idHypertextBtn.onclick = (e) => {
+        // 复制hypertext再修改, 否则page上的元素也会被修改
         var idCont = document.querySelector("a.issue-link");
-        // idCont.textContent += '123'; // this is an example to change text/link in a hyperText
-        // idCont.href += '123';
+        let idContDup = idCont.cloneNode(true);
+        // 可以在这里修改 text/link, 不过这里的text都会被当成hypertext的一部分
+        // idContDup.textContent = "(" + id + ")";
+        // idContDup.href = 'https://www.example.com';
 
+        // 创建一个新的span元素,用于包裹超链接和括号
+        var spanElem = document.createElement('span');
+        spanElem.appendChild(document.createTextNode('('));
+        spanElem.appendChild(idContDup);
+        spanElem.appendChild(document.createTextNode(')'));
+
+        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+        spanElem.style.position = 'absolute';
+        spanElem.style.left = '-9999px';
+        document.body.appendChild(spanElem);
+
+        // 选择临时元素并复制
         var range = document.createRange();
-        range.selectNode(idCont);
+        range.selectNode(spanElem);
         var selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
         document.execCommand('copy');
+        selection.removeAllRanges();
+
+        // 把临时的元素从页面中移除
+        document.body.removeChild(spanElem);
     };
 
-    const descBtn = document.createElement("a");
-    descBtn.innerHTML = "Copy desc";
-    descBtn.id = "copy_desc";
-    descBtn.onclick = (e) => {
-        var descElement = document.getElementsByClassName("activity-new-val");
-        var descVal = descElement[descElement.length - 1].innerText;
-        navigator.clipboard.writeText(descVal);
+    const idHypertextBtn2 = document.createElement("a");
+    idHypertextBtn2.innerHTML = "hypertext: id";
+    idHypertextBtn2.id = "copy_text_link2";
+    idHypertextBtn2.onclick = (e) => {
+        // 复制hypertext再修改, 否则page上的元素也会被修改
+        var idCont = document.querySelector("a.issue-link");
+        let idContDup = idCont.cloneNode(true);
+        // 可以在这里修改 text/link, 不过这里的text都会被当成hypertext的一部分
+        // idContDup.textContent = "(" + id + ")";
+        // idContDup.href = 'https://www.example.com';
+
+        // 创建一个新的span元素,用于包裹超链接和括号
+        var spanElem = document.createElement('span');
+        spanElem.appendChild(idContDup);
+        spanElem.appendChild(document.createTextNode(' '));
+
+        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+        spanElem.style.position = 'absolute';
+        spanElem.style.left = '-9999px';
+        document.body.appendChild(spanElem);
+
+        // 选择临时元素并复制
+        var range = document.createRange();
+        range.selectNode(spanElem);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand('copy');
+        selection.removeAllRanges();
+
+        // 把临时的元素从页面中移除
+        document.body.removeChild(spanElem);
     };
+
+    // const descBtn = document.createElement("a");
+    // descBtn.innerHTML = "Copy desc";
+    // descBtn.id = "copy_desc";
+    // descBtn.onclick = (e) => {
+    //     var descElement = document.getElementsByClassName("activity-new-val");
+    //     var descVal = descElement[descElement.length - 1].innerText;
+    //     navigator.clipboard.writeText(descVal);
+    // };
 
     const idLinkBtn = document.createElement("a");
     idLinkBtn.innerHTML = "[id|link]";
@@ -169,31 +221,32 @@ function addCopyBtn() {
         navigator.clipboard.writeText(id + ": " + summary);
     };
 
-    const idSummaryBtn2 = document.createElement("a");
-    idSummaryBtn2.innerHTML = "id summary";
-    idSummaryBtn2.id = "copy_id_summary2";
-    idSummaryBtn2.onclick = (e) => {
-        navigator.clipboard.writeText(id + " " + summary);
-    };
+    // const idSummaryBtn2 = document.createElement("a");
+    // idSummaryBtn2.innerHTML = "id summary";
+    // idSummaryBtn2.id = "copy_id_summary2";
+    // idSummaryBtn2.onclick = (e) => {
+    //     navigator.clipboard.writeText(id + " " + summary);
+    // };
 
-    const idSummaryBtn3 = document.createElement("a");
-    idSummaryBtn3.innerHTML = "[id] summary";
-    idSummaryBtn3.id = "copy_id_summary3";
-    idSummaryBtn3.onclick = (e) => {
-        navigator.clipboard.writeText("[" + id + "] " + summary);
-    };
+    // const idSummaryBtn3 = document.createElement("a");
+    // idSummaryBtn3.innerHTML = "[id] summary";
+    // idSummaryBtn3.id = "copy_id_summary3";
+    // idSummaryBtn3.onclick = (e) => {
+    //     navigator.clipboard.writeText("[" + id + "] " + summary);
+    // };
 
     const btnArray = [
         idBtn,
         idHypertextBtn,
+        idHypertextBtn2,
         linkBtn,
-        summaryBtn,
-        descBtn,
+        // summaryBtn,
+        // descBtn,
         idLinkBtn,
         idLinkMdBtn,
         idSummaryBtn,
-        idSummaryBtn2,
-        idSummaryBtn3,
+        // idSummaryBtn2,
+        // idSummaryBtn3,
     ];
     btnArray.forEach(element => {
         element.className = "aui-button aui-button-primary aui-style";

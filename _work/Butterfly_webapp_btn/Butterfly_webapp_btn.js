@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.0.1
+// @version             0.1.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.1.0: 优化了hypertext的复制逻辑
 // 0.0.1: init, 添加若干按钮
 
 (async function () {
@@ -94,13 +95,35 @@
     );
 
     buttonContainer.append(
-        createButton('copy_hyperLink', () => {
-            const range = document.createRange();
-            range.selectNode(hyperlink);
-            const selection = window.getSelection();
+        createButton('hyperLink: (model)', () => {
+            // 复制hypertext再修改, 否则page上的元素也会被修改
+            let hyperlinkDup = hyperlink.cloneNode(true);
+            // 可以在这里修改 text/link, 不过这里的text都会被当成hypertext的一部分
+            hyperlinkDup.textContent = "model";
+            // hyperlinkDup.href = 'https://www.example.com';
+
+            // 创建一个新的span元素,用于包裹超链接和括号
+            var spanElem = document.createElement('span');
+            spanElem.appendChild(document.createTextNode('('));
+            spanElem.appendChild(hyperlinkDup);
+            spanElem.appendChild(document.createTextNode(')'));
+
+            // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+            spanElem.style.position = 'absolute';
+            spanElem.style.left = '-9999px';
+            document.body.appendChild(spanElem);
+
+            // 选择临时元素并复制
+            var range = document.createRange();
+            range.selectNode(spanElem);
+            var selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
             document.execCommand('copy');
+            selection.removeAllRanges();
+
+            // 把临时的元素从页面中移除
+            document.body.removeChild(spanElem);
         })
     );
 

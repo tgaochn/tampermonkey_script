@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.4
+// @version     0.1.5
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -86,7 +86,7 @@ It may include some errors or formatting issues due to inaccurate OCR results. Y
             "btnNm": "what-MLE",
             "prompt": `What is XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
-1. You need to act as a very senior machine learning engineer in Indeed. \n
+1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
@@ -99,7 +99,7 @@ Give me a detailed response following these backgrounds and instructions:\n
             "btnNm": "how-MLE",
             "prompt": `How to XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
-1. You need to act as a very senior machine learning engineer in Indeed. \n
+1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
 3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose of each step.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
@@ -112,7 +112,7 @@ Give me a detailed response following these backgrounds and instructions:\n
             "btnNm": "比较-MLE",
             "prompt": `What is the difference between \"XXX\" and \"YYY\"?\n\n
 Give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
-1. You need to act as a very senior machine learning engineer in Indeed.\n
+1. You need to act as a senior machine learning engineer.\n
 2. The task is to make some explanations to the newbie interns.\n
 3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
 4. The response needs to be in Chinese.\n
@@ -124,7 +124,7 @@ Give me a detailed relationship explanation and comparison following these backg
             "btnNm": "改code-MLE",
             "prompt": `Fix or improve the code.\n\n 
 Give me a detailed response following these backgrounds and instructions:\n
-1. You need to act as a very senior machine learning engineer in Indeed.\n
+1. You need to act as a senior machine learning engineer.\n
 2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
 3. You need to provide explanation on the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
