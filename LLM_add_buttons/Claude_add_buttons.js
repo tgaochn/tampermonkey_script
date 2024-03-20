@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.2
+// @version     0.1.4
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -24,11 +24,11 @@
         },
         'chn_': {
             'btnNm': '中文⏎',
-            'prompt': 'repeat the response in chinese and explain in details what it implies. The explanation should be easy to understand.',
+            'prompt': 'repeat the response in Chinese and explain in detail what it implies. The explanation should be easy to understand.',
         },
         'md_': {
             'btnNm': 'markdown⏎',
-            'prompt': 'Reformat the response in format of raw markdown code so I can copy and paste in my markdown editor.',
+            'prompt': 'Reformat the response in the format of raw markdown code so I can copy and paste into my markdown editor.',
         },
         "example_": {
             "btnNm": "加例子⏎",
@@ -56,60 +56,79 @@
         },
         "explain_eng_chn": {
             "btnNm": "解释, 英翻中",
-            "prompt": "What is \"XXX\". What does it mean in this content. Give me a detailed explanation and some examples in English. Then translate the response into Chinese."
+            "prompt": "What is \"XXX\"? What does it mean in this content if applicable? Give me a detailed explanation and some examples in English. Then translate the response into Chinese."
         },
         "chn2eng": {
             "btnNm": "中翻英",
             "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
         },
+        "ocr": {
+            "btnNm": "OCR",
+            "prompt": `Please OCR the attached image following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
+2. The task is to identify the content, same as what OCR software does.\n
+3. The content could be a piece of code, some plain text, or a table. \n
+4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.\n
+5. Please follow these instructions in all the following responses.\n
+`
+        },
         "fix_ocr": {
             "btnNm": "fix-OCR",
-            "prompt": `Response based on the given content obtained from OCR softwares following these backgrounds and instructions:\n
-1. You need to act as a very senior machine learning engineer in a OCR software developing company.\n
-2. The task is to manually improve the raw results from OCR softwares.\n
-3. The content could be a piece of code or some plaintext. \n
-It may include some errors or formatting issues due to the inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation about the content.`
+            "prompt": `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
+1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
+2. The task is to manually improve the raw results from OCR software.\n
+3. The content could be a piece of code, some plain text or a table. \n
+4. Please follow these instructions in all the following responses.\n
+It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
+`
         },
-
         "what_mle": {
             "btnNm": "what-MLE",
-            "prompt": `Give me a detailed intro about \"XXX\" following these backgrounds and instructions:\n
+            "prompt": `What is XXX?\n\n
+Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed. \n
 2. The task is to make some explanations to the newbie interns. \n
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
-5. The response needs to be in Chinese.
+5. The response needs to be in Chinese.\n
+6. Please follow these instructions in all the following responses.\n
 `
         },
 
         "how_mle": {
             "btnNm": "how-MLE",
-            "prompt": `Give me a detailed instruction about \"how to XXX\" following these backgrounds and instructions:\n
+            "prompt": `How to XXX?\n\n
+Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed. \n
 2. The task is to make some explanations to the newbie interns. \n
-3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose for each step.\n
+3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose of each step.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
-5. The response needs to be in Chinese.
+5. The response needs to be in Chinese.\n
+6. Please follow these instructions in all the following responses.\n
 `
         },
 
         "compare_mle": {
             "btnNm": "比较-MLE",
-            "prompt": `For \"XXX\" and \"YYY\", give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
+            "prompt": `What is the difference between \"XXX\" and \"YYY\"?\n\n
+Give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed.\n
 2. The task is to make some explanations to the newbie interns.\n
 3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
-4. The response needs to be in Chinese.
+4. The response needs to be in Chinese.\n
+5. Please follow these instructions in all the following responses.\n
 `
         },
 
         "improve_code_mle": {
             "btnNm": "改code-MLE",
-            "prompt": `Explain the given code and improve it following these backgrounds and instructions:\n
+            "prompt": `Fix or improve the code.\n\n 
+Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in Indeed.\n
 2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
-3. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
-4. The explanation need to be in Chinese, but the comments in the code block should be in English.
+3. You need to provide explanation on the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
+4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
+5. Please follow these instructions in all the following responses.\n
 `
         }
     };
