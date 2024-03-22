@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.5
+// @version     0.1.6
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -12,6 +12,7 @@
 // ==/UserScript==
 // 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 // 0.1.0: 改进了prompt
+// 0.1.6: 改进了prompt
 
 (async function () {
     'use strict';
@@ -128,6 +129,19 @@ Give me a detailed response following these backgrounds and instructions:\n
 2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
 3. You need to provide explanation on the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
+5. Please follow these instructions in all the following responses.\n
+`
+        },
+
+        "eb1_pl": {
+            "btnNm": "PL for eb1a",
+            "prompt": `Could you revise the following content?\n\n 
+\n
+Please provide a detailed response following these backgrounds and instructions:\n
+1. You need to act as a senior migration lawyer to process US EB1a migration cases.\n
+2. The overall purpose of the revision is to prove Dr. Gao has significant impact in the fields and US will benefit if Dr. Gao's migration petition is approved.\n
+3. The response should include revised content in English, and explanation why the revision is provided in Chinese.\n
+4. The revised content should be in formal tone and easy to understand to the officers who review Dr. Gao's case.\n
 5. Please follow these instructions in all the following responses.\n
 `
         }
