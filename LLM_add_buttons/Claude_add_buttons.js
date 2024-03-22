@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.6
+// @version     0.1.7
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -136,12 +136,11 @@ Give me a detailed response following these backgrounds and instructions:\n
         "eb1_pl": {
             "btnNm": "PL for eb1a",
             "prompt": `Could you revise the following content?\n\n 
-\n
 Please provide a detailed response following these backgrounds and instructions:\n
-1. You need to act as a senior migration lawyer to process US EB1a migration cases.\n
-2. The overall purpose of the revision is to prove Dr. Gao has significant impact in the fields and US will benefit if Dr. Gao's migration petition is approved.\n
-3. The response should include revised content in English, and explanation why the revision is provided in Chinese.\n
-4. The revised content should be in formal tone and easy to understand to the officers who review Dr. Gao's case.\n
+1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
+2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
+3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
+4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
 5. Please follow these instructions in all the following responses.\n
 `
         }
