@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.1.7
+// @version     0.2.0
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 // 0.1.0: 改进了prompt
 // 0.1.6: 改进了prompt
+// 0.2.0: 部分prompt输入完成之后直接提交
 
 (async function () {
     'use strict';
@@ -21,50 +22,61 @@
     const myPromptJson1 = {
         "continue_": {
             "btnNm": "Continue⏎",
+            "sendOutPrompt": true,
             "prompt": "Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with \"The answer is finished.\""
         },
-        'chn_': {
-            'btnNm': '中文⏎',
-            'prompt': 'repeat the response in Chinese and explain in detail what it implies. The explanation should be easy to understand.',
+        "chn_": {
+            "btnNm": "中文⏎",
+            "sendOutPrompt": true,
+            "prompt": "repeat the response in Chinese and explain in detail what it implies. The explanation should be easy to understand.",
         },
-        'md_': {
-            'btnNm': 'markdown⏎',
-            'prompt': 'Reformat the response in the format of raw markdown code so I can copy and paste into my markdown editor.',
+        "md_": {
+            "btnNm": "markdown⏎",
+            "sendOutPrompt": true,
+            "prompt": "Reformat the response in the format of raw markdown code so I can copy and paste into my markdown editor.",
         },
         "example_": {
             "btnNm": "加例子⏎",
+            "sendOutPrompt": true,
             "prompt": "give me more examples to explain the response. The examples should be easy to understand and explain why the example supports the response if applicable."
         },
         "rewrite_": {
             "btnNm": "改写⏎",
+            "sendOutPrompt": true,
             "prompt": "Rewrite the response and make the response more understandable."
         },
     };
 
     // 不带下划线的prompt会在输入框中显示并等待继续输入内容
     const myPromptJson2 = {
-        'rewrite': {
-            'btnNm': '改写',
-            'prompt': 'Rewrite the following text in different tones, which will be used in project documents (objective), messages between colleagues (informal), and emails (formal and polite): \n',
+        "rewrite": {
+            "btnNm": "改写",
+            "sendOutPrompt": false,
+            "prompt": "Rewrite the following text in different tones, which will be used in project documents (objective), messages between colleagues (informal), and emails (formal and polite): \n",
         },
         "explain_translate": {
             "btnNm": "解释翻译",
+            "sendOutPrompt": false,
             "prompt": "For the following test, explain in detail what it means and what it may possibly imply (in English). Then, translate it and do the explanation again in Chinese:\n "
         },
         "summarize": {
             "btnNm": "总结",
+            "sendOutPrompt": false,
             "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: \n"
         },
         "explain_eng_chn": {
             "btnNm": "解释, 英翻中",
+            "sendOutPrompt": false,
             "prompt": "What is \"XXX\"? What does it mean in this content if applicable? Give me a detailed explanation and some examples in English. Then translate the response into Chinese."
         },
         "chn2eng": {
             "btnNm": "中翻英",
+            "sendOutPrompt": false,
             "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
         },
         "ocr": {
             "btnNm": "OCR",
+            "sendOutPrompt": false,
             "prompt": `Please OCR the attached image following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to identify the content, same as what OCR software does.\n
@@ -75,6 +87,7 @@
         },
         "fix_ocr": {
             "btnNm": "fix-OCR",
+            "sendOutPrompt": false,
             "prompt": `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to manually improve the raw results from OCR software.\n
@@ -85,6 +98,7 @@ It may include some errors or formatting issues due to inaccurate OCR results. Y
         },
         "what_mle": {
             "btnNm": "what-MLE",
+            "sendOutPrompt": false,
             "prompt": `What is XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
@@ -98,6 +112,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 
         "how_mle": {
             "btnNm": "how-MLE",
+            "sendOutPrompt": false,
             "prompt": `How to XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
@@ -111,6 +126,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 
         "compare_mle": {
             "btnNm": "比较-MLE",
+            "sendOutPrompt": false,
             "prompt": `What is the difference between \"XXX\" and \"YYY\"?\n\n
 Give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer.\n
@@ -123,6 +139,7 @@ Give me a detailed relationship explanation and comparison following these backg
 
         "improve_code_mle": {
             "btnNm": "改code-MLE",
+            "sendOutPrompt": false,
             "prompt": `Fix or improve the code.\n\n 
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer.\n
@@ -135,6 +152,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 
         "eb1_pl": {
             "btnNm": "PL for eb1a",
+            "sendOutPrompt": false,
             "prompt": `Could you revise the following content?\n\n 
 Please provide a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
@@ -182,6 +200,7 @@ Please provide a detailed response following these backgrounds and instructions:
             keyCode: 13,
             which: 13
         });
+        element.focus();
         element.dispatchEvent(enterKeyEvent);
     }
 
@@ -197,13 +216,13 @@ Please provide a detailed response following these backgrounds and instructions:
                 setSelection(input);
             }
 
-            // TODO: add prompt submission
-            // Trigger the input event to make the textarea send the message
-            // const inputEvent = new Event('input', { bubbles: true });
-            // input.dispatchEvent(inputEvent);
-            // input.focus();
-            // const inputElement = document.getElementById('myInput');
-            // sendEnterKey(input);
+            // send enter key to submit response after 1 second if specified
+            if (promptJson[promptKey].sendOutPrompt) {
+                setTimeout(() => {
+                    sendEnterKey(input);
+                }, 1000);
+            }
+
         };
 
         return button;
