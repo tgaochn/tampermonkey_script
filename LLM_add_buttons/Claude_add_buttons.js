@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.2.1
+// @version     0.2.2
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -143,8 +143,8 @@ Give me a detailed relationship explanation and comparison following these backg
             "prompt": `Fix or improve the code.\n\n 
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer.\n
-2. The task is to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
-3. You need to provide explanation on the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
+2. The task is to debug the code in pair programming or to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
+3. You need to provide an explanation of the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
 5. Please follow these instructions in all the following responses.\n
 `
