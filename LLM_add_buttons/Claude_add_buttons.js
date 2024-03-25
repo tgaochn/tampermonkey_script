@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.2.0
+// @version     0.2.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -28,7 +28,7 @@
         "chn_": {
             "btnNm": "中文⏎",
             "sendOutPrompt": true,
-            "prompt": "repeat the response in Chinese and explain in detail what it implies. The explanation should be easy to understand.",
+            "prompt": "repeat the response in Chinese. Only the explanation should be in Chinese, the code blocks with comments should be in English. If there is no existing explanation, please further explain the response in detail about what it implies. The explanation should be easy to understand.",
         },
         "md_": {
             "btnNm": "markdown⏎",
