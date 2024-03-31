@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name         BlockZhihu
-// @name:zh-CN   禁用知乎
+// @name         1_BlockZhihu
+// @name:zh-CN   1_禁用知乎
 // @namespace    http://tampermonkey.net/
 // @version      0.1.1
 // @description  Stop Wasting Time On Zhihu!
