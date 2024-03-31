@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.2.0
+// @version             0.2.2
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -69,8 +69,6 @@
     const id = hyperlink.childNodes[0].innerText;
     const url = 'https://butterfly.sandbox.indeed.net/#/model/' + id;
     const buildsTagsSelector = 'span[class="row no-gutters justify-content-start"]';
-    const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
-    const lastBuildId = buildsTags.querySelector('div a:last-of-type').href.split('/').pop();
 
     buttonContainer.append(
         createButton('copy_id', () => {
@@ -99,8 +97,29 @@
     );
 
     buttonContainer.append(
-        createButton('copy_build_id', () => {
+        createButton('copy_last_build_id', () => {
+            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
+            const lastBuildId = buildsTags.querySelector('div a:last-of-type').href.split('/').pop();
             navigator.clipboard.writeText(lastBuildId);
+        })
+    );
+
+    buttonContainer.append(
+        createButton('copy_all_build_id', () => {
+            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
+            const buildIds = [];
+            
+            buildsTags.forEach(div => {
+              const anchorElement = div.querySelector('a');
+              if (anchorElement) {
+                const url = anchorElement.href;
+                const buildId = url.split('/').pop();
+                buildIds.push(buildId);
+              }
+            });
+            
+            const textToCopy = buildIds.join('\n');
+            navigator.clipboard.writeText(textToCopy)
         })
     );
 
