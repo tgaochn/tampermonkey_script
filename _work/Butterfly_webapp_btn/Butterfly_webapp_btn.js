@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.2.2
+// @version             0.2.3
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -98,28 +98,23 @@
 
     buttonContainer.append(
         createButton('copy_last_build_id', () => {
-            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
-            const lastBuildId = buildsTags.querySelector('div a:last-of-type').href.split('/').pop();
+            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
+            const lastBuildId = buildsTags[buildsTags.length - 1].id;
             navigator.clipboard.writeText(lastBuildId);
         })
     );
 
     buttonContainer.append(
         createButton('copy_all_build_id', () => {
-            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
+            const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
             const buildIds = [];
             
-            buildsTags.forEach(div => {
-              const anchorElement = div.querySelector('a');
-              if (anchorElement) {
-                const url = anchorElement.href;
-                const buildId = url.split('/').pop();
-                buildIds.push(buildId);
-              }
+            buildsTags.forEach((div) => {
+                buildIds.push(div.id);
             });
             
-            const textToCopy = buildIds.join('\n');
-            navigator.clipboard.writeText(textToCopy)
+            const textToCopy = buildIds.join("\n");
+            navigator.clipboard.writeText(textToCopy);
         })
     );
 
