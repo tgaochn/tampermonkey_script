@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.1.0
+// @version             0.2.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.2.0: 增加copy build id
 // 0.1.0: 优化了hypertext的复制逻辑
 // 0.0.1: init, 添加若干按钮
 
@@ -67,6 +68,9 @@
     const hyperlink = document.querySelector(hyperLinkSelector).childNodes[0];
     const id = hyperlink.childNodes[0].innerText;
     const url = 'https://butterfly.sandbox.indeed.net/#/model/' + id;
+    const buildsTagsSelector = 'span[class="row no-gutters justify-content-start"]';
+    const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0];
+    const lastBuildId = buildsTags.querySelector('div a:last-of-type').href.split('/').pop();
 
     buttonContainer.append(
         createButton('copy_id', () => {
@@ -91,6 +95,12 @@
         createButton('md_[model|url]', () => {
             const cont = '[model|' + url + ']';
             navigator.clipboard.writeText(cont);
+        })
+    );
+
+    buttonContainer.append(
+        createButton('copy_build_id', () => {
+            navigator.clipboard.writeText(lastBuildId);
         })
     );
 
