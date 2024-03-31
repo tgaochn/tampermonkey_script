@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.2.2
+// @version     0.2.3
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,10 +10,11 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
-// 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
-// 0.1.0: 改进了prompt
-// 0.1.6: 改进了prompt
+// 0.2.3: 加入magic prompt
 // 0.2.0: 部分prompt输入完成之后直接提交
+// 0.1.6: 改进了prompt
+// 0.1.0: 改进了prompt
+// 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
 (async function () {
     'use strict';
@@ -83,6 +84,7 @@
 3. The content could be a piece of code, some plain text, or a table. \n
 4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.\n
 5. Please follow these instructions in all the following responses.\n
+6. Take a deep breath and work on this problem step-by-step.\n
 `
         },
         "fix_ocr": {
@@ -93,6 +95,7 @@
 2. The task is to manually improve the raw results from OCR software.\n
 3. The content could be a piece of code, some plain text or a table. \n
 4. Please follow these instructions in all the following responses.\n
+5. Take a deep breath and work on this problem step-by-step.\n
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
 `
         },
@@ -107,6 +110,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
 5. The response needs to be in Chinese.\n
 6. Please follow these instructions in all the following responses.\n
+7. Take a deep breath and work on this problem step-by-step.\n
 `
         },
 
@@ -121,6 +125,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
 5. The response needs to be in Chinese.\n
 6. Please follow these instructions in all the following responses.\n
+7. Take a deep breath and work on this problem step-by-step.\n
 `
         },
 
@@ -134,6 +139,7 @@ Give me a detailed relationship explanation and comparison following these backg
 3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
 4. The response needs to be in Chinese.\n
 5. Please follow these instructions in all the following responses.\n
+6. Take a deep breath and work on this problem step-by-step.\n
 `
         },
 
@@ -147,6 +153,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 3. You need to provide an explanation of the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
 5. Please follow these instructions in all the following responses.\n
+6. Take a deep breath and work on this problem step-by-step.\n
 `
         },
 
@@ -160,6 +167,7 @@ Please provide a detailed response following these backgrounds and instructions:
 3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
 4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
 5. Please follow these instructions in all the following responses.\n
+6. Take a deep breath and work on this problem step-by-step.\n
 `
         }
     };
