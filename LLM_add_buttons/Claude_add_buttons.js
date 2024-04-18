@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.3.0
+// @version     0.3.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,14 +10,14 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
-// 0.3.0: 使用observer实现网页变化检测
+// 0.3.1: 使用observer实现网页变化检测
 // 0.2.3: 加入magic prompt
 // 0.2.0: 部分prompt输入完成之后直接提交
 // 0.1.6: 改进了prompt
 // 0.1.0: 改进了prompt
 // 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
-(async function () {
+(function () {
     'use strict';
     // ! define all the prompt
     // 带下划线的会直接提交
