@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.2.5
+// @version             0.2.6
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -55,14 +55,14 @@
         return buttonContainer;
     }
 
-    function generateHypertext(text, url, leftPart = '', rightPart = '') {
+    function copyHypertext(text, url, leftPart = '', rightPart = '') {
         // Create a new anchor element
-        let hyperlinkElem = document.createElement('a');
+        const hyperlinkElem = document.createElement('a');
         hyperlinkElem.textContent = text;
         hyperlinkElem.href = url;
     
         // 创建一个新的span元素,用于包裹超链接和括号
-        var spanElem = document.createElement('span');
+        const spanElem = document.createElement('span');
         spanElem.appendChild(document.createTextNode(leftPart));
         spanElem.appendChild(hyperlinkElem);
         spanElem.appendChild(document.createTextNode(rightPart));
@@ -73,9 +73,9 @@
         document.body.appendChild(spanElem);
     
         // 选择临时元素并复制
-        let range = document.createRange();
+        const range = document.createRange();
         range.selectNode(spanElem);
-        let selection = window.getSelection();
+        const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
         document.execCommand('copy');
@@ -116,13 +116,13 @@
 
     buttonContainer.append(
         createButton('copy href: (model)', () => {
-            generateHypertext('model', url, '(', ')');
+            copyHypertext('model', url, '(', ')');
         })
     );
 
     buttonContainer.append(
         createButton('copy href: model', () => {
-            generateHypertext('model', url);
+            copyHypertext('model', url);
         })
     );
 

@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.2.2
+// @version      0.2.3
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
@@ -93,14 +93,14 @@
 
 })();
 
-function generateHypertext(text, url, leftPart = '', rightPart = '') {
+function copyHypertext(text, url, leftPart = '', rightPart = '') {
     // Create a new anchor element
-    let hyperlinkElem = document.createElement('a');
+    const hyperlinkElem = document.createElement('a');
     hyperlinkElem.textContent = text;
     hyperlinkElem.href = url;
 
     // 创建一个新的span元素,用于包裹超链接和括号
-    var spanElem = document.createElement('span');
+    const spanElem = document.createElement('span');
     spanElem.appendChild(document.createTextNode(leftPart));
     spanElem.appendChild(hyperlinkElem);
     spanElem.appendChild(document.createTextNode(rightPart));
@@ -111,9 +111,9 @@ function generateHypertext(text, url, leftPart = '', rightPart = '') {
     document.body.appendChild(spanElem);
 
     // 选择临时元素并复制
-    let range = document.createRange();
+    const range = document.createRange();
     range.selectNode(spanElem);
-    let selection = window.getSelection();
+    const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
     document.execCommand('copy');
@@ -148,14 +148,14 @@ function addCopyBtn() {
     idHypertextBtn.innerHTML = "copy href: (ticket)";
     idHypertextBtn.id = "copy_text_link";
     idHypertextBtn.onclick = (e) => {
-        generateHypertext(id, url, '(', ')');
+        copyHypertext(id, url, '(', ')');
     };
 
     const idHypertextBtn2 = document.createElement("a");
     idHypertextBtn2.innerHTML = "copy href: ticket";
     idHypertextBtn2.id = "copy_text_link2";
     idHypertextBtn2.onclick = (e) => {
-        generateHypertext(id, url);
+        copyHypertext(id, url);
     };
 
     // const descBtn = document.createElement("a");
