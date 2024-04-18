@@ -2,15 +2,15 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.1.0
+// @version      0.2.0
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
+// 0.2.0: 把添加hypertext弄成函数了
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
-
 
 (function () {
     'use strict';
@@ -93,12 +93,42 @@
 
 })();
 
+function generateHypertext(text, url, leftPart = '', rightPart = '') {
+    // Create a new anchor element
+    let hyperlinkElem = document.createElement('a');
+    hyperlinkElem.textContent = text;
+    hyperlinkElem.href = url;
+
+    // 创建一个新的span元素,用于包裹超链接和括号
+    var spanElem = document.createElement('span');
+    spanElem.appendChild(document.createTextNode(leftPart));
+    spanElem.appendChild(hyperlinkElem);
+    spanElem.appendChild(document.createTextNode(rightPart));
+
+    // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+    spanElem.style.position = 'absolute';
+    spanElem.style.left = '-9999px';
+    document.body.appendChild(spanElem);
+
+    // 选择临时元素并复制
+    let range = document.createRange();
+    range.selectNode(spanElem);
+    let selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
+    selection.removeAllRanges();
+
+    // 把临时的元素从页面中移除
+    document.body.removeChild(spanElem);
+}
+
 function addCopyBtn() {
     if (!document.getElementById('stalker')) return;
 
     const id = document.getElementById("key-val").childNodes[0].data;
     const summary = document.getElementById("summary-val").childNodes[0].data;
-    const link = "https://bugs.indeed.com/browse/" + id
+    const url = "https://bugs.indeed.com/browse/" + id
 
     const idBtn = document.createElement("a");
     idBtn.innerHTML = "Copy id";
@@ -107,87 +137,25 @@ function addCopyBtn() {
         navigator.clipboard.writeText(id);
     };
 
-    // const summaryBtn = document.createElement("a");
-    // summaryBtn.innerHTML = "Copy summary";
-    // summaryBtn.id = "copy_summary";
-    // summaryBtn.onclick = (e) => {
-    //     navigator.clipboard.writeText(summary);
-    // };
-
-    const linkBtn = document.createElement("a");
-    linkBtn.innerHTML = "Copy link";
-    linkBtn.id = "copy_link";
-    linkBtn.onclick = (e) => {
-        navigator.clipboard.writeText(link);
+    const urlBtn = document.createElement("a");
+    urlBtn.innerHTML = "Copy url";
+    urlBtn.id = "copy_link";
+    urlBtn.onclick = (e) => {
+        navigator.clipboard.writeText(url);
     };
 
     const idHypertextBtn = document.createElement("a");
     idHypertextBtn.innerHTML = "hypertext: (id)";
     idHypertextBtn.id = "copy_text_link";
     idHypertextBtn.onclick = (e) => {
-        // 复制hypertext再修改, 否则page上的元素也会被修改
-        var idCont = document.querySelector("a.issue-link");
-        let idContDup = idCont.cloneNode(true);
-        // 可以在这里修改 text/link, 不过这里的text都会被当成hypertext的一部分
-        // idContDup.textContent = "(" + id + ")";
-        // idContDup.href = 'https://www.example.com';
-
-        // 创建一个新的span元素,用于包裹超链接和括号
-        var spanElem = document.createElement('span');
-        spanElem.appendChild(document.createTextNode('('));
-        spanElem.appendChild(idContDup);
-        spanElem.appendChild(document.createTextNode(')'));
-
-        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-        spanElem.style.position = 'absolute';
-        spanElem.style.left = '-9999px';
-        document.body.appendChild(spanElem);
-
-        // 选择临时元素并复制
-        var range = document.createRange();
-        range.selectNode(spanElem);
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand('copy');
-        selection.removeAllRanges();
-
-        // 把临时的元素从页面中移除
-        document.body.removeChild(spanElem);
+        generateHypertext(id, url, '(', ')');
     };
 
     const idHypertextBtn2 = document.createElement("a");
     idHypertextBtn2.innerHTML = "hypertext: id";
     idHypertextBtn2.id = "copy_text_link2";
     idHypertextBtn2.onclick = (e) => {
-        // 复制hypertext再修改, 否则page上的元素也会被修改
-        var idCont = document.querySelector("a.issue-link");
-        let idContDup = idCont.cloneNode(true);
-        // 可以在这里修改 text/link, 不过这里的text都会被当成hypertext的一部分
-        // idContDup.textContent = "(" + id + ")";
-        // idContDup.href = 'https://www.example.com';
-
-        // 创建一个新的span元素,用于包裹超链接和括号
-        var spanElem = document.createElement('span');
-        spanElem.appendChild(idContDup);
-        spanElem.appendChild(document.createTextNode(' '));
-
-        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-        spanElem.style.position = 'absolute';
-        spanElem.style.left = '-9999px';
-        document.body.appendChild(spanElem);
-
-        // 选择临时元素并复制
-        var range = document.createRange();
-        range.selectNode(spanElem);
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand('copy');
-        selection.removeAllRanges();
-
-        // 把临时的元素从页面中移除
-        document.body.removeChild(spanElem);
+        generateHypertext(id, url);
     };
 
     // const descBtn = document.createElement("a");
@@ -200,17 +168,17 @@ function addCopyBtn() {
     // };
 
     const idLinkBtn = document.createElement("a");
-    idLinkBtn.innerHTML = "[id|link]";
+    idLinkBtn.innerHTML = "[id|url]";
     idLinkBtn.id = "copy_id_link";
     idLinkBtn.onclick = (e) => {
-        navigator.clipboard.writeText("[" + id + "|" + link + "]");
+        navigator.clipboard.writeText("[" + id + "|" + url + "]");
     };
 
     const idLinkMdBtn = document.createElement("a");
-    idLinkMdBtn.innerHTML = "[id](link)";
+    idLinkMdBtn.innerHTML = "[id](url)";
     idLinkMdBtn.id = "copy_id_md_link";
     idLinkMdBtn.onclick = (e) => {
-        navigator.clipboard.writeText("[" + id + "](" + link + ")");
+        navigator.clipboard.writeText("[" + id + "](" + url + ")");
     };
 
     const idSummaryBtn = document.createElement("a");
@@ -236,9 +204,9 @@ function addCopyBtn() {
 
     const btnArray = [
         idBtn,
+        urlBtn,
         idHypertextBtn,
         idHypertextBtn2,
-        linkBtn,
         // summaryBtn,
         // descBtn,
         idLinkBtn,
