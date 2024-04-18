@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.3.1
+// @version     0.3.2
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -17,6 +17,7 @@
 // 0.1.0: 改进了prompt
 // 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
+// (async function () {
 (function () {
     'use strict';
     // ! define all the prompt
@@ -97,6 +98,7 @@
 3. The content could be a piece of code, some plain text or a table. \n
 4. Please follow these instructions in all the following responses.\n
 5. Take a deep breath and work on this problem step-by-step.\n
+6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.\n
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
 `
         },
