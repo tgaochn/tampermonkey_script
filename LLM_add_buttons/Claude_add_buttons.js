@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.2.3
+// @version     0.3.0
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// 0.3.0: 使用observer实现网页变化检测
 // 0.2.3: 加入magic prompt
 // 0.2.0: 部分prompt输入完成之后直接提交
 // 0.1.6: 改进了prompt
@@ -258,6 +259,27 @@ Please provide a detailed response following these backgrounds and instructions:
         return buttonContainer;
     }
 
+    // Function to add button containers vertically
+    function addButtonContainersVertically(containerElement) {
+        containerElement.appendChild(buttonContainer1);
+        containerElement.parentNode.insertBefore(buttonContainer2, containerElement.nextSibling);
+    }
+
+    // Function to add button containers horizontally
+    function addButtonContainersHorizontally(containerElement) {
+        containerElement.insertAdjacentElement('afterend', buttonContainer1);
+        containerElement.insertAdjacentElement('afterend', buttonContainer2);
+    }
+
+    // Function to add button containers to the page
+    function addButtonContainers(containerElement) {
+        // contrainer 上下排列
+        addButtonContainersVertically(containerElement);
+
+        // contrainer 左右排列
+        // addButtonContainersHorizontally(containerElement);
+    }
+
     // ! add buttons in the containers
     const buttonContainer1 = createButtonContainer();
     const buttonContainer2 = createButtonContainer();
@@ -272,20 +294,27 @@ Please provide a detailed response following these backgrounds and instructions:
         );
     }
 
-    // ! add containers on the page 
-    while (true) {
-        await delay(100);
-        const btnContainerPosElement = document.querySelector(btnContainerPosSelector);
-        if (btnContainerPosElement) {
-            // contrainer 上下排列
-            btnContainerPosElement.appendChild(buttonContainer1);
-            btnContainerPosElement.parentNode.insertBefore(buttonContainer2, btnContainerPosElement.nextSibling);
-
-            // contrainer 左右排列
-            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer);
-            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer2);
-            break;
+    // Create a MutationObserver instance
+    const observer = new MutationObserver((mutationsList, observer) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                const btnContainerPosElement = document.querySelector(btnContainerPosSelector);
+                if (btnContainerPosElement) {
+                    addButtonContainers(btnContainerPosElement);
+                    observer.disconnect();
+                    break;
+                }
+            }
         }
-    }
+    });
 
+    // Configure the observer
+    const config = {
+        childList: true,
+        subtree: true
+    };
+
+    // Start observing the target node
+    const observedNode = document.body
+    observer.observe(observedNode, config);
 })();
