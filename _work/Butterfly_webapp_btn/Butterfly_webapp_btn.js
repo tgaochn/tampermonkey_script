@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.2.4
+// @version             0.2.5
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.2.5: reorder button positions and revise desc
 // 0.2.4: Added copy build ID and copy hypertext functionality
 // 0.2.0: 增加copy build id
 // 0.1.0: 优化了hypertext的复制逻辑
@@ -114,6 +115,18 @@
     );
 
     buttonContainer.append(
+        createButton('copy href: (model)', () => {
+            generateHypertext('model', url, '(', ')');
+        })
+    );
+
+    buttonContainer.append(
+        createButton('copy href: model', () => {
+            generateHypertext('model', url);
+        })
+    );
+
+    buttonContainer.append(
         createButton('copy md: [model](url)', () => {
             const cont = '[model](' + url + ')';
             navigator.clipboard.writeText(cont);
@@ -146,18 +159,6 @@
             
             const textToCopy = buildIds.join("\n");
             navigator.clipboard.writeText(textToCopy);
-        })
-    );
-
-    buttonContainer.append(
-        createButton('hyperLink: (model)', () => {
-            generateHypertext('model', url, '(', ')');
-        })
-    );
-
-    buttonContainer.append(
-        createButton('hyperLink: model', () => {
-            generateHypertext('model', url);
         })
     );
 
