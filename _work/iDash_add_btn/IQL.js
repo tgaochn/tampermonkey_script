@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.0.1
+// @version      0.1.0
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,104 +10,153 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.1.0: 增加format IQL url的各种按钮
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
 
-(function () {
+(async function () {
     'use strict';
-    //var
-    let list = [];
 
-    //set css
-    function setCss($dom) {
-        let css = {
-            'color': '#333',
-            'display': 'block',
-            'width': '100%',
-            'text-overflow': 'ellipsis',
-            'overflow': 'hidden',
-            'white-space': 'nowrap',
-        };
-        css['font-size'] = '16px';
-        $dom.css(css).hover(function () {
-            $(this).css('color', '#01AAED');
-        }).mouseout(function () {
-            $(this).css('color', '#333');
-        });
+    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function createButtonContainer() {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'inline-block';
+        buttonContainer.style.justifyContent = 'center';
+        buttonContainer.style.marginTop = '10px';
+        buttonContainer.style.marginLeft = '10px';
+
+        return buttonContainer;
     }
 
-    //create dom
-    function createBtn() {
-        const css = {
-            'position': 'fixed',
-            'top': 'calc(23% - 15px)', // 右边中间
-            // 'top': 'calc(8% - 15px)', // 右上角
-            'right': '0', 
-            'border-radius': '10px',
-            'border': '1px solid #ccc',
-            'height': '25px',
-            // 'width': '60px',
-            'width': '25px',
-            'z-index': '999',
-            'box-shadow': '1px 2px 3px #ccc',
-            'background': '#009688',
-            'color': '#fff',
-            'font-size': '14px',
-            'outline': 'none',
-            'box-sizing': 'border-box',
-        };
-        // const $btn = $('<button>解</button>').css(css).hover(function () {
-        const $btn = $('<button>link</button>').css(css).hover(function () {
-            $(this).css('background', '#5FB878');
-        }).mouseout(function () {
-            $(this).css('background', '#009688');
-        });
-        return $btn;
+    function setBtnStyle(btn) {
+        btn.style.backgroundColor = '#009688';
+        btn.style.color = 'white';
+        btn.style.padding = '5px 5px';
+        btn.style.height = '30px';
+        btn.style.fontSize = '14px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.outline = 'none';
+        btn.style.boxSizing = 'border-box';
     }
 
-    function createDom() {
-        const $listDom = $('<div></div>');
-        const listCss = {
-            'min-width': '30px',
-            'box-sizing': 'border-box',
-            'padding': '2px',
-            'background': '#F0F0F0',
-            'box-shadow': '1px 2px 3px #ccc',
-            // 'height': '30%', // 多行
-            'height': '3%', // 单行
-            'position': 'fixed',
-            'right': '0',
-            'top': '23%',
-            'overflow-y': 'auto',
-            'color': '#333',
-            'border-radius': '5px',
-            'line-height': '1.6',
-            'z-index': '99',
-            'max-width': '160px',
+    function createButton(text, callbackFunc) {
+        const button = document.createElement('button');
+        setBtnStyle(button);
+        button.innerHTML = text;
+        button.onclick = callbackFunc;
+        return button;
+    }
 
-        };
-        $listDom.css(listCss).hide();
-        for (let i of list) {
-            let $a = $(`<a href='${i.url}' target="_blank" title='${i.value}'>${i.value}</a>`);
-            setCss($a);
-            $listDom.append($a);
+    function copyHypertext(text, url, leftPart = '', rightPart = '') {
+        // Create a new anchor element
+        const hyperlinkElem = document.createElement('a');
+        hyperlinkElem.textContent = text;
+        hyperlinkElem.href = url;
+
+        // 创建一个新的span元素,用于包裹超链接和括号
+        const spanElem = document.createElement('span');
+        spanElem.appendChild(document.createTextNode(leftPart));
+        spanElem.appendChild(hyperlinkElem);
+        spanElem.appendChild(document.createTextNode(rightPart));
+
+        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+        spanElem.style.position = 'absolute';
+        spanElem.style.left = '-9999px';
+        document.body.appendChild(spanElem);
+
+        // 选择临时元素并复制
+        const range = document.createRange();
+        range.selectNode(spanElem);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand('copy');
+        selection.removeAllRanges();
+
+        // 把临时的元素从页面中移除
+        document.body.removeChild(spanElem);
+    }
+
+    // ! add buttons in the containers
+    const buttonContainer1 = createButtonContainer();
+
+    // 按钮1: 打开 google sheet 转 md table 的网站
+    buttonContainer1.append(
+        createButton('Gsheet2Md', () => {
+            const targetUrl = 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown/';
+            window.open(targetUrl, '_blank');
+        })
+    );
+
+    // 后面的按钮: 各种copy
+    buttonContainer1.append(
+        createButton('copy url', async () => {
+            const btn = document.getElementById('share-query-verbatim');
+            btn.click();
+        })
+    );
+
+    buttonContainer1.append(
+        createButton('copy href: IQL', async () => {
+            const btn = document.getElementById('share-query-verbatim');
+            btn.click();
+            await delay(500);
+
+            const clipboardContents = await navigator.clipboard.readText();
+            copyHypertext('IQL', clipboardContents);
+        })
+    );
+
+    buttonContainer1.append(
+        createButton('copy href: (IQL)', async () => {
+            const btn = document.getElementById('share-query-verbatim');
+            btn.click();
+            await delay(500);
+
+            const clipboardContents = await navigator.clipboard.readText();
+            copyHypertext('IQL', clipboardContents, '(', ')');
+        })
+    );
+
+    buttonContainer1.append(
+        createButton('copy md: [IQL|url]', async () => {
+            const btn = document.getElementById('share-query-verbatim');
+            btn.click();
+            await delay(500);
+
+            const clipboardContents = await navigator.clipboard.readText();
+            navigator.clipboard.writeText(`[IQL|${clipboardContents}]`);
+        })
+    );
+
+    buttonContainer1.append(
+        createButton('copy md: [IQL](url)', async () => {
+            const btn = document.getElementById('share-query-verbatim');
+            btn.click();
+            await delay(500);
+
+            const clipboardContents = await navigator.clipboard.readText();
+            navigator.clipboard.writeText(`[IQL](${clipboardContents})`);
+        })
+    );
+
+    // ! add container to the table
+    while (true) {
+        await delay(100);
+        const btnContainerPosId = 'undefined-nav-bar-navigation-container';
+        const btnContainerPosElement = document.getElementById(btnContainerPosId);
+        // const curBtn = btnContainerPosElement.firstElementChild.firstElementChild;
+        if (btnContainerPosElement) {
+            // contrainer 上下排列
+            btnContainerPosElement.appendChild(buttonContainer1);
+            btnContainerPosElement.parentNode.insertBefore(buttonContainer2, btnContainerPosElement.nextSibling);
+
+            // contrainer 左右排列
+            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer);
+            // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer2);
+            break;
         }
-        $('body').append($listDom);
-        $listDom.slideDown('fast');
-        // $listDom.slideUp('fast'); // 自动折叠
-        const $btn = createBtn();
-        $btn.on('click', () => {
-            $listDom.slideToggle();
-        });
-        $('body').append($btn);
     }
-
-    //get solution
-    (function () {
-        var $ = $ || window.$;
-        // Google Sheet 2 markdown table
-        var targetUrl = "https://tabletomarkdown.com/convert-spreadsheet-to-markdown/";
-        list.push({ url: targetUrl, value: 'Gsheet2MdTable' })
-        
-        createDom();
-    })();
 })();
