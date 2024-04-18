@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.2.1
+// @version      0.2.2
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
@@ -131,28 +131,28 @@ function addCopyBtn() {
     const url = "https://bugs.indeed.com/browse/" + id
 
     const idBtn = document.createElement("a");
-    idBtn.innerHTML = "Copy id";
+    idBtn.innerHTML = "copy: ticket";
     idBtn.id = "copy_id";
     idBtn.onclick = (e) => {
         navigator.clipboard.writeText(id);
     };
 
     const urlBtn = document.createElement("a");
-    urlBtn.innerHTML = "Copy url";
+    urlBtn.innerHTML = "copy: url";
     urlBtn.id = "copy_link";
     urlBtn.onclick = (e) => {
         navigator.clipboard.writeText(url);
     };
 
     const idHypertextBtn = document.createElement("a");
-    idHypertextBtn.innerHTML = "hypertext: (id)";
+    idHypertextBtn.innerHTML = "copy href: (ticket)";
     idHypertextBtn.id = "copy_text_link";
     idHypertextBtn.onclick = (e) => {
         generateHypertext(id, url, '(', ')');
     };
 
     const idHypertextBtn2 = document.createElement("a");
-    idHypertextBtn2.innerHTML = "hypertext: id";
+    idHypertextBtn2.innerHTML = "copy href: ticket";
     idHypertextBtn2.id = "copy_text_link2";
     idHypertextBtn2.onclick = (e) => {
         generateHypertext(id, url);
@@ -168,21 +168,21 @@ function addCopyBtn() {
     // };
 
     const idLinkBtn = document.createElement("a");
-    idLinkBtn.innerHTML = "[id|url]";
+    idLinkBtn.innerHTML = "copy md: [ticket|url]";
     idLinkBtn.id = "copy_id_link";
     idLinkBtn.onclick = (e) => {
         navigator.clipboard.writeText("[" + id + "|" + url + "]");
     };
 
     const idLinkMdBtn = document.createElement("a");
-    idLinkMdBtn.innerHTML = "[id](url)";
+    idLinkMdBtn.innerHTML = "copy md: [ticket](url)";
     idLinkMdBtn.id = "copy_id_md_link";
     idLinkMdBtn.onclick = (e) => {
         navigator.clipboard.writeText("[" + id + "](" + url + ")");
     };
 
     const idSummaryBtn = document.createElement("a");
-    idSummaryBtn.innerHTML = "id: summary";
+    idSummaryBtn.innerHTML = "ticket: summary";
     idSummaryBtn.id = "copy_id_summary";
     idSummaryBtn.onclick = (e) => {
         navigator.clipboard.writeText(id + ": " + summary);
