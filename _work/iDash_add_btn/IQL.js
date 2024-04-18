@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.1.1
+// @version      0.1.2
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,6 +10,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.1.2: clean up code
 // 0.1.1: MutationObserver methods
 // 0.1.0: 增加format IQL url的各种按钮
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
@@ -143,25 +144,6 @@
         })
     );
 
-    // ! add container to the table
-    // while (true) {
-    //     await delay(100);
-    //     const btnContainerPosId = 'undefined-nav-bar-navigation-container';
-    //     const btnContainerPosElement = document.getElementById(btnContainerPosId);
-    //     // const curBtn = btnContainerPosElement.firstElementChild.firstElementChild;
-    //     if (btnContainerPosElement) {
-    //         // contrainer 上下排列
-    //         btnContainerPosElement.appendChild(buttonContainer1);
-    //         btnContainerPosElement.parentNode.insertBefore(buttonContainer2, btnContainerPosElement.nextSibling);
-
-    //         // contrainer 左右排列
-    //         // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer);
-    //         // btnContainerPosElement.insertAdjacentElement('afterend', buttonContainer2);
-    //         break;
-    //     }
-    // }
-
-    // Function to add button containers to the table
     function addButtonContainers(containerElement) {
         // Add button containers vertically
         containerElement.appendChild(buttonContainer1);
@@ -172,7 +154,7 @@
         // containerElement.insertAdjacentElement('afterend', buttonContainer2);
     }
 
-    // Create a MutationObserver instance
+    // ! Create a MutationObserver instance and add container
     const observer = new MutationObserver((mutationsList, observer) => {
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
