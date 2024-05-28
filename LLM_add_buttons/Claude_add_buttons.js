@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.3.2
+// @version     0.4.0
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// 0.4.0: 优化prompt, 按钮改成3行
 // 0.3.1: 使用observer实现网页变化检测
 // 0.2.3: 加入magic prompt
 // 0.2.0: 部分prompt输入完成之后直接提交
@@ -53,27 +54,22 @@
     // 不带下划线的prompt会在输入框中显示并等待继续输入内容
     const myPromptJson2 = {
         "rewrite": {
-            "btnNm": "改写",
+            "btnNm": "日常-改写",
             "sendOutPrompt": false,
-            "prompt": "Rewrite the following text in different tones, which will be used in project documents (objective), messages between colleagues (informal), and emails (formal and polite): \n",
+            "prompt": "Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth. The text is likely to be used in project documentation: \n",
         },
         "explain_translate": {
-            "btnNm": "解释翻译",
+            "btnNm": "日常-解释翻译",
             "sendOutPrompt": false,
-            "prompt": "For the following test, explain in detail what it means and what it may possibly imply (in English). Then, translate it and do the explanation again in Chinese:\n "
+            "prompt": "I'm not an English native speaker and I cannot fully understand the following content. Could you explain in detail what it means and what it may possibly imply (in English). Please also give some examples to show how the expression is used. Then, translate the response in Chinese:\n "
         },
         "summarize": {
-            "btnNm": "总结",
+            "btnNm": "日常-总结",
             "sendOutPrompt": false,
             "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: \n"
         },
-        "explain_eng_chn": {
-            "btnNm": "解释, 英翻中",
-            "sendOutPrompt": false,
-            "prompt": "What is \"XXX\"? What does it mean in this content if applicable? Give me a detailed explanation and some examples in English. Then translate the response into Chinese."
-        },
         "chn2eng": {
-            "btnNm": "中翻英",
+            "btnNm": "日常-中翻英",
             "sendOutPrompt": false,
             "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
         },
@@ -90,7 +86,7 @@
 `
         },
         "fix_ocr": {
-            "btnNm": "fix-OCR",
+            "btnNm": "fix_OCR",
             "sendOutPrompt": false,
             "prompt": `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
@@ -102,8 +98,10 @@
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
 `
         },
-        "what_mle": {
-            "btnNm": "what-MLE",
+    }
+    const myPromptJson3 = {
+        "what1_mle": {
+            "btnNm": "MLE-what1",
             "sendOutPrompt": false,
             "prompt": `What is XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
@@ -117,8 +115,23 @@ Give me a detailed response following these backgrounds and instructions:\n
 `
         },
 
+        "what2_mle": {
+            "btnNm": "MLE-what2",
+            "sendOutPrompt": false,
+            "prompt": `What does it mean when people say XXX?\n\n
+Give me a detailed response following these backgrounds and instructions:\n
+1. You need to act as a senior machine learning engineer. \n
+2. The task is to make some explanations to the newbie interns. \n
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
+5. The response needs to be in Chinese.\n
+6. Please follow these instructions in all the following responses.\n
+7. Take a deep breath and work on this problem step-by-step.\n
+`
+        },
+
         "how_mle": {
-            "btnNm": "how-MLE",
+            "btnNm": "MLE-how",
             "sendOutPrompt": false,
             "prompt": `How to XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
@@ -133,7 +146,7 @@ Give me a detailed response following these backgrounds and instructions:\n
         },
 
         "compare_mle": {
-            "btnNm": "比较-MLE",
+            "btnNm": "MLE-比较",
             "sendOutPrompt": false,
             "prompt": `What is the difference between \"XXX\" and \"YYY\"?\n\n
 Give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
@@ -147,7 +160,7 @@ Give me a detailed relationship explanation and comparison following these backg
         },
 
         "improve_code_mle": {
-            "btnNm": "改code-MLE",
+            "btnNm": "MLE-改code",
             "sendOutPrompt": false,
             "prompt": `Fix or improve the code.\n\n 
 Give me a detailed response following these backgrounds and instructions:\n
@@ -261,40 +274,28 @@ Please provide a detailed response following these backgrounds and instructions:
         return buttonContainer;
     }
 
-    // Function to add button containers vertically
-    function addButtonContainersVertically(containerElement) {
-        containerElement.appendChild(buttonContainer1);
-        containerElement.parentNode.insertBefore(buttonContainer2, containerElement.nextSibling);
-    }
-
-    // Function to add button containers horizontally
-    function addButtonContainersHorizontally(containerElement) {
-        containerElement.insertAdjacentElement('afterend', buttonContainer1);
-        containerElement.insertAdjacentElement('afterend', buttonContainer2);
-    }
-
-    // Function to add button containers to the page
     function addButtonContainers(containerElement) {
-        // contrainer 上下排列
-        addButtonContainersVertically(containerElement);
+        containerElement.style.display = 'flex';
+        containerElement.style.flexDirection = 'column'; // contrainer 上下排列
+        // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-        // contrainer 左右排列
-        // addButtonContainersHorizontally(containerElement);
+        containerElement.appendChild(buttonContainer1);
+        containerElement.appendChild(buttonContainer2);
+        containerElement.appendChild(buttonContainer3);
+    }
+
+    function createButtonContainerWithButtons(prompts) {
+        const buttonContainer = createButtonContainer();
+        for (const promptKey in prompts) {
+            buttonContainer.append(createButton(prompts, promptKey));
+        }
+        return buttonContainer;
     }
 
     // ! add buttons in the containers
-    const buttonContainer1 = createButtonContainer();
-    const buttonContainer2 = createButtonContainer();
-    for (const promptKey in myPromptJson1) {
-        buttonContainer1.append(
-            createButton(myPromptJson1, promptKey)
-        );
-    }
-    for (const promptKey in myPromptJson2) {
-        buttonContainer2.append(
-            createButton(myPromptJson2, promptKey)
-        );
-    }
+    const buttonContainer1 = createButtonContainerWithButtons(myPromptJson1);
+    const buttonContainer2 = createButtonContainerWithButtons(myPromptJson2);
+    const buttonContainer3 = createButtonContainerWithButtons(myPromptJson3);
 
     // Create a MutationObserver instance
     const observer = new MutationObserver((mutationsList, observer) => {
