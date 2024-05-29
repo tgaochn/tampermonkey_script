@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.3.4
+// @version             0.3.5
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.3.5: use mutationObserver instead of await
 // 0.3.2: improved code
 // 0.3.0: improved the layout and added text desc
 // 0.2.5: reorder button positions and revise desc
@@ -23,23 +24,51 @@
 (async function () {
     'use strict';
 
-    // ! wait until the page is loaded
-    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-    const modelLinkSelector = 'div[class="model-view--header-model-name-row"]';
-    while (true) {
-        await delay(100);
-        if (document.querySelector(modelLinkSelector)) {
-            break;
-        }
-    }
+    const observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
 
+        return function (targetNode, onAddCallback, onRemoveCallback) {
+            if (MutationObserver) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
+                        onAddCallback();
+                    }
+                });
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
+                });
+            } else if (eventListenerSupported) {
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            }
+        };
+    })();
+
+    // Check if the target element exists, if not, add the buttons
+    const observeTarget = document.body;
+    const targetElementId = "container_id";
+    observeDOM(observeTarget, () => {
+        if (!document.getElementById(targetElementId)) {
+            main();
+        }
+    });
+
+})();
+
+function main() {
     // ! add button in the container and define click func
     const modelInfoButtonContainer = createButtonContainer();
     const buildInfoButtonContainer = createButtonContainer();
     const buildsTagsSelector = 'span[class="row no-gutters justify-content-start"]';
+    const modelLinkSelector = 'div[class="model-view--header-model-name-row"]';
     const modelNameElem = document.querySelector(modelLinkSelector).childNodes[0];
     const modelId = modelNameElem.childNodes[0].innerText;
     const modelUrl = 'https://butterfly.sandbox.indeed.net/#/model/' + modelId;
+    modelInfoButtonContainer.id = "container_id";
 
     modelInfoButtonContainer.append(
         createTextNode('text: '),
@@ -91,7 +120,7 @@
     newRow.appendChild(cell11);
     newRow.appendChild(cell12);
     table.appendChild(newRow);
-})();
+}
 
 function setBtnStyle(btn) {
     btn.style.backgroundColor = '#009688';
