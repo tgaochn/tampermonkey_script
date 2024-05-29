@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.3
+// @version             0.3.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.3.1: improved code
 // 0.3.0: improved the layout and added text desc
 // 0.2.5: reorder button positions and revise desc
 // 0.2.4: Added copy build ID and copy hypertext functionality
@@ -37,10 +38,17 @@
     }
 
     function createButton(text, callbackFunc) {
+        const useBtnStyleFromPage = true;
         const button = document.createElement('button');
-        button.className = 'model-view--status-label badge bg-info';
-        // button.className = 'text-nowrap btn btn-warning btn-sm';
-        // setBtnStyle(button);
+
+        if (useBtnStyleFromPage) {
+            button.className = 'model-view--status-label badge bg-info';
+        }
+        else {
+            button.className = 'text-nowrap btn btn-warning btn-sm';
+            setBtnStyle(button);
+        }
+        
         button.innerHTML = text;
         button.onclick = callbackFunc;
         return button;
@@ -52,14 +60,27 @@
         return textElem;
     }
 
-    function createButtonContainer() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.display = 'inline-block';
-        buttonContainer.style.justifyContent = 'center';
-        buttonContainer.style.marginTop = '10px';
-        buttonContainer.style.marginLeft = '10px';
+    // Utility functions to create buttons, text nodes and containers
+    function createCopyButton(text, copyText) {
+        const button = document.createElement('button');
+        button.className = 'model-view--status-label badge bg-info';
+        button.innerHTML = text;
+        button.onclick = () => {
+            navigator.clipboard.writeText(copyText);
+        };
+        return button;
+    }
 
-        return buttonContainer;
+    function createTextNode(text) {
+        return document.createTextNode(text);
+    }
+
+    function createButtonContainer() {
+        const container = document.createElement('div');
+        container.style.display = 'inline-block';
+        container.style.marginTop = '10px';
+        container.style.marginLeft = '10px';
+        return container;
     }
 
     function copyHypertext(text, url, leftPart = '', rightPart = '') {
@@ -69,19 +90,19 @@
         hyperlinkElem.href = url;
 
         // 创建一个新的span元素,用于包裹超链接和括号
-        const spanElem = document.createElement('span');
-        spanElem.appendChild(document.createTextNode(leftPart));
-        spanElem.appendChild(hyperlinkElem);
-        spanElem.appendChild(document.createTextNode(rightPart));
+        const tempContainerElem = document.createElement('span');
+        tempContainerElem.appendChild(document.createTextNode(leftPart));
+        tempContainerElem.appendChild(hyperlinkElem);
+        tempContainerElem.appendChild(document.createTextNode(rightPart));
 
         // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-        spanElem.style.position = 'absolute';
-        spanElem.style.left = '-9999px';
-        document.body.appendChild(spanElem);
+        tempContainerElem.style.position = 'absolute';
+        tempContainerElem.style.left = '-9999px';
+        document.body.appendChild(tempContainerElem);
 
         // 选择临时元素并复制
         const range = document.createRange();
-        range.selectNode(spanElem);
+        range.selectNode(tempContainerElem);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
@@ -89,7 +110,7 @@
         selection.removeAllRanges();
 
         // 把临时的元素从页面中移除
-        document.body.removeChild(spanElem);
+        document.body.removeChild(tempContainerElem);
     }
 
     // ! wait until the page is loaded
@@ -103,84 +124,47 @@
     }
 
     // ! add button in the container and define click func
-    const buttonContainer1 = createButtonContainer();
-    const buttonContainer2 = createButtonContainer();
-    const hyperlink = document.querySelector(hyperLinkSelector).childNodes[0];
-    const id = hyperlink.childNodes[0].innerText;
-    const url = 'https://butterfly.sandbox.indeed.net/#/model/' + id;
+    const modelInfoButtonContainer = createButtonContainer();
+    const buildInfoButtonContainer = createButtonContainer();
     const buildsTagsSelector = 'span[class="row no-gutters justify-content-start"]';
+    const targetSelector = 'div[class="model-view--header-model-name-row"]';
+    const modelNameElem = document.querySelector(targetSelector).childNodes[0];  
+    const modelId = modelNameElem.childNodes[0].innerText;
+    const modelUrl = 'https://butterfly.sandbox.indeed.net/#/model/' + modelId;
 
-    buttonContainer1.append(
-        createText('text: '),
+    modelInfoButtonContainer.append(
+        createTextNode('text: '),
+        createCopyButton('id', modelId),
+        createCopyButton('url', modelUrl),
     );
 
-    buttonContainer1.append(
-        createButton('id', () => {
-            navigator.clipboard.writeText(id);
-        })
+    modelInfoButtonContainer.append(
+        createTextNode('\thref: '),
+        createButton('href: (model)', () => copyHypertext('model', modelUrl, '(', ')')),
+        createButton('href: model', () => copyHypertext('model', modelUrl)),
     );
 
-    buttonContainer1.append(
-        createButton('url', () => {
-            navigator.clipboard.writeText(url);
-        })
-    );
-
-    buttonContainer1.append(
-        createText('\thref: '),
-    );
-
-    buttonContainer1.append(
-        createButton('href: (model)', () => {
-            copyHypertext('model', url, '(', ')');
-        })
-    );
-
-    buttonContainer1.append(
-        createButton('href: model', () => {
-            copyHypertext('model', url);
-        })
-    );
-
-    buttonContainer1.append(
+    modelInfoButtonContainer.append(
         createText('\tmd: '),
+        createButton('md: [model](url)', () => navigator.clipboard.writeText(`[model](${modelUrl})`)),
+        createButton('md: [model|url]', () => navigator.clipboard.writeText(`[model|${modelUrl}]`))
     );
 
-    buttonContainer1.append(
-        createButton('md: [model](url)', () => {
-            const cont = '[model](' + url + ')';
-            navigator.clipboard.writeText(cont);
-        })
-    );
-
-    buttonContainer1.append(
-        createButton('md: [model|url]', () => {
-            const cont = '[model|' + url + ']';
-            navigator.clipboard.writeText(cont);
-        })
-    );
-
-    buttonContainer2.append(
+    buildInfoButtonContainer.append(
         createText('builds: '),
-    );
-
-    buttonContainer2.append(
         createButton('last_build_id', () => {
             const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
             const lastBuildId = buildsTags[buildsTags.length - 1].id;
             navigator.clipboard.writeText(lastBuildId);
-        })
-    );
-
-    buttonContainer2.append(
+        }),
         createButton('all_build_id', () => {
             const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
             const buildIds = [];
-
+    
             buildsTags.forEach((div) => {
                 buildIds.push(div.id);
             });
-
+    
             const textToCopy = buildIds.join("\n");
             navigator.clipboard.writeText(textToCopy);
         })
@@ -197,8 +181,8 @@
     cell12.style.flexDirection = 'column'; // contrainer 上下排列
     // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-    cell12.appendChild(buttonContainer1);
-    cell12.appendChild(buttonContainer2);
+    cell12.appendChild(modelInfoButtonContainer);
+    cell12.appendChild(buildInfoButtonContainer);
     newRow.appendChild(cell11);
     newRow.appendChild(cell12);
     table.appendChild(newRow);
