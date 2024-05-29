@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.3
+// @version      0.3.1
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
@@ -124,26 +124,26 @@ function createButtonContainer() {
 function main() {
     if (!document.getElementById('stalker')) return;
     
-    const id = document.getElementById("key-val").childNodes[0].data;
+    const ticket_id = document.getElementById("key-val").childNodes[0].data;
     const summary = document.getElementById("summary-val").childNodes[0].data;
-    const url = "https://bugs.indeed.com/browse/" + id
+    const ticket_url = "https://bugs.indeed.com/browse/" + ticket_id
 
     const buttonContainer = createButtonContainer();
     buttonContainer.id = "container_id";
 
     buttonContainer.append(
         createTextNode('text: '),
-        createButtonCopyText('id', id),
-        createButtonCopyText('url', url),
-        createButtonCopyText('ticket: summary', `${id}: ${summary}`),
+        createButtonCopyText('ticket_id', ticket_id),
+        createButtonCopyText('ticket_url', ticket_url),
+        createButtonCopyText('ticket: summary', `${ticket_id}: ${summary}`),
 
         createTextNode('\thref: '),
-        createButton('href: (ticket)', () => copyHypertext(id, url, '(', ')')),
-        createButton('href: ticket', () => copyHypertext(id, url)),
+        createButton('href: (ticket)', () => copyHypertext(ticket_id, ticket_url, '(', ')')),
+        createButton('href: ticket', () => copyHypertext(ticket_id, ticket_url)),
 
         createTextNode('\tmd: '),
-        createButtonCopyText('md: [ticket](url)', `[${id}](${url})`),
-        createButtonCopyText('md: [ticket|url]', `[${id}|${url}]`)        
+        createButtonCopyText('md: [ticket](ticket_url)', `[${ticket_id}](${ticket_url})`),
+        createButtonCopyText('md: [ticket|ticket_url]', `[${ticket_id}|${ticket_url}]`)        
     );
 
     document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(buttonContainer));
