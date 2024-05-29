@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.3.2
+// @version             0.3.4
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -23,96 +23,6 @@
 (async function () {
     'use strict';
 
-    // ! function to create button/container/selection
-    function setBtnStyle(btn) {
-        btn.style.backgroundColor = '#009688';
-        btn.style.color = 'white';
-        btn.style.padding = '5px 5px';
-        btn.style.height = '10px';
-        btn.style.fontSize = '14px';
-        btn.style.border = '1px solid #ccc';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
-        btn.style.outline = 'none';
-        btn.style.boxSizing = 'border-box';
-    }
-
-    function createButton(text, callbackFunc) {
-        const useBtnStyleFromPage = true;
-        const button = document.createElement('button');
-
-        if (useBtnStyleFromPage) {
-            button.className = 'model-view--status-label badge bg-info';
-        }
-        else {
-            button.className = 'text-nowrap btn btn-warning btn-sm';
-            setBtnStyle(button);
-        }
-        
-        button.innerHTML = text;
-        button.onclick = callbackFunc;
-        return button;
-    }
-
-    function createText(text) {
-        const textElem = document.createElement('span');
-        textElem.textContent = text;
-        return textElem;
-    }
-
-    // Utility functions to create buttons, text nodes and containers
-    function createCopyButton(text, copyText) {
-        const button = document.createElement('button');
-        button.className = 'model-view--status-label badge bg-info';
-        button.innerHTML = text;
-        button.onclick = () => {
-            navigator.clipboard.writeText(copyText);
-        };
-        return button;
-    }
-
-    function createTextNode(text) {
-        return document.createTextNode(text);
-    }
-
-    function createButtonContainer() {
-        const container = document.createElement('div');
-        container.style.display = 'inline-block';
-        container.style.marginTop = '10px';
-        container.style.marginLeft = '10px';
-        return container;
-    }
-
-    function copyHypertext(text, url, leftPart = '', rightPart = '') {
-        // Create a new anchor element
-        const hyperlinkElem = document.createElement('a');
-        hyperlinkElem.textContent = text;
-        hyperlinkElem.href = url;
-
-        // 创建一个新的span元素,用于包裹超链接和括号
-        const tempContainerElem = document.createElement('span');
-        tempContainerElem.appendChild(document.createTextNode(leftPart));
-        tempContainerElem.appendChild(hyperlinkElem);
-        tempContainerElem.appendChild(document.createTextNode(rightPart));
-
-        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-        tempContainerElem.style.position = 'absolute';
-        tempContainerElem.style.left = '-9999px';
-        document.body.appendChild(tempContainerElem);
-
-        // 选择临时元素并复制
-        const range = document.createRange();
-        range.selectNode(tempContainerElem);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand('copy');
-        selection.removeAllRanges();
-
-        // 把临时的元素从页面中移除
-        document.body.removeChild(tempContainerElem);
-    }
-
     // ! wait until the page is loaded
     const delay = (ms) => new Promise((r) => setTimeout(r, ms));
     const modelLinkSelector = 'div[class="model-view--header-model-name-row"]';
@@ -127,30 +37,26 @@
     const modelInfoButtonContainer = createButtonContainer();
     const buildInfoButtonContainer = createButtonContainer();
     const buildsTagsSelector = 'span[class="row no-gutters justify-content-start"]';
-    const modelNameElem = document.querySelector(modelLinkSelector).childNodes[0];  
+    const modelNameElem = document.querySelector(modelLinkSelector).childNodes[0];
     const modelId = modelNameElem.childNodes[0].innerText;
     const modelUrl = 'https://butterfly.sandbox.indeed.net/#/model/' + modelId;
 
     modelInfoButtonContainer.append(
         createTextNode('text: '),
-        createCopyButton('id', modelId),
-        createCopyButton('url', modelUrl),
-    );
+        createButtonCopyText('id', modelId),
+        createButtonCopyText('url', modelUrl),
 
-    modelInfoButtonContainer.append(
         createTextNode('\thref: '),
         createButton('href: (model)', () => copyHypertext('model', modelUrl, '(', ')')),
         createButton('href: model', () => copyHypertext('model', modelUrl)),
-    );
 
-    modelInfoButtonContainer.append(
-        createText('\tmd: '),
-        createButton('md: [model](url)', () => navigator.clipboard.writeText(`[model](${modelUrl})`)),
-        createButton('md: [model|url]', () => navigator.clipboard.writeText(`[model|${modelUrl}]`))
+        createTextNode('\tmd: '),
+        createButtonCopyText('md: [model](url)', `[model](${modelUrl})`),
+        createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`)
     );
 
     buildInfoButtonContainer.append(
-        createText('builds: '),
+        createTextNode('builds: '),
         createButton('last_build_id', () => {
             const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
             const lastBuildId = buildsTags[buildsTags.length - 1].id;
@@ -159,11 +65,11 @@
         createButton('all_build_id', () => {
             const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
             const buildIds = [];
-    
+
             buildsTags.forEach((div) => {
                 buildIds.push(div.id);
             });
-    
+
             const textToCopy = buildIds.join("\n");
             navigator.clipboard.writeText(textToCopy);
         })
@@ -186,3 +92,85 @@
     newRow.appendChild(cell12);
     table.appendChild(newRow);
 })();
+
+function setBtnStyle(btn) {
+    btn.style.backgroundColor = '#009688';
+    btn.style.color = 'white';
+    btn.style.padding = '5px 5px';
+    btn.style.height = '10px';
+    btn.style.fontSize = '14px';
+    btn.style.border = '1px solid #ccc';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.outline = 'none';
+    btn.style.boxSizing = 'border-box';
+}
+
+function createButton(text, callbackFunc) {
+    const useBtnStyleFromPage = true;
+    const button = document.createElement('button');
+
+    if (useBtnStyleFromPage) {
+        button.className = 'model-view--status-label badge bg-info';
+    }
+    else {
+        button.className = 'text-nowrap btn btn-warning btn-sm';
+        setBtnStyle(button);
+    }
+
+    button.innerHTML = text;
+    button.onclick = callbackFunc;
+    return button;
+}
+
+function createButtonCopyText(text, copyText) {
+    const button = document.createElement('button');
+    button.className = 'model-view--status-label badge bg-info';
+    button.innerHTML = text;
+    button.onclick = () => {
+        navigator.clipboard.writeText(copyText);
+    };
+    return button;
+}
+
+function createTextNode(text) {
+    return document.createTextNode(text);
+}
+
+function createButtonContainer() {
+    const container = document.createElement('div');
+    container.style.display = 'inline-block';
+    container.style.marginTop = '10px';
+    container.style.marginLeft = '10px';
+    return container;
+}
+
+function copyHypertext(text, url, leftPart = '', rightPart = '') {
+    // Create a new anchor element
+    const hyperlinkElem = document.createElement('a');
+    hyperlinkElem.textContent = text;
+    hyperlinkElem.href = url;
+
+    // 创建一个新的span元素,用于包裹超链接和括号
+    const tempContainerElem = document.createElement('span');
+    tempContainerElem.appendChild(document.createTextNode(leftPart));
+    tempContainerElem.appendChild(hyperlinkElem);
+    tempContainerElem.appendChild(document.createTextNode(rightPart));
+
+    // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+    tempContainerElem.style.position = 'absolute';
+    tempContainerElem.style.left = '-9999px';
+    document.body.appendChild(tempContainerElem);
+
+    // 选择临时元素并复制
+    const range = document.createRange();
+    range.selectNode(tempContainerElem);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
+    selection.removeAllRanges();
+
+    // 把临时的元素从页面中移除
+    document.body.removeChild(tempContainerElem);
+}
