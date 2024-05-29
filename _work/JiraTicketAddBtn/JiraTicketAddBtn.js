@@ -2,12 +2,13 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.2.3
+// @version      0.3
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
+// 0.3.0: deeply refactor
 // 0.2.0: 把添加hypertext弄成函数了
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
@@ -15,81 +16,38 @@
 (function () {
     'use strict';
 
-    GM_addStyle(`
-      #snackbar {
-  visibility: hidden;
-  min-width: 250px;
-  margin-left: -125px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 2px;
-  padding: 16px;
-  position: fixed;
-  z-index: 1;
-  left: 50%;
-  top: 50px;
-  font-size: 17px;
-}
+    const observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
 
-#snackbar.show {
-  visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-
-@-webkit-keyframes fadein {
-  from {top: 0; opacity: 0;}
-  to {top: 50px; opacity: 1;}
-}
-
-@keyframes fadein {
-  from {top: 0; opacity: 0;}
-  to {top: 50px; opacity: 1;}
-}
-
-@-webkit-keyframes fadeout {
-  from {top: 50px; opacity: 1;}
-  to {top: 0; opacity: 0;}
-}
-
-@keyframes fadeout {
-  from {top: 50px; opacity: 1;}
-  to {top: 0; opacity: 0;}
-}
-    `);
-    var observeDOM = (function () {
-        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        var eventListenerSupported = window.addEventListener;
-
-        return function (obj, onAddCallback, onRemoveCallback) {
+        return function (targetNode, onAddCallback, onRemoveCallback) {
             if (MutationObserver) {
-                // define a new observer
-                var mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback != undefined) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
                         onAddCallback();
                     }
                 });
-                // have the observer observe foo for changes in children
-                mutationObserver.observe(obj, {
-                    childList: true
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
                 });
             } else if (eventListenerSupported) {
-                obj.addEventListener('DOMNodeInserted', onAddCallback, false);
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
             }
         };
     })();
 
-
-    var ff = function () {
-        setTimeout(function () {
-            if (document.getElementById("copy_id") == null) {
-                addCopyBtn();
-            }
-        }, 0);
-    }
-    var target = document.getElementsByTagName('body')[0];
-    observeDOM(target, /*onAdd*/ ff, /*onRemove*/ ff);
+    // Check if the target element exists, if not, add the buttons
+    const observeTarget = document.body;
+    const targetElementId = "container_id";
+    observeDOM(observeTarget, () => {
+        if (!document.getElementById(targetElementId)) {
+            main();
+        }
+    });
 
 })();
 
@@ -100,19 +58,19 @@ function copyHypertext(text, url, leftPart = '', rightPart = '') {
     hyperlinkElem.href = url;
 
     // 创建一个新的span元素,用于包裹超链接和括号
-    const spanElem = document.createElement('span');
-    spanElem.appendChild(document.createTextNode(leftPart));
-    spanElem.appendChild(hyperlinkElem);
-    spanElem.appendChild(document.createTextNode(rightPart));
+    const tempContainerElem = document.createElement('span');
+    tempContainerElem.appendChild(document.createTextNode(leftPart));
+    tempContainerElem.appendChild(hyperlinkElem);
+    tempContainerElem.appendChild(document.createTextNode(rightPart));
 
     // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-    spanElem.style.position = 'absolute';
-    spanElem.style.left = '-9999px';
-    document.body.appendChild(spanElem);
+    tempContainerElem.style.position = 'absolute';
+    tempContainerElem.style.left = '-9999px';
+    document.body.appendChild(tempContainerElem);
 
     // 选择临时元素并复制
     const range = document.createRange();
-    range.selectNode(spanElem);
+    range.selectNode(tempContainerElem);
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
@@ -120,104 +78,74 @@ function copyHypertext(text, url, leftPart = '', rightPart = '') {
     selection.removeAllRanges();
 
     // 把临时的元素从页面中移除
-    document.body.removeChild(spanElem);
+    document.body.removeChild(tempContainerElem);
 }
 
-function addCopyBtn() {
-    if (!document.getElementById('stalker')) return;
+function setBtnStyle(btn) {
+    btn.style.backgroundColor = '#009688';
+    btn.style.color = 'white';
+    btn.style.padding = '5px 5px';
+    btn.style.height = '30px';
+    btn.style.fontSize = '14px';
+    btn.style.border = '1px solid #ccc';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.outline = 'none';
+    btn.style.boxSizing = 'border-box';
+}
 
+function createButton(title, callbackFunc) {
+    const button = document.createElement('button');
+    button.className = 'text-nowrap btn btn-warning btn-sm';
+    setBtnStyle(button);
+    button.innerHTML = title;
+    button.onclick = callbackFunc;
+    return button;
+}
+
+function createButtonCopyText(title, copyText) {
+    return createButton(title, () => {
+        navigator.clipboard.writeText(copyText);
+    });
+}
+
+function createTextNode(text) {
+    return document.createTextNode(text);
+}
+
+function createButtonContainer() {
+    const container = document.createElement('div');
+    container.style.display = 'inline-block';
+    container.style.marginTop = '10px';
+    container.style.marginLeft = '10px';
+    return container;
+}
+
+function main() {
+    if (!document.getElementById('stalker')) return;
+    
     const id = document.getElementById("key-val").childNodes[0].data;
     const summary = document.getElementById("summary-val").childNodes[0].data;
     const url = "https://bugs.indeed.com/browse/" + id
 
-    const idBtn = document.createElement("a");
-    idBtn.innerHTML = "copy: ticket";
-    idBtn.id = "copy_id";
-    idBtn.onclick = (e) => {
-        navigator.clipboard.writeText(id);
-    };
+    const buttonContainer = createButtonContainer();
+    buttonContainer.id = "container_id";
 
-    const urlBtn = document.createElement("a");
-    urlBtn.innerHTML = "copy: url";
-    urlBtn.id = "copy_link";
-    urlBtn.onclick = (e) => {
-        navigator.clipboard.writeText(url);
-    };
+    buttonContainer.append(
+        createTextNode('text: '),
+        createButtonCopyText('id', id),
+        createButtonCopyText('url', url),
+        createButtonCopyText('ticket: summary', `${id}: ${summary}`),
 
-    const idHypertextBtn = document.createElement("a");
-    idHypertextBtn.innerHTML = "copy href: (ticket)";
-    idHypertextBtn.id = "copy_text_link";
-    idHypertextBtn.onclick = (e) => {
-        copyHypertext(id, url, '(', ')');
-    };
+        createTextNode('\thref: '),
+        createButton('href: (ticket)', () => copyHypertext(id, url, '(', ')')),
+        createButton('href: ticket', () => copyHypertext(id, url)),
 
-    const idHypertextBtn2 = document.createElement("a");
-    idHypertextBtn2.innerHTML = "copy href: ticket";
-    idHypertextBtn2.id = "copy_text_link2";
-    idHypertextBtn2.onclick = (e) => {
-        copyHypertext(id, url);
-    };
+        createTextNode('\tmd: '),
+        createButtonCopyText('md: [ticket](url)', `[${id}](${url})`),
+        createButtonCopyText('md: [ticket|url]', `[${id}|${url}]`)        
+    );
 
-    // const descBtn = document.createElement("a");
-    // descBtn.innerHTML = "Copy desc";
-    // descBtn.id = "copy_desc";
-    // descBtn.onclick = (e) => {
-    //     var descElement = document.getElementsByClassName("activity-new-val");
-    //     var descVal = descElement[descElement.length - 1].innerText;
-    //     navigator.clipboard.writeText(descVal);
-    // };
-
-    const idLinkBtn = document.createElement("a");
-    idLinkBtn.innerHTML = "copy md: [ticket|url]";
-    idLinkBtn.id = "copy_id_link";
-    idLinkBtn.onclick = (e) => {
-        navigator.clipboard.writeText("[" + id + "|" + url + "]");
-    };
-
-    const idLinkMdBtn = document.createElement("a");
-    idLinkMdBtn.innerHTML = "copy md: [ticket](url)";
-    idLinkMdBtn.id = "copy_id_md_link";
-    idLinkMdBtn.onclick = (e) => {
-        navigator.clipboard.writeText("[" + id + "](" + url + ")");
-    };
-
-    const idSummaryBtn = document.createElement("a");
-    idSummaryBtn.innerHTML = "ticket: summary";
-    idSummaryBtn.id = "copy_id_summary";
-    idSummaryBtn.onclick = (e) => {
-        navigator.clipboard.writeText(id + ": " + summary);
-    };
-
-    // const idSummaryBtn2 = document.createElement("a");
-    // idSummaryBtn2.innerHTML = "id summary";
-    // idSummaryBtn2.id = "copy_id_summary2";
-    // idSummaryBtn2.onclick = (e) => {
-    //     navigator.clipboard.writeText(id + " " + summary);
-    // };
-
-    // const idSummaryBtn3 = document.createElement("a");
-    // idSummaryBtn3.innerHTML = "[id] summary";
-    // idSummaryBtn3.id = "copy_id_summary3";
-    // idSummaryBtn3.onclick = (e) => {
-    //     navigator.clipboard.writeText("[" + id + "] " + summary);
-    // };
-
-    const btnArray = [
-        idBtn,
-        urlBtn,
-        idHypertextBtn,
-        idHypertextBtn2,
-        // summaryBtn,
-        // descBtn,
-        idLinkBtn,
-        idLinkMdBtn,
-        idSummaryBtn,
-        // idSummaryBtn2,
-        // idSummaryBtn3,
-    ];
-    btnArray.forEach(element => {
-        element.className = "aui-button aui-button-primary aui-style";
-        document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(element));
-    });
+    document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(buttonContainer));
 }
 
