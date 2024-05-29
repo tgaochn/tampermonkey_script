@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.4.0
+// @version     0.4.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -318,6 +318,6 @@ Please provide a detailed response following these backgrounds and instructions:
     };
 
     // Start observing the target node
-    const observedNode = document.body
+    const observedNode = document.body;
     observer.observe(observedNode, config);
 })();
