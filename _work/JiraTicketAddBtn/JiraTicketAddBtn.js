@@ -2,12 +2,13 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.3.1
+// @version      0.3.2
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
+// 0.3.2: added more btn
 // 0.3.0: deeply refactor
 // 0.2.0: 把添加hypertext弄成函数了
 // 0.1.0: 优化了copy hypertext
@@ -135,11 +136,13 @@ function main() {
         createTextNode('text: '),
         createButtonCopyText('ticket_id', ticket_id),
         createButtonCopyText('ticket_url', ticket_url),
+        createButtonCopyText('summary', `${summary}`),
         createButtonCopyText('ticket: summary', `${ticket_id}: ${summary}`),
 
         createTextNode('\thref: '),
         createButton('href: (ticket)', () => copyHypertext(ticket_id, ticket_url, '(', ')')),
         createButton('href: ticket', () => copyHypertext(ticket_id, ticket_url)),
+        createButton('href: (ticket): summary', () => copyHypertext(ticket_id, ticket_url, '(', `) ${summary}`)),
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [ticket](ticket_url)', `[${ticket_id}](${ticket_url})`),
