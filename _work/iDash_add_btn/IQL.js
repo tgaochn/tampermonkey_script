@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.1.2
+// @version      0.2.0
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,171 +10,202 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.2.0: improved the layout, added clipboard content detection and added MutationObserver
 // 0.1.2: clean up code
 // 0.1.1: MutationObserver methods
 // 0.1.0: 增加format IQL url的各种按钮
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
 
-(async function () {
+(function () {
     'use strict';
 
+    const observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
+
+        return function (targetNode, onAddCallback, onRemoveCallback) {
+            if (MutationObserver) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
+                        onAddCallback();
+                    }
+                });
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
+                });
+            } else if (eventListenerSupported) {
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            }
+        };
+    })();
+
+    // Check if the target element exists, if not, add the buttons
+    const observeTarget = document.body;
+    const targetElementId = "container_id";
+    observeDOM(observeTarget, () => {
+        if (!document.getElementById(targetElementId)) {
+            main();
+        }
+    });
+})();
+
+function main() {
     const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+    async function get_IQL_link() {
+        const btn = document.getElementById('share-query-verbatim');
+        const initialClipboardContents = await navigator.clipboard.readText();
 
-    function createButtonContainer() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.display = 'inline-block';
-        buttonContainer.style.justifyContent = 'center';
-        buttonContainer.style.marginTop = '10px';
-        buttonContainer.style.marginLeft = '10px';
+        btn.click();
+        const timeoutDuration = 3000;
+        const pollingInterval = 500;
+        let elapsedTime = 0;
 
-        return buttonContainer;
+        // Poll the clipboard contents until the timeout is reached or the contents change
+        while (elapsedTime < timeoutDuration) {
+            await delay(pollingInterval);
+            elapsedTime += pollingInterval;
+
+            const currentClipboardContents = await navigator.clipboard.readText();
+
+            // Check if the clipboard contents have changed
+            if (currentClipboardContents !== initialClipboardContents) {
+                return currentClipboardContents;
+            }
+        }
+
+        // If the timeout is reached and the clipboard contents haven't changed, return null or throw an error
+        return null; // or throw new Error('Clipboard contents did not change before timeout');
     }
 
-    function setBtnStyle(btn) {
-        btn.style.backgroundColor = '#009688';
-        btn.style.color = 'white';
-        btn.style.padding = '5px 5px';
-        btn.style.height = '30px';
-        btn.style.fontSize = '14px';
-        btn.style.border = '1px solid #ccc';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
-        btn.style.outline = 'none';
-        btn.style.boxSizing = 'border-box';
-    }
+    const existingContainerId = 'undefined-nav-bar-navigation-container';
+    const existingContainer = document.getElementById(existingContainerId);
+    const btnContainer = createButtonContainer();
+    const btnSubContainer1 = createButtonContainer();
+    // const btnSubContainer2 = createButtonContainer();
+    btnContainer.id = "container_id";
+    existingContainer.appendChild(btnContainer);
+    btnContainer.appendChild(btnSubContainer1);
+    // btnContainer.appendChild(btnSubContainer2);
 
-    function createButton(text, callbackFunc) {
-        const button = document.createElement('button');
-        setBtnStyle(button);
-        button.innerHTML = text;
-        button.onclick = callbackFunc;
-        return button;
-    }
-
-    function copyHypertext(text, url, leftPart = '', rightPart = '') {
-        // Create a new anchor element
-        const hyperlinkElem = document.createElement('a');
-        hyperlinkElem.textContent = text;
-        hyperlinkElem.href = url;
-
-        // 创建一个新的span元素,用于包裹超链接和括号
-        const spanElem = document.createElement('span');
-        spanElem.appendChild(document.createTextNode(leftPart));
-        spanElem.appendChild(hyperlinkElem);
-        spanElem.appendChild(document.createTextNode(rightPart));
-
-        // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-        spanElem.style.position = 'absolute';
-        spanElem.style.left = '-9999px';
-        document.body.appendChild(spanElem);
-
-        // 选择临时元素并复制
-        const range = document.createRange();
-        range.selectNode(spanElem);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand('copy');
-        selection.removeAllRanges();
-
-        // 把临时的元素从页面中移除
-        document.body.removeChild(spanElem);
-    }
+    btnContainer.style.display = 'flex';
+    btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
+    // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
     // ! add buttons in the containers
-    const buttonContainer1 = createButtonContainer();
-
-    // 按钮1: 打开 google sheet 转 md table 的网站
-    buttonContainer1.append(
+    btnSubContainer1.append(
+        // 按钮: 打开 google sheet 转 md table 的网站
         createButton('Gsheet2Md', () => {
             const targetUrl = 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown/';
             window.open(targetUrl, '_blank');
-        })
-    );
+        }),
 
-    // 后面的按钮: 各种copy
-    buttonContainer1.append(
-        createButton('copy url', async () => {
-            const btn = document.getElementById('share-query-verbatim');
-            btn.click();
-        })
-    );
+        // 按钮: 各种 copy 按钮
+        createButton('url', async () => {
+            await get_IQL_link();
+        }),
 
-    buttonContainer1.append(
-        createButton('copy href: IQL', async () => {
-            const btn = document.getElementById('share-query-verbatim');
-            btn.click();
-            await delay(500);
+        createTextNode('\thref: '),
 
-            const clipboardContents = await navigator.clipboard.readText();
+        createButton('href: IQL', async () => {
+            const clipboardContents = await get_IQL_link();
             copyHypertext('IQL', clipboardContents);
-        })
-    );
+        }),
 
-    buttonContainer1.append(
-        createButton('copy href: (IQL)', async () => {
-            const btn = document.getElementById('share-query-verbatim');
-            btn.click();
-            await delay(500);
-
-            const clipboardContents = await navigator.clipboard.readText();
+        createButton('href: (IQL)', async () => {
+            const clipboardContents = await get_IQL_link();
             copyHypertext('IQL', clipboardContents, '(', ')');
-        })
-    );
+        }),
 
-    buttonContainer1.append(
-        createButton('copy md: [IQL|url]', async () => {
-            const btn = document.getElementById('share-query-verbatim');
-            btn.click();
-            await delay(500);
+        createTextNode('\tmd: '),
 
-            const clipboardContents = await navigator.clipboard.readText();
+        createButton('md: [IQL|url]', async () => {
+            const clipboardContents = await get_IQL_link();
             navigator.clipboard.writeText(`[IQL|${clipboardContents}]`);
-        })
-    );
+        }),
 
-    buttonContainer1.append(
-        createButton('copy md: [IQL](url)', async () => {
-            const btn = document.getElementById('share-query-verbatim');
-            btn.click();
-            await delay(500);
-
-            const clipboardContents = await navigator.clipboard.readText();
+        createButton('md: [IQL](url)', async () => {
+            const clipboardContents = await get_IQL_link();
             navigator.clipboard.writeText(`[IQL](${clipboardContents})`);
         })
     );
+}
 
-    function addButtonContainers(containerElement) {
-        // Add button containers vertically
-        containerElement.appendChild(buttonContainer1);
-        // containerElement.parentNode.insertBefore(buttonContainer2, containerElement.nextSibling);
+function createButtonContainer() {
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'inline-block';
+    buttonContainer.style.justifyContent = 'center';
+    buttonContainer.style.marginTop = '10px';
+    buttonContainer.style.marginLeft = '10px';
 
-        // Uncomment the following lines to add button containers horizontally
-        // containerElement.insertAdjacentElement('afterend', buttonContainer1);
-        // containerElement.insertAdjacentElement('afterend', buttonContainer2);
-    }
+    return buttonContainer;
+}
 
-    // ! Create a MutationObserver instance and add container
-    const observer = new MutationObserver((mutationsList, observer) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                const btnContainerPosId = 'undefined-nav-bar-navigation-container';
-                const btnContainerPosElement = document.getElementById(btnContainerPosId);
-                if (btnContainerPosElement) {
-                    addButtonContainers(btnContainerPosElement);
-                    observer.disconnect();
-                    break;
-                }
-            }
-        }
+function setBtnStyle(btn) {
+    btn.style.backgroundColor = '#009688';
+    btn.style.color = 'white';
+    btn.style.padding = '5px 5px';
+    btn.style.height = '30px';
+    btn.style.fontSize = '14px';
+    btn.style.border = '1px solid #ccc';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.outline = 'none';
+    btn.style.boxSizing = 'border-box';
+}
+
+function createButton(text, callbackFunc) {
+    const button = document.createElement('button');
+    setBtnStyle(button);
+    button.innerHTML = text;
+    button.onclick = callbackFunc;
+    return button;
+}
+
+function createButtonCopyText(title, copyText) {
+    return createButton(title, () => {
+        navigator.clipboard.writeText(copyText);
     });
+}
 
-    // Configure the observer
-    const config = {
-        childList: true,
-        subtree: true
-    };
+function createTextNode(text) {
+    const textElement = document.createElement('span');
+    const textNode = document.createTextNode(text);
+    textElement.appendChild(textNode);
+    textElement.style.color = 'black';
+    return textElement;
+}
 
-    // Start observing the target node
-    observer.observe(document.body, config);
-})();
+
+function copyHypertext(text, url, leftPart = '', rightPart = '') {
+    // Create a new anchor element
+    const hyperlinkElem = document.createElement('a');
+    hyperlinkElem.textContent = text;
+    hyperlinkElem.href = url;
+
+    // 创建一个新的span元素,用于包裹超链接和括号
+    const tempContainerElem = document.createElement('span');
+    tempContainerElem.appendChild(document.createTextNode(leftPart));
+    tempContainerElem.appendChild(hyperlinkElem);
+    tempContainerElem.appendChild(document.createTextNode(rightPart));
+
+    // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
+    tempContainerElem.style.position = 'absolute';
+    tempContainerElem.style.left = '-9999px';
+    document.body.appendChild(tempContainerElem);
+
+    // 选择临时元素并复制
+    const range = document.createRange();
+    range.selectNode(tempContainerElem);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
+    selection.removeAllRanges();
+
+    // 把临时的元素从页面中移除
+    document.body.removeChild(tempContainerElem);
+}
