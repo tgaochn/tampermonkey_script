@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.3.5
+// @version             0.4.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.4.0: add btn to open links
 // 0.3.5: use mutationObserver instead of await
 // 0.3.2: improved code
 // 0.3.0: improved the layout and added text desc
@@ -81,7 +82,7 @@ function main() {
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [model](url)', `[model](${modelUrl})`),
-        createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`)
+        createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`),
     );
 
     buildInfoButtonContainer.append(
@@ -101,7 +102,12 @@ function main() {
 
             const textToCopy = buildIds.join("\n");
             navigator.clipboard.writeText(textToCopy);
-        })
+        }),
+
+        createTextNode('\tlinks: '),
+        createButtonOpenUrl('US Apply', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflyapplymodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D'),
+        createButtonOpenUrl('US CTR', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxsjbutterflyctrmodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D'),
+        createButtonOpenUrl('US dislike', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflydislikemodeltst'),
     );
 
     // ! add container to the table
@@ -152,14 +158,16 @@ function createButton(text, callbackFunc) {
     return button;
 }
 
+function createButtonOpenUrl(text, targetUrl) {
+    return createButton(text, () => {
+        window.open(targetUrl);
+    })
+}
+
 function createButtonCopyText(text, copyText) {
-    const button = document.createElement('button');
-    button.className = 'model-view--status-label badge bg-info';
-    button.innerHTML = text;
-    button.onclick = () => {
+    return createButton(text, () => {
         navigator.clipboard.writeText(copyText);
-    };
-    return button;
+    });
 }
 
 function createTextNode(text) {
