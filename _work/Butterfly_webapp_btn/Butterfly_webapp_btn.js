@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.4.0
+// @version             0.4.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -105,6 +105,7 @@ function main() {
         }),
 
         createTextNode('\tlinks: '),
+        createButtonOpenUrl('IS promotion wiki', 'https://wiki.indeed.com/pages/viewpage.action?pageId=640792440'),
         createButtonOpenUrl('US Apply', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflyapplymodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D'),
         createButtonOpenUrl('US CTR', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxsjbutterflyctrmodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D'),
         createButtonOpenUrl('US dislike', 'https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflydislikemodeltst'),
