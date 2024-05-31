@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.2.0
+// @version      0.2.1
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,6 +10,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.2.1: fixed the btn position and add links
 // 0.2.0: improved the layout, added clipboard content detection and added MutationObserver
 // 0.1.2: clean up code
 // 0.1.1: MutationObserver methods
@@ -81,7 +82,8 @@ function main() {
         return null; // or throw new Error('Clipboard contents did not change before timeout');
     }
 
-    const existingContainerId = 'undefined-nav-bar-navigation-container';
+    // const existingContainerId = 'undefined-nav-bar-navigation-container';
+    const existingContainerId = 'undefined-button-container';
     const existingContainer = document.getElementById(existingContainerId);
     const btnContainer = createButtonContainer();
     const btnSubContainer1 = createButtonContainer();
@@ -97,40 +99,37 @@ function main() {
 
     // ! add buttons in the containers
     btnSubContainer1.append(
-        // 按钮: 打开 google sheet 转 md table 的网站
-        createButton('Gsheet2Md', () => {
-            const targetUrl = 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown/';
-            window.open(targetUrl, '_blank');
-        }),
-
-        // 按钮: 各种 copy 按钮
+        // 按钮: copy url
         createButton('url', async () => {
             await get_IQL_link();
         }),
 
+        // 按钮: copy 超链接
         createTextNode('\thref: '),
-
         createButton('href: IQL', async () => {
             const clipboardContents = await get_IQL_link();
             copyHypertext('IQL', clipboardContents);
         }),
-
         createButton('href: (IQL)', async () => {
             const clipboardContents = await get_IQL_link();
             copyHypertext('IQL', clipboardContents, '(', ')');
         }),
 
+        // 按钮: copy md 形式的链接
         createTextNode('\tmd: '),
-
         createButton('md: [IQL|url]', async () => {
             const clipboardContents = await get_IQL_link();
             navigator.clipboard.writeText(`[IQL|${clipboardContents}]`);
         }),
-
         createButton('md: [IQL](url)', async () => {
             const clipboardContents = await get_IQL_link();
             navigator.clipboard.writeText(`[IQL](${clipboardContents})`);
-        })
+        }),
+
+        // 按钮: 打开 link
+        createTextNode('\tlink: '),
+        createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
+        createButtonOpenUrl('sqlFormatter', 'https://codebeautify.org/sqlformatter'),
     );
 }
 
@@ -179,6 +178,11 @@ function createTextNode(text) {
     return textElement;
 }
 
+function createButtonOpenUrl(text, targetUrl) {
+    return createButton(text, () => {
+        window.open(targetUrl);
+    })
+}
 
 function copyHypertext(text, url, leftPart = '', rightPart = '') {
     // Create a new anchor element
