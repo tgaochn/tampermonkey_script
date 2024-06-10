@@ -72,7 +72,7 @@ const myPromptJson1 = {
     "md_": {
         "btnNm": "markdown⏎",
         "sendOutPrompt": true,
-        "prompt": "Reformat the response in the format of raw markdown code so I can copy and paste into my markdown editor.",
+        "prompt": "Reformat the response in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.",
     },
     "example_": {
         "btnNm": "加例子⏎",
@@ -91,7 +91,10 @@ const myPromptJson2 = {
     "rewrite": {
         "btnNm": "日常-改写",
         "sendOutPrompt": false,
-        "prompt": "Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth. The text is likely to be used in project documentation: \n",
+        "prompt": `Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+1. The text will be used in project documentation.\n
+2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
+`,
     },
     "explain_translate": {
         "btnNm": "日常-解释翻译",
@@ -101,7 +104,7 @@ const myPromptJson2 = {
     "summarize": {
         "btnNm": "日常-总结",
         "sendOutPrompt": false,
-        "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets: \n"
+        "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n"
     },
     "chn2eng": {
         "btnNm": "日常-中翻英",
