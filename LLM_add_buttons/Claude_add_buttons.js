@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.0
+// @version     0.5.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
