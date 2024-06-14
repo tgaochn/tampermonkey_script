@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.3
+// @version     0.5.4
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -235,8 +235,8 @@ Please provide the response following these backgrounds and instructions:\n
 1. You need to act as a senior latex expert and a senior machine learning engineer.\n
 2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
 3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in details.\n
-5. Please follow these instructions in all the responses in this session for the further questions.\n
+4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
+5. Please follow these instructions in all the responses in this session for further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `
     }
