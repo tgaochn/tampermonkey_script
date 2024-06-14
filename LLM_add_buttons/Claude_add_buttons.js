@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.1
+// @version     0.5.2
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// 0.5.2: add prompt to format latex formula
 // 0.5.0: use MutationObserver to make sure the buttons always show up
 // 0.4.0: 优化prompt, 按钮改成3行
 // 0.3.1: 使用observer实现网页变化检测
@@ -119,7 +120,7 @@ const myPromptJson2 = {
 2. The task is to identify the content, same as what OCR software does.\n
 3. The content could be a piece of code, some plain text, or a table. \n
 4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.\n
-5. Please follow these instructions in all the following responses.\n
+5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `
     },
@@ -130,7 +131,7 @@ const myPromptJson2 = {
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to manually improve the raw results from OCR software.\n
 3. The content could be a piece of code, some plain text or a table. \n
-4. Please follow these instructions in all the following responses.\n
+4. Please follow these instructions in all the responses in this session for the further questions.\n
 5. Take a deep breath and work on this problem step-by-step.\n
 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.\n
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
@@ -149,7 +150,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
 5. The response needs to be in Chinese.\n
-6. Please follow these instructions in all the following responses.\n
+6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 `
     },
@@ -164,7 +165,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
 5. The response needs to be in Chinese.\n
-6. Please follow these instructions in all the following responses.\n
+6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 `
     },
@@ -179,7 +180,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose of each step.\n
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
 5. The response needs to be in Chinese.\n
-6. Please follow these instructions in all the following responses.\n
+6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 `
     },
@@ -193,7 +194,7 @@ Give me a detailed relationship explanation and comparison following these backg
 2. The task is to make some explanations to the newbie interns.\n
 3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.\n
 4. The response needs to be in Chinese.\n
-5. Please follow these instructions in all the following responses.\n
+5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `
     },
@@ -207,21 +208,35 @@ Give me a detailed response following these backgrounds and instructions:\n
 2. The task is to debug the code in pair programming or to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
 3. You need to provide an explanation of the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
-5. Please follow these instructions in all the following responses.\n
+5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `
     },
 
-    "eb1_pl": {
-        "btnNm": "PL for eb1a",
+//     "eb1_pl": {
+//         "btnNm": "PL for eb1a",
+//         "sendOutPrompt": false,
+//         "prompt": `Could you revise the following content?\n\n 
+// Please provide a detailed response following these backgrounds and instructions:\n
+// 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
+// 2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
+// 3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
+// 4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
+// 5. Please follow these instructions in all the responses in this session for the further questions.\n
+// 6. Take a deep breath and work on this problem step-by-step.\n
+// `
+//     }
+
+    "format_tex_formula": {
+        "btnNm": "format tex formula",
         "sendOutPrompt": false,
-        "prompt": `Could you revise the following content?\n\n 
-Please provide a detailed response following these backgrounds and instructions:\n
-1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
-2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
-3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
-4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
-5. Please follow these instructions in all the following responses.\n
+        "prompt": `Could you format the following tex formula and make it more readable?\n\n 
+Please provide the response following these backgrounds and instructions:\n
+1. You need to act as a senior latex expert and a senior machine learning engineer.\n
+2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
+3. The latex code for the formula is from OCR, so it may include errors.\n
+4. If there are errors, please correct them and explain the changes in details.\n
+5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `
     }
