@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.4
+// @version     0.5.5
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,15 +10,16 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
-// 0.5.2: add prompt to format latex formula
-// 0.5.0: use MutationObserver to make sure the buttons always show up
-// 0.4.0: 优化prompt, 按钮改成3行
-// 0.3.1: 使用observer实现网页变化检测
-// 0.2.3: 加入magic prompt
-// 0.2.0: 部分prompt输入完成之后直接提交
-// 0.1.6: 改进了prompt
-// 0.1.0: 改进了prompt
-// 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
+// Claude_Add_Buttons 0.5.5: improved prompt
+// Claude_Add_Buttons 0.5.2: add prompt to format latex formula
+// Claude_Add_Buttons 0.5.0: use MutationObserver to make sure the buttons always show up
+// Claude_Add_Buttons 0.4.0: 优化prompt, 按钮改成3行
+// Claude_Add_Buttons 0.3.1: 使用observer实现网页变化检测
+// Claude_Add_Buttons 0.2.3: 加入magic prompt
+// Claude_Add_Buttons 0.2.0: 部分prompt输入完成之后直接提交
+// Claude_Add_Buttons 0.1.6: 改进了prompt
+// Claude_Add_Buttons 0.1.0: 改进了prompt
+// Claude_Add_Buttons 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
 (function () {
     'use strict';
@@ -89,11 +90,19 @@ const myPromptJson1 = {
 
 // 不带下划线的prompt会在输入框中显示并等待继续输入内容
 const myPromptJson2 = {
-    "rewrite": {
-        "btnNm": "日常-改写",
+    "rewrite_doc": {
+        "btnNm": "日常-改写-doc",
         "sendOutPrompt": false,
         "prompt": `Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
 1. The text will be used in project documentation.\n
+2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
+`,
+    },
+    "rewrite_slack": {
+        "btnNm": "日常-改写-slack",
+        "sendOutPrompt": false,
+        "prompt": `Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+1. The text will be used in discussion on slack btw colleagues.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
     },
@@ -113,7 +122,7 @@ const myPromptJson2 = {
         "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
     },
     "ocr": {
-        "btnNm": "OCR",
+        "btnNm": "img_OCR",
         "sendOutPrompt": false,
         "prompt": `Please OCR the attached image following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
@@ -122,10 +131,11 @@ const myPromptJson2 = {
 4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.\n
 5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
+7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `
     },
     "fix_ocr": {
-        "btnNm": "fix_OCR",
+        "btnNm": "fix_cont_OCR",
         "sendOutPrompt": false,
         "prompt": `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
@@ -134,9 +144,24 @@ const myPromptJson2 = {
 4. Please follow these instructions in all the responses in this session for the further questions.\n
 5. Take a deep breath and work on this problem step-by-step.\n
 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.\n
+7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
 `
     },
+
+    "format_tex_formula": {
+        "btnNm": "format tex formula",
+        "sendOutPrompt": false,
+        "prompt": `Could you format the following tex formula and make it more readable?\n\n 
+Please provide the response following these backgrounds and instructions:\n
+1. You need to act as a senior latex expert and a senior machine learning engineer.\n
+2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
+3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
+4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
+5. Please follow these instructions in all the responses in this session for further questions.\n
+6. Take a deep breath and work on this problem step-by-step.\n
+`
+    }
 };
 
 const myPromptJson3 = {
@@ -152,6 +177,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 5. The response needs to be in Chinese.\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
+8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `
     },
 
@@ -167,6 +193,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 5. The response needs to be in Chinese.\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
+8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `
     },
 
@@ -182,6 +209,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 5. The response needs to be in Chinese.\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
+8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `
     },
 
@@ -196,6 +224,7 @@ Give me a detailed relationship explanation and comparison following these backg
 4. The response needs to be in Chinese.\n
 5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
+7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `
     },
 
@@ -213,33 +242,20 @@ Give me a detailed response following these backgrounds and instructions:\n
 `
     },
 
-//     "eb1_pl": {
-//         "btnNm": "PL for eb1a",
-//         "sendOutPrompt": false,
-//         "prompt": `Could you revise the following content?\n\n 
-// Please provide a detailed response following these backgrounds and instructions:\n
-// 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
-// 2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
-// 3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
-// 4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
-// 5. Please follow these instructions in all the responses in this session for the further questions.\n
-// 6. Take a deep breath and work on this problem step-by-step.\n
-// `
-//     }
+    //     "eb1_pl": {
+    //         "btnNm": "PL for eb1a",
+    //         "sendOutPrompt": false,
+    //         "prompt": `Could you revise the following content?\n\n 
+    // Please provide a detailed response following these backgrounds and instructions:\n
+    // 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
+    // 2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
+    // 3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
+    // 4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
+    // 5. Please follow these instructions in all the responses in this session for the further questions.\n
+    // 6. Take a deep breath and work on this problem step-by-step.\n
+    // `
+    //     }
 
-    "format_tex_formula": {
-        "btnNm": "format tex formula",
-        "sendOutPrompt": false,
-        "prompt": `Could you format the following tex formula and make it more readable?\n\n 
-Please provide the response following these backgrounds and instructions:\n
-1. You need to act as a senior latex expert and a senior machine learning engineer.\n
-2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
-3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
-5. Please follow these instructions in all the responses in this session for further questions.\n
-6. Take a deep breath and work on this problem step-by-step.\n
-`
-    }
 };
 
 function main() {
@@ -248,7 +264,7 @@ function main() {
     btnContainer.style.display = 'flex';
     btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
     // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
-    
+
     const btnSubContainer1 = createButtonContainerFromJson(myPromptJson1);
     const btnSubContainer2 = createButtonContainerFromJson(myPromptJson2);
     const btnSubContainer3 = createButtonContainerFromJson(myPromptJson3);
