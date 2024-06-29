@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.5
+// @version     0.5.6
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// Claude_Add_Buttons 0.5.6: 改进container的识别方式以适应新版Claude的UI变化
 // Claude_Add_Buttons 0.5.5: improved prompt
 // Claude_Add_Buttons 0.5.2: add prompt to format latex formula
 // Claude_Add_Buttons 0.5.0: use MutationObserver to make sure the buttons always show up
@@ -259,8 +260,12 @@ Give me a detailed response following these backgrounds and instructions:\n
 };
 
 function main() {
-    const btnContainerSelector = "div[class='relative z-10']";
-    const btnContainer = document.querySelector(btnContainerSelector);
+    // const btnContainerSelector = "div[class='relative z-10']";
+    // const btnContainer = document.querySelector(btnContainerSelector);
+    const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']";
+    const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']";
+    const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+
     btnContainer.style.display = 'flex';
     btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
     // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
