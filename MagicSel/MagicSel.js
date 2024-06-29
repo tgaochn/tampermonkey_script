@@ -2,7 +2,7 @@
 // @name       智能选择 MagicSel
 // @author      gtfish
 // @namespace    http://tampermonkey.net/
-// @version    0.1.2
+// @version    0.1.3
 // @description  鼠标简单选取即可把外币、英制长度、英制重量、华氏温度和油耗等转换为个人更习惯的单位（人民币、公制和摄氏度等）
 // @noframes
 // @match       https://www.amazon.com/*
@@ -28,6 +28,7 @@
 // MagicSel 0.1.0: 添加识别多个数字的功能, 如 14 x 11 x 0.1 inches
 // MagicSel 0.1.1: 优化逻辑: 如果不是数字+单位, 则不弹出窗口
 // MagicSel 0.1.2: 添加识别ft的功能; 添加按住ctrl才激活的功能
+// MagicSel 0.1.3: 优化识别reg, 去掉头尾
 
 
 !function (argument) {
@@ -1362,9 +1363,13 @@
         const reg_str_conn = "(?:x|\\*)"
 
         const reg_str_inch_part = `${reg_str_num}\\s*${reg_str_unit_inch}?\\s*${reg_str_suffix}`
-        const reg_str_inch_full = `^\\s*\\(?\\s*${reg_str_inch_part}(?:\\s*${reg_str_conn}\\s*${reg_str_inch_part}){0,2}\\s*${reg_str_unit_inch}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
         const reg_str_ft_part = `${reg_str_num}\\s*${reg_str_unit_ft}?\\s*${reg_str_suffix}`
-        const reg_str_ft_full = `^\\s*\\(?\\s*${reg_str_ft_part}(?:\\s*${reg_str_conn}\\s*${reg_str_ft_part}){0,2}\\s*${reg_str_unit_ft}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
+        const reg_str_inch_full = `\\s*\\(?\\s*${reg_str_inch_part}(?:\\s*${reg_str_conn}\\s*${reg_str_inch_part}){0,2}\\s*${reg_str_unit_inch}\\s*${reg_str_suffix}?\\s*\\)?\\s*`
+        const reg_str_ft_full = `\\s*\\(?\\s*${reg_str_ft_part}(?:\\s*${reg_str_conn}\\s*${reg_str_ft_part}){0,2}\\s*${reg_str_unit_ft}\\s*${reg_str_suffix}?\\s*\\)?\\s*`
+
+        // 带头尾识别更严格
+        // const reg_str_inch_full = `^\\s*\\(?\\s*${reg_str_inch_part}(?:\\s*${reg_str_conn}\\s*${reg_str_inch_part}){0,2}\\s*${reg_str_unit_inch}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
+        // const reg_str_ft_full = `^\\s*\\(?\\s*${reg_str_ft_part}(?:\\s*${reg_str_conn}\\s*${reg_str_ft_part}){0,2}\\s*${reg_str_unit_ft}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
 
         const reg_inch_full = new RegExp(reg_str_inch_full, 'i')
         const reg_ft_full = new RegExp(reg_str_ft_full, 'i')
