@@ -2,7 +2,7 @@
 // @name       智能选择 MagicSel
 // @author      gtfish
 // @namespace    http://tampermonkey.net/
-// @version    0.1.0
+// @version    0.1.2
 // @description  鼠标简单选取即可把外币、英制长度、英制重量、华氏温度和油耗等转换为个人更习惯的单位（人民币、公制和摄氏度等）
 // @noframes
 // @match       https://www.amazon.com/*
@@ -27,6 +27,7 @@
 // MagicSel 0.0.2: formatted code and update links
 // MagicSel 0.1.0: 添加识别多个数字的功能, 如 14 x 11 x 0.1 inches
 // MagicSel 0.1.1: 优化逻辑: 如果不是数字+单位, 则不弹出窗口
+// MagicSel 0.1.2: 添加识别ft的功能; 添加按住ctrl才激活的功能
 
 
 !function (argument) {
@@ -1347,43 +1348,45 @@
     }
 
     function multi_trans(text) {
+        // !! func: 多个数字转化, reg识别后每个部分单独转化
+        // examples: 14 x 11 x 0.1 inches, 12"D x 9"W x 4"H, 8.5” x 11", 5.20*2.03*1.90inch, 5.20*2.03*1.90ft
+
         if (!text || text.length >= 50) {
             return null;
         }
 
-        // !! func: 多个数字转化, reg识别后每个部分单独转化
-        // examples: 14 x 11 x 0.1 inches, 12"D x 9"W x 4"H, 8.5” x 11", 5.20*2.03*1.90inch
-
         const reg_str_num = "(\\d+(?:\\.\\d+)?)"
-        const reg_str_unit = "(?:inch(?:es)?|in\\.?|\"|\”|'')"
+        const reg_str_unit_inch = "(?:inch(?:es)?|in\\.?|\"|\"|'')"
+        const reg_str_unit_ft = "(?:f[eo][eo]t|ft\\.?|')"
         const reg_str_suffix = "(?:D|W|H)?"
         const reg_str_conn = "(?:x|\\*)"
 
-        const reg_str_part = `${reg_str_num}\\s*${reg_str_unit}?\\s*${reg_str_suffix}`
-        const reg_str_full = `^\\s*\\(?\\s*${reg_str_part}(?:\\s*${reg_str_conn}\\s*${reg_str_part}){0,2}\\s*${reg_str_unit}?\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
+        const reg_str_inch_part = `${reg_str_num}\\s*${reg_str_unit_inch}?\\s*${reg_str_suffix}`
+        const reg_str_inch_full = `^\\s*\\(?\\s*${reg_str_inch_part}(?:\\s*${reg_str_conn}\\s*${reg_str_inch_part}){0,2}\\s*${reg_str_unit_inch}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
+        const reg_str_ft_part = `${reg_str_num}\\s*${reg_str_unit_ft}?\\s*${reg_str_suffix}`
+        const reg_str_ft_full = `^\\s*\\(?\\s*${reg_str_ft_part}(?:\\s*${reg_str_conn}\\s*${reg_str_ft_part}){0,2}\\s*${reg_str_unit_ft}\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
 
-        // console.log(reg_str_full);
+        const reg_inch_full = new RegExp(reg_str_inch_full, 'i')
+        const reg_ft_full = new RegExp(reg_str_ft_full, 'i')
 
-        const reg_full = new RegExp(reg_str_full, 'i')
-
-        const match = text.match(reg_full);
-
-        if (match) {
+        function processMatch(match, unit) {
             const parts = text.split(/(?:x|\*)/);
-            const result = parts.map(part => {
+            return parts.map(part => {
                 const numMatch = part.match(/\d+(?:\.\d+)?/);
                 if (numMatch) {
-                    return check_metric('', `${numMatch[0]} inches`);
+                    return check_metric('', `${numMatch[0]} ${unit}`);
                 }
                 return '';
-            }).filter(Boolean);
-
-            return result.join("</br>");
-        } else {
-            // 单个数字转化, 即原有逻辑
-            return check_all(text);
+            }).filter(Boolean).join("</br>");
         }
 
+        if (reg_inch_full.test(text)) {
+            return processMatch(text, 'inches');
+        } else if (reg_ft_full.test(text)) {
+            return processMatch(text, 'ft');
+        } else {
+            return check_all(text);
+        }
     }
 
     if (!IS_TESTING) {
@@ -1485,6 +1488,11 @@
 
     // !! 主函数：处理文本选择和显示结果
     document.body.addEventListener('mouseup', function (e) {
+        // 检查 Ctrl 键是否被按下
+        if (!e.ctrlKey) {
+            return; // 如果 Ctrl 键没有被按下，直接返回
+        }
+
         const selectedText = window.getSelection().toString().trim();
         const floatingWindow = getOrCreateFloatingWindow();
 
