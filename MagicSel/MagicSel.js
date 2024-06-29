@@ -26,6 +26,7 @@
 // MagicSel 0.0.1: init
 // MagicSel 0.0.2: formatted code and update links
 // MagicSel 0.1.0: 添加识别多个数字的功能, 如 14 x 11 x 0.1 inches
+// MagicSel 0.1.1: 优化逻辑: 如果不是数字+单位, 则不弹出窗口
 
 
 !function (argument) {
@@ -1346,7 +1347,11 @@
     }
 
     function multi_trans(text) {
-        // 多个数字转化, reg识别后每个部分单独转化
+        if (!text || text.length >= 50) {
+            return null;
+        }
+
+        // !! func: 多个数字转化, reg识别后每个部分单独转化
         // examples: 14 x 11 x 0.1 inches, 12"D x 9"W x 4"H, 8.5” x 11", 5.20*2.03*1.90inch
 
         const reg_str_num = "(\\d+(?:\\.\\d+)?)"
@@ -1355,7 +1360,7 @@
         const reg_str_conn = "(?:x|\\*)"
 
         const reg_str_part = `${reg_str_num}\\s*${reg_str_unit}?\\s*${reg_str_suffix}`
-        const reg_str_full = `\\s*\\(?\\s*${reg_str_part}(?:\\s*${reg_str_conn}\\s*${reg_str_part}){0,2}\\s*${reg_str_unit}?\\s*${reg_str_suffix}?\\s*\\)?\\s*`
+        const reg_str_full = `^\\s*\\(?\\s*${reg_str_part}(?:\\s*${reg_str_conn}\\s*${reg_str_part}){0,2}\\s*${reg_str_unit}?\\s*${reg_str_suffix}?\\s*\\)?\\s*$`
 
         // console.log(reg_str_full);
 
@@ -1452,58 +1457,54 @@
     z-index: 10000;
 }
 `)
-    document.body.addEventListener('mouseup',
-        function (e) {
-            // console.log('mouseup: ' + e.clientX + ',' + e.clientY);
-            var seltext = window.getSelection().toString();
-            // console.log('Selected: ' + window.getSelection().toString());
 
-            var get_win = function () {
-                var win = document.getElementById('sel-ext-win');
-                if (!win) {
-                    // console.log('Create show win');
-                    win = document.createElement('div');
-                    win.id = 'sel-ext-win';
-                    win.className = 'sel-text-win';
-                    document.body.appendChild(win);
-                }
-                return win;
-            }
-            var win = get_win();
-
-            if (!seltext) {
-                win.style['display'] = 'none';
-                return;
-            }
-
-
-            // 修改
-            MagicSel.sendRequest({ text: seltext },
-                function (response) {
-                    res = response.res;
-                    var win = get_win();
-
-                    if (res) {
-                        win.style['display'] = 'block';
-                        var bodyTop = parseInt(document.defaultView.getComputedStyle(document.body, '').getPropertyValue('margin-top'));
-                        var top = e.pageY - bodyTop - win.clientHeight - 1;
-                        top = Math.max(0, top);
-                        win.style['top'] = top + 'px';
-
-                        var bodyLeft = parseInt(document.defaultView.getComputedStyle(document.body, '').getPropertyValue('margin-left'));
-                        var left = e.pageX - bodyLeft + 30;
-                        left = Math.max(0, left);
-                        win.style['left'] = left + 'px';
-
-                        win.innerHTML = res;
-                    } else {
-                        win.style['display'] = 'none';
-                    }
-                }
-            );
+    // 创建或获取浮动窗口
+    function getOrCreateFloatingWindow() {
+        let win = document.getElementById('sel-ext-win');
+        if (!win) {
+            win = document.createElement('div');
+            win.id = 'sel-ext-win';
+            win.className = 'sel-text-win';
+            document.body.appendChild(win);
         }
-    );// mouseup function END！
+        return win;
+    }
 
+    // 设置窗口位置
+    function setWindowPosition(win, x, y) {
+        const bodyStyle = window.getComputedStyle(document.body);
+        const bodyTop = parseInt(bodyStyle.getPropertyValue('margin-top'));
+        const bodyLeft = parseInt(bodyStyle.getPropertyValue('margin-left'));
+
+        let top = Math.max(0, y - bodyTop - win.clientHeight - 20);
+        let left = Math.max(0, x - bodyLeft + 30);
+
+        win.style.top = `${top}px`;
+        win.style.left = `${left}px`;
+    }
+
+    // !! 主函数：处理文本选择和显示结果
+    document.body.addEventListener('mouseup', function (e) {
+        const selectedText = window.getSelection().toString().trim();
+        const floatingWindow = getOrCreateFloatingWindow();
+
+        if (!selectedText) {
+            floatingWindow.style.display = 'none';
+            return;
+        }
+
+        MagicSel.sendRequest({ text: selectedText }, function (response) {
+            const result = response.res;
+
+            if (result) {
+                floatingWindow.innerHTML = result;
+                floatingWindow.style.display = 'block';
+                setWindowPosition(floatingWindow, e.pageX, e.pageY);
+            } else {
+                floatingWindow.style.display = 'none';
+            }
+        });
+    });
 })();
 
 // options
