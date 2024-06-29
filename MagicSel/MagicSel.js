@@ -2,7 +2,7 @@
 // @name       智能选择 MagicSel
 // @author      gtfish
 // @namespace    http://tampermonkey.net/
-// @version    0.0.2
+// @version    0.1.0
 // @description  鼠标简单选取即可把外币、英制长度、英制重量、华氏温度和油耗等转换为个人更习惯的单位（人民币、公制和摄氏度等）
 // @noframes
 // @match       https://www.amazon.com/*
@@ -25,6 +25,8 @@
 // original author: ChandlerVer5/Yi Deng, http://daviddengcn.com/
 // MagicSel 0.0.1: init
 // MagicSel 0.0.2: formatted code and update links
+// MagicSel 0.1.0: 添加识别多个数字的功能, 如 14 x 11 x 0.1 inches
+
 
 !function (argument) {
     window.MagicSel = {};
@@ -53,6 +55,7 @@
     g_target_cur = 'rmb';
 
     // 1->number, 2->mul
+    // !! 数字的reg
     g_pure_number = '[0-9,]+[.]?|[0-9,]*[.][0-9]+|[0-9.]+[,][0-9][0-9]'
     g_number_exp = '((?:' + g_pure_number + ')(?:\\s+(?:' + g_pure_number + ')\\s*/\\s*(?:' + g_pure_number + '))?)\\s*(十|百|千|万|十万|百万|千万|亿|十亿|百亿|千亿|万亿|million|m|trillion|t|billion|b|thousand|k)?';
     // match: (1) (2)/(3)
@@ -566,9 +569,10 @@
                         smaller: 'inch',
                         fmt: { en: '{} ft', cn: '{}英尺' }
                     },
+                    // !! inch 单位信息
                     inch: {
                         rate: 0.0254,
-                        suffixes: ['吋', '英?寸', 'inche?s?', 'in[.]?', '"', "''"],
+                        suffixes: ['吋', '英?寸', 'inche?s?', 'in[.]?', '"', "''", "”"],
                         fmt: { en: '{} in', cn: '{}英寸' }
                     },
                     yard: {
@@ -930,20 +934,28 @@
 
     // check_metric tries to convert the normalized text into destination system value.
     function check_metric(res, text) {
+        // console.log(0);
         var cnvs = [];
-        for (var m in g_metrics) {
+
+        // ! g_metrics structure
+        // g_metrics[unit_type][unit_country]['units'][unit_name][rate/suffixes/fmt]
+        // g_metrics['len']['imp']['units']['mile'][rate/suffixes/fmt]
+
+        for (var m in g_metrics) { // m: 单位类型 (len/area/weight/...)
             var mi = g_metrics[m];
-            var dst_si = mi[g_dest_sys];
+            var dst_si = mi[g_dest_sys]; // 默认输出单位类型 (英制/国内/标准)
             if (!dst_si) {
                 dst_si = mi.imp;
             }
-            for (var s in mi) {
+            for (var s in mi) { // s: 度量系统 (英制imp/公制std)
                 if (s == g_dest_sys) {
                     continue;
                 }
                 var si = mi[s];
-                for (var u in si.units) {
-                    var ui = si.units[u];
+                for (var u in si.units) { // u: 具体的单位 (mile/inch/...)
+                    var ui = si.units[u]; // ui: 具体的单位的信息 (rate/suffixes/fmt)
+
+                    // !! 检测text是否符合reg pattern
                     var ent = parse_suffix_entry(text, ui.suffix_reg);
                     if (ent) {
                         var val;
@@ -999,6 +1011,7 @@
                 var reg_any = '';
                 for (var u in si.units) {
                     var ui = si.units[u];
+                    // !! 拼装具体单位对应的reg
                     var reg_str = '\\s*' + g_number_exp + '(\\s*)-?('
                         + ui.suffixes.join('|') + ')\\s*';
                     ui.suffix_reg = new RegExp('^' + reg_str + '$', 'i')
@@ -1332,11 +1345,47 @@
         return res ? res : null;
     }
 
+    function multi_trans(text) {
+        // 多个数字转化, reg识别后每个部分单独转化
+        // examples: 14 x 11 x 0.1 inches, 12"D x 9"W x 4"H, 8.5” x 11", 5.20*2.03*1.90inch
+
+        const reg_str_num = "(\\d+(?:\\.\\d+)?)"
+        const reg_str_unit = "(?:inch(?:es)?|in\\.?|\"|\”|'')"
+        const reg_str_suffix = "(?:D|W|H)?"
+        const reg_str_conn = "(?:x|\\*)"
+
+        const reg_str_part = `${reg_str_num}\\s*${reg_str_unit}?\\s*${reg_str_suffix}`
+        const reg_str_full = `\\s*\\(?\\s*${reg_str_part}(?:\\s*${reg_str_conn}\\s*${reg_str_part}){0,2}\\s*${reg_str_unit}?\\s*${reg_str_suffix}?\\s*\\)?\\s*`
+
+        // console.log(reg_str_full);
+
+        const reg_full = new RegExp(reg_str_full, 'i')
+
+        const match = text.match(reg_full);
+
+        if (match) {
+            const parts = text.split(/(?:x|\*)/);
+            const result = parts.map(part => {
+                const numMatch = part.match(/\d+(?:\.\d+)?/);
+                if (numMatch) {
+                    return check_metric('', `${numMatch[0]} inches`);
+                }
+                return '';
+            }).filter(Boolean);
+
+            return result.join("</br>");
+        } else {
+            // 单个数字转化, 即原有逻辑
+            return check_all(text);
+        }
+
+    }
+
     if (!IS_TESTING) {
         window.MagicSel.sendRequest = function (request, cb) {
             if (request.text) {
-                // console.log(check_all(request.text));
-                cb({ res: check_all(request.text) });
+                cb({ res: multi_trans(request.text) });
+                // cb({ res: check_all(request.text) });
             }
             if (request.options) {
                 opt = request.options;
