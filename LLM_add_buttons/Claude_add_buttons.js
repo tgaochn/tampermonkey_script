@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.5.6
+// @version     0.5.7
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -106,6 +106,7 @@ const myPromptJson2 = {
 1. The text will be used in discussion on slack btw colleagues.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
+// 3. The revised text should be simple and easy to understand.\n
     },
     "explain_translate": {
         "btnNm": "日常-解释翻译",
