@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.2.1
+// @version      0.3.0
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,12 +10,15 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.3.0: fixed the btn position and remove jira link
 // 0.2.1: fixed the btn position and add links
 // 0.2.0: improved the layout, added clipboard content detection and added MutationObserver
 // 0.1.2: clean up code
 // 0.1.1: MutationObserver methods
 // 0.1.0: 增加format IQL url的各种按钮
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
+
+IS_FIXED_POS = true;
 
 (function () {
     'use strict';
@@ -82,17 +85,12 @@ function main() {
         return null; // or throw new Error('Clipboard contents did not change before timeout');
     }
 
-    // const existingContainerId = 'undefined-nav-bar-navigation-container';
-    const existingContainerId = 'undefined-button-container';
-    const existingContainer = document.getElementById(existingContainerId);
     const btnContainer = createButtonContainer();
     const btnSubContainer1 = createButtonContainer();
     // const btnSubContainer2 = createButtonContainer();
     btnContainer.id = "container_id";
-    existingContainer.appendChild(btnContainer);
     btnContainer.appendChild(btnSubContainer1);
     // btnContainer.appendChild(btnSubContainer2);
-
     btnContainer.style.display = 'flex';
     btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
     // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
@@ -117,20 +115,48 @@ function main() {
 
         // 按钮: copy md 形式的链接
         createTextNode('\tmd: '),
-        createButton('md: [IQL|url]', async () => {
-            const clipboardContents = await get_IQL_link();
-            navigator.clipboard.writeText(`[IQL|${clipboardContents}]`);
-        }),
         createButton('md: [IQL](url)', async () => {
             const clipboardContents = await get_IQL_link();
             navigator.clipboard.writeText(`[IQL](${clipboardContents})`);
         }),
+        // createButton('md: [IQL|url]', async () => {
+        //     const clipboardContents = await get_IQL_link();
+        //     // navigator.clipboard.writeText(`[IQL|${clipboardContents}]`);
+        // }),
 
         // 按钮: 打开 link
         createTextNode('\tlink: '),
         createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
         createButtonOpenUrl('sqlFormatter', 'https://codebeautify.org/sqlformatter'),
     );
+
+    if (IS_FIXED_POS) {
+        attachFixedContainer(btnContainer, top="-10px", left="650px");
+    }
+    else {
+        // const existingContainerId = 'undefined-nav-bar-navigation-container';
+        const existingContainerId = 'undefined-button-container';
+        const existingContainer = document.getElementById(existingContainerId);
+        existingContainer.appendChild(btnContainer);
+    }
+}
+
+function createButtonContainerFixedPosition(top, left) {
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.zIndex = '1000';  // Ensure it's above other elements
+    container.style.top = top;
+    container.style.left = left;
+
+    return container;
+}
+
+function attachFixedContainer(container, top, left) {
+    document.body.appendChild(container);
+    container.style.position = 'fixed';
+    container.style.zIndex = '1000';  // Ensure it's above other elements
+    container.style.top = top;
+    container.style.left = left;
 }
 
 function createButtonContainer() {

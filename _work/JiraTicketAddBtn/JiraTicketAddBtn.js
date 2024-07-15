@@ -2,17 +2,20 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.3.2
+// @version      0.4.0
 // @match        http*://bugs.indeed.com/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
+// 0.4.0: added function to fix the position of the button
 // 0.3.2: added more btn
 // 0.3.0: deeply refactor
 // 0.2.0: 把添加hypertext弄成函数了
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
+
+IS_FIXED_POS = false;
 
 (function () {
     'use strict';
@@ -122,9 +125,27 @@ function createButtonContainer() {
     return container;
 }
 
+function createButtonContainerFixedPosition(top, left) {
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.zIndex = '1000';  // Ensure it's above other elements
+    container.style.top = top;
+    container.style.left = left;
+
+    return container;
+}
+
+function attachFixedContainer(container, top, left) {
+    document.body.appendChild(container);
+    container.style.position = 'fixed';
+    container.style.zIndex = '1000';  // Ensure it's above other elements
+    container.style.top = top;
+    container.style.left = left;
+}
+
 function main() {
     if (!document.getElementById('stalker')) return;
-    
+
     const ticket_id = document.getElementById("key-val").childNodes[0].data;
     const summary = document.getElementById("summary-val").childNodes[0].data;
     const ticket_url = "https://bugs.indeed.com/browse/" + ticket_id
@@ -146,9 +167,15 @@ function main() {
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [ticket](ticket_url)', `[${ticket_id}](${ticket_url})`),
-        createButtonCopyText('md: [ticket|ticket_url]', `[${ticket_id}|${ticket_url}]`)        
+        // createButtonCopyText('md: [ticket|ticket_url]', `[${ticket_id}|${ticket_url}]`)
     );
 
-    document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(buttonContainer));
+    if (IS_FIXED_POS) {
+        attachFixedContainer(buttonContainer, top="50px", left="650px");
+    }
+    else {
+        document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(buttonContainer));
+    }
+
 }
 

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.4.1
+// @version             0.4.2
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.4.2: remove jira link
 // 0.4.0: add btn to open links
 // 0.3.5: use mutationObserver instead of await
 // 0.3.2: improved code
@@ -82,7 +83,7 @@ function main() {
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [model](url)', `[model](${modelUrl})`),
-        createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`),
+        // createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`),
     );
 
     buildInfoButtonContainer.append(
