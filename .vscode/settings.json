@@ -14,7 +14,9 @@
         "**/.settings": true,
         "**/*.pyc": true,
         "**/node_modules": true,
-        ".vscode": true
+        ".vscode": true,
+        "**/desktop.ini": true,
+        "**/*.url": true
     },
     "explorerExclude.backup": {},
     "[javascript]": {
