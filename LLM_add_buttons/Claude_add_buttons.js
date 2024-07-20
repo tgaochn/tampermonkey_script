@@ -94,7 +94,7 @@ const myPromptJson2 = {
     "rewrite_doc": {
         "btnNm": "日常-改写-doc",
         "sendOutPrompt": false,
-        "prompt": `Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+        "prompt": `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
 1. The text will be used in project documentation.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
@@ -102,7 +102,7 @@ const myPromptJson2 = {
     "rewrite_slack": {
         "btnNm": "日常-改写-slack",
         "sendOutPrompt": false,
-        "prompt": `Rewrite the following text in the same tone. The author of the text is not an English native speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+        "prompt": `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
 1. The text will be used in discussion on slack btw colleagues.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
@@ -111,7 +111,7 @@ const myPromptJson2 = {
     "explain_translate": {
         "btnNm": "日常-解释翻译",
         "sendOutPrompt": false,
-        "prompt": "I'm not an English native speaker and I cannot fully understand the following content. Could you explain in detail what it means and what it may possibly imply (in English). Please also give some examples to show how the expression is used. Then, translate the response in Chinese:\n "
+        "prompt": "I'm not an native English speaker and I cannot fully understand the following content. Could you explain in detail what it means and what it may possibly imply (in English). Please also give some examples to show how the expression is used. Then, translate the response in Chinese:\n "
     },
     "summarize": {
         "btnNm": "日常-总结",
