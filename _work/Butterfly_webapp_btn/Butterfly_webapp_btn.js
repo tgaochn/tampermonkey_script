@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.4.2
+// @version             0.4.3
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.4.3: add more btn
 // 0.4.2: remove jira link
 // 0.4.0: add btn to open links
 // 0.3.5: use mutationObserver instead of await
@@ -70,12 +71,14 @@ function main() {
     const modelNameElem = document.querySelector(modelLinkSelector).childNodes[0];
     const modelId = modelNameElem.childNodes[0].innerText;
     const modelUrl = 'https://butterfly.sandbox.indeed.net/#/model/' + modelId;
+    const modelConfUrl = modelUrl + '/PUBLISHED/config';
     modelInfoButtonContainer.id = "container_id";
 
     modelInfoButtonContainer.append(
         createTextNode('text: '),
         createButtonCopyText('id', modelId),
-        createButtonCopyText('url', modelUrl),
+        createButtonCopyText('model_url', modelUrl),
+        createButtonCopyText('config_url', modelConfUrl),
 
         createTextNode('\thref: '),
         createButton('href: (model)', () => copyHypertext('model', modelUrl, '(', ')')),
@@ -83,6 +86,7 @@ function main() {
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [model](url)', `[model](${modelUrl})`),
+        createButtonCopyText('md: [id](url)', `[${modelId}](${modelUrl})`),
         // createButtonCopyText('md: [model|url]', `[model|${modelUrl}]`),
     );
 
