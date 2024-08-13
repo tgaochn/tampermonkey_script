@@ -10,6 +10,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.0.2: 修改link, 添加更多的model pattern
 // 0.0.1: init, 添加部分model的name pattern
 
 (function () {
