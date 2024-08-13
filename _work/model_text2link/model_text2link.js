@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.0.1
+// @version      0.0.2
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -22,22 +22,17 @@
         //     urlTemplate: 'http://www.$1.com'
         // },
 
-        // ! single target hp/serp models: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0
+        // ! single/multiple target hp/serp models
+        // applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
         {
-            regex: /^(((applyperseen)|(ctr))_((rj_hp)|(mobweb))_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: 'http://www.$1.com'
-        },
-
-        // ! MTM models: applyperseen_and_ctr_rj_hp_jp_15339e0
-        {
-            regex: /^(applyperseen_and_ctr_rj_hp_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: 'http://www.$1.com'
+            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr))_((rj_(sj)?hp)|(mobweb))_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
         // ! SERP models: sjmobweb_us_15339e0
         {
             regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: 'http://www.$1.com'
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
     ];
