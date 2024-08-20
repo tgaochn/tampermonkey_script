@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.1
+// @version      0.0.2
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @include      https://teststats.sandbox.indeed.net/*
@@ -13,6 +13,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.0.2: adjust the btn position
 // 0.0.1: init
 
 
@@ -108,7 +109,7 @@ function main() {
         // createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
     );
 
-    attachFixedContainer(btnContainer, top = "-10px", left = "650px");
+    attachFixedContainer(btnContainer, top = "-10px", left = "1200px");
 }
 
 function findBestMatch(url, patterns) {
