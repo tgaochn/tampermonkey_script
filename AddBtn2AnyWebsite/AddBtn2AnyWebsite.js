@@ -9,7 +9,6 @@
 // @include      https://proctor-v2.sandbox.indeed.net/*
 // @include      https://indeed.atlassian.net/*
 // @include      https://code.corp.indeed.com/*
-// @require      https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
