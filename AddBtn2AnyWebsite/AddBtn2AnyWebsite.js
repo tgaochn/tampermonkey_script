@@ -1,12 +1,11 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.5
+// @version      0.0.6
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
-// @match        https://butterfly.sandbox.indeed.net/?/proctor/*
-// @match        https://butterfly.sandbox.indeed.net/?/ruleSet/*
+// @match        https://butterfly.sandbox.indeed.net/*
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://indeed.atlassian.net/*
 // @match        https://code.corp.indeed.com/*
@@ -14,6 +13,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.0.6: bug fixed
 // 0.0.5: bug fixed
 // 0.0.4: specify enabled sites for butterfly
 // 0.0.2: adjust the btn position
