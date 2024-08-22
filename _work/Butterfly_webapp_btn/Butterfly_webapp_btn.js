@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.4.4
+// @version             0.4.5
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
-// @match               https://butterfly.sandbox.indeed.net/#/model/*
+// @match               https://butterfly.sandbox.indeed.net/*
 // @run-at              document-idle
 // @grant               GM_getValue
 // @grant               GM_setValue
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
+// 0.4.5: bug fixed
 // 0.4.4: bug fixed
 // 0.4.3: add more btn
 // 0.4.2: remove jira link
@@ -27,6 +28,17 @@
 
 (async function () {
     'use strict';
+
+    const inclusionPatterns = [
+        /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
+    ];
+
+    const exclusionPatterns = [
+    ];
+
+    if (!shouldRunScript(inclusionPatterns, exclusionPatterns)) {
+        return;
+    }
 
     const observeDOM = (function () {
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -60,8 +72,24 @@
             main();
         }
     });
-
 })();
+
+function shouldRunScript(inclusionPatterns, exclusionPatterns) {
+    const url = window.location.href;
+
+    // Check if the URL matches any inclusion pattern
+    if (!inclusionPatterns.some(pattern => pattern.test(url))) {
+        return false;
+    }
+
+    // Check if the URL matches any exclusion pattern
+    if (exclusionPatterns.some(pattern => pattern.test(url))) {
+        return false;
+    }
+
+    // Default behavior for other pages
+    return true;
+}
 
 function main() {
     // ! add button in the container and define click func

@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.4
+// @version      0.0.5
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
-// @match        https://butterfly.sandbox.indeed.net/*
-// @exclude      https://butterfly.sandbox.indeed.net/#/model/*
+// @match        https://butterfly.sandbox.indeed.net/?/proctor/*
+// @match        https://butterfly.sandbox.indeed.net/?/ruleSet/*
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://indeed.atlassian.net/*
 // @match        https://code.corp.indeed.com/*
@@ -14,6 +14,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.0.5: bug fixed
 // 0.0.4: specify enabled sites for butterfly
 // 0.0.2: adjust the btn position
 // 0.0.1: init
@@ -22,6 +23,32 @@
 
 (function () {
     'use strict';
+
+    const inclusionPatterns = [
+        /.*/,
+    ];
+
+    const exclusionPatterns = [
+        /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
+    ];
+
+    if (!shouldRunScript(inclusionPatterns, exclusionPatterns)) {
+        return;
+    }
+
+    const url2title = [
+        // google for testing
+        // @include      https://www.google.com/*
+        // { pattern: /^https?:\/\/(www\.)?google\.com.*$/, title: 'Google' },
+
+        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, title: 'Butterfly traffic' },
+        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, title: 'RuleSet' },
+        { pattern: /^https:\/\/proctor-v2\.sandbox\.indeed\.net.*$/, title: 'proctor' },
+        { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
+        { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
+        { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
+
+    ];
 
     const observeDOM = (function () {
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -52,26 +79,29 @@
     const targetElementId = "container_id";
     observeDOM(observeTarget, () => {
         if (!document.getElementById(targetElementId)) {
-            main();
+            main(url2title);
         }
     });
 })();
 
-function main() {
-    const URL2TITLE = [
-        // google for testing
-        // @include      https://www.google.com/*
-        // { pattern: /^https?:\/\/(www\.)?google\.com.*$/, title: 'Google' },
+function shouldRunScript(inclusionPatterns, exclusionPatterns) {
+    const url = window.location.href;
 
-        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, title: 'Butterfly traffic' },
-        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, title: 'RuleSet' },
-        { pattern: /^https:\/\/proctor-v2\.sandbox\.indeed\.net.*$/, title: 'proctor' },
-        { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
-        { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
-        { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
+    // Check if the URL matches any inclusion pattern
+    if (!inclusionPatterns.some(pattern => pattern.test(url))) {
+        return false;
+    }
 
-    ];
+    // Check if the URL matches any exclusion pattern
+    if (exclusionPatterns.some(pattern => pattern.test(url))) {
+        return false;
+    }
 
+    // Default behavior for other pages
+    return true;
+}
+
+function main(url2title) {
     const btnContainer = createButtonContainer();
     const btnSubContainer1 = createButtonContainer();
     // const btnSubContainer2 = createButtonContainer();
@@ -83,7 +113,7 @@ function main() {
     // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
     const curURL = window.location.href;
-    const pageTitle = findBestMatch(curURL, URL2TITLE);
+    const pageTitle = findBestMatch(curURL, url2title);
 
     // ! add buttons in the containers
     btnSubContainer1.append(
