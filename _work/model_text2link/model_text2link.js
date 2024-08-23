@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.0.2
+// @version      0.0.3
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -10,6 +10,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.0.3: added I2A models template - elephant-multi-en-all_en-4e18057
 // 0.0.2: 修改link, 添加更多的model pattern
 // 0.0.1: init, 添加部分model的name pattern
 
@@ -33,6 +34,12 @@
         // ! SERP models: sjmobweb_us_15339e0
         {
             regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
+        },
+
+        // ! I2A models: elephant-multi-en-all_en-4e18057
+        {
+            regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
             urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
