@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.3.0
+// @version      0.3.1
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -10,6 +10,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.3.1: added new links
 // 0.3.0: fixed the btn position and remove jira link
 // 0.2.1: fixed the btn position and add links
 // 0.2.0: improved the layout, added clipboard content detection and added MutationObserver
@@ -126,8 +127,10 @@ function main() {
 
         // 按钮: 打开 link
         createTextNode('\tlink: '),
+        createButtonOpenUrl('search_iql', 'https://app.glean.com/search?q=type%3Aiqlindex+type%3Aiqlquery+type%3Areusablequery+type%3Abusinessmetric+ctr&tab=all&hcp=1'),
         createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
-        createButtonOpenUrl('sqlFormatter', 'https://codebeautify.org/sqlformatter'),
+        createButtonOpenUrl('iql_formatter', 'https://codebeautify.org/sqlformatter'),
+        createButtonOpenUrl('sql_formatter', 'https://nene.github.io/prettier-sql-playground/'),
     );
 
     if (IS_FIXED_POS) {
