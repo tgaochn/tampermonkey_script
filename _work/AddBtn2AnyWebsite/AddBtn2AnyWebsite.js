@@ -9,8 +9,8 @@
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://indeed.atlassian.net/*
 // @match        https://code.corp.indeed.com/*
-// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
-// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
+// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
+// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
 // 0.0.6: bug fixed
