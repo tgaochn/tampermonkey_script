@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.7
+// @version      0.0.8
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -9,18 +9,18 @@
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://indeed.atlassian.net/*
 // @match        https://code.corp.indeed.com/*
+// @match        https://app.datadoghq.com/*
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.0.8: bug fixed
 // 0.0.7: added datadog, set default text to "link"
 // 0.0.6: bug fixed
 // 0.0.5: bug fixed
 // 0.0.4: specify enabled sites for butterfly
 // 0.0.2: adjust the btn position
 // 0.0.1: init
-
-
 
 (function () {
     'use strict';
