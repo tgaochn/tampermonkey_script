@@ -112,14 +112,14 @@ const myPromptJson2 = {
     "explain_translate": {
         "btnNm": "日常-解释翻译",
         "sendOutPrompt": false,
-        "prompt": `I'm not an native English speaker and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood. More background or requirement of the text is shown below. They should be applied to all the follow-up responses.
+        "prompt": `I'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? More background or requirements of the text are shown below. They should be applied to all the follow-up responses.\n
 1. The response should be in Chinese, but the comments in the code block should be in English if applicable.\n
-2. The text are from discussion on slack btw American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.\n
+2. The text is from a discussion on Slack between American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.\n
 3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys.\n
 4. If it is a question, explain the background and the main points. Then provide a possible answer.\n
 5. If it is a request, explain the main points and the objective. Then provide a possible answer.\n
-6. If it is a suggestion, explain the main points, the objective and the reasons.\n
-The text are:`
+6. If it is a suggestion, explain the main points, the objective, and the reasons.\n
+The text is:`
     },
     "summarize": {
         "btnNm": "日常-总结",
