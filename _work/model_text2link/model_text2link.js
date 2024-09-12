@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.0.3
+// @version      0.0.4
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -10,6 +10,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.0.4: added more models pattern
 // 0.0.3: added I2A models template - elephant-multi-en-all_en-4e18057
 // 0.0.2: 修改link, 添加更多的model pattern
 // 0.0.1: init, 添加部分model的name pattern
@@ -25,9 +26,12 @@
         // },
 
         // ! single/multiple target hp/serp models
-        // applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
+        // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
+        // bidding: ac-per-click_rj_hp_us_5a303d3 / apply_rj_hp_us_fbed164
+        // post-apply: qualifiedapply_mob_global_6156574 / qualified_mob_global_e9b72c9 
+        // others: dislike_rj_hp_us_b734f31 
         {
-            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr))_((rj_(sj)?hp)|(mobweb))_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
@@ -42,7 +46,6 @@
             regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
             urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
-
     ];
 
     function convertTextToLinks(node) {
