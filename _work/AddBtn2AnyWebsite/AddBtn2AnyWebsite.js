@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.8
+// @version      0.0.9
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -14,6 +14,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.0.9: aligned with the new version of jira 
 // 0.0.8: bug fixed
 // 0.0.7: added datadog, set default text to "link"
 // 0.0.6: bug fixed
@@ -28,9 +29,10 @@
     const inclusionPatterns = [
         /.*/,
     ];
-
+    // https://indeed.atlassian.net/browse
     const exclusionPatterns = [
         /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
+        /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
 
     if (!shouldRunScript(inclusionPatterns, exclusionPatterns)) {
