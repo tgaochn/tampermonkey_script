@@ -2,12 +2,14 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.4.0
-// @match        http*://bugs.indeed.com/*
+// @version      0.5.0
+// @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
+
+// 0.5.0: align the script with the new jira version
 // 0.4.0: added function to fix the position of the button
 // 0.3.2: added more btn
 // 0.3.0: deeply refactor
@@ -15,7 +17,7 @@
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
 
-IS_FIXED_POS = false;
+IS_FIXED_POS = true;
 
 (function () {
     'use strict';
@@ -121,7 +123,7 @@ function createButtonContainer() {
     const container = document.createElement('div');
     container.style.display = 'inline-block';
     container.style.marginTop = '10px';
-    container.style.marginLeft = '10px';
+    container.style.marginLeft = '100px';
     return container;
 }
 
@@ -143,12 +145,23 @@ function attachFixedContainer(container, top, left) {
     container.style.left = left;
 }
 
-function main() {
-    if (!document.getElementById('stalker')) return;
+function extractId(url) {
+    const match = url.match(/\/browse\/(.+)$/);
+    return match ? match[1] : null;
+  }
 
-    const ticket_id = document.getElementById("key-val").childNodes[0].data;
-    const summary = document.getElementById("summary-val").childNodes[0].data;
-    const ticket_url = "https://bugs.indeed.com/browse/" + ticket_id
+function main() {
+    // if (!document.getElementById('stalker')) return;
+
+    // const ticket_id = document.getElementById("key-val").childNodes[0].data;
+    // const summary = document.getElementById("summary-val").childNodes[0].data;
+
+    const ticket_url = window.location.href;
+    const ticket_id = extractId(ticket_url);
+
+    if (!ticket_id) {
+        return;
+    }
 
     const buttonContainer = createButtonContainer();
     buttonContainer.id = "container_id";
@@ -157,13 +170,13 @@ function main() {
         createTextNode('text: '),
         createButtonCopyText('ticket_id', ticket_id),
         createButtonCopyText('ticket_url', ticket_url),
-        createButtonCopyText('summary', `${summary}`),
-        createButtonCopyText('ticket: summary', `${ticket_id}: ${summary}`),
+        // createButtonCopyText('summary', `${summary}`),
+        // createButtonCopyText('ticket: summary', `${ticket_id}: ${summary}`),
 
         createTextNode('\thref: '),
         createButton('href: (ticket)', () => copyHypertext(ticket_id, ticket_url, '(', ')')),
         createButton('href: ticket', () => copyHypertext(ticket_id, ticket_url)),
-        createButton('href: (ticket): summary', () => copyHypertext(ticket_id, ticket_url, '(', `) ${summary}`)),
+        // createButton('href: (ticket): summary', () => copyHypertext(ticket_id, ticket_url, '(', `) ${summary}`)),
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [ticket](ticket_url)', `[${ticket_id}](${ticket_url})`),
