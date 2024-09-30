@@ -2,13 +2,14 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.5.0
+// @version      0.6.0
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
 
+// 0.6.0: improve the layout and fixed the bug with in-page links
 // 0.5.0: align the script with the new jira version
 // 0.4.0: added function to fix the position of the button
 // 0.3.2: added more btn
@@ -17,44 +18,79 @@
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
 
-IS_FIXED_POS = true;
+IS_FIXED_POS = false;
 
 (function () {
     'use strict';
 
-    const observeDOM = (function () {
-        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        const eventListenerSupported = window.addEventListener;
+    let lastProcessedTicketId = null;
+    let isProcessing = false;
+    const ticketIdElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]';
+    const summaryElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.summary.heading"]';
 
-        return function (targetNode, onAddCallback, onRemoveCallback) {
-            if (MutationObserver) {
-                // Define a new observer
-                const mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback) {
-                        onAddCallback();
-                    }
-                });
-
-                // Have the observer observe target node for changes in children
-                mutationObserver.observe(targetNode, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (eventListenerSupported) {
-                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
-            }
-        };
-    })();
-
-    // Check if the target element exists, if not, add the buttons
-    const observeTarget = document.body;
-    const targetElementId = "container_id";
-    observeDOM(observeTarget, () => {
-        if (!document.getElementById(targetElementId)) {
-            main();
+    function safeQuerySelector(selector) {
+        try {
+            return document.querySelector(selector);
+        } catch (error) {
+            console.error('Error in querySelector:', error);
+            return null;
         }
-    });
+    }
 
+    function processChanges() {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        try {
+            // !! new UI (2024-09-29)
+            const ticketIdElement = safeQuerySelector(ticketIdElementSelectorStr);
+
+            if (ticketIdElement) {
+                const currentTicketId = ticketIdElement.textContent.trim();
+                if (currentTicketId && currentTicketId !== lastProcessedTicketId) {
+                    lastProcessedTicketId = currentTicketId;
+                    console.log('Ticket ID changed to:', currentTicketId);
+
+                    // Add a small delay before fetching the summary
+                    setTimeout(() => {
+                        // !! new UI (2024-09-29)
+                        const summaryElement = safeQuerySelector(summaryElementSelectorStr);
+                        const currentSummary = summaryElement ? summaryElement.textContent.trim() : '';
+
+                        console.log('Fetched summary:', currentSummary);
+
+                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr);
+                    }, 1000); // 1000ms delay, adjust if needed
+                }
+            }
+        } catch (error) {
+            console.error('Error in processChanges:', error);
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    function observeDOM() {
+        const targetNode = document.body;
+        const config = { childList: true, subtree: true };
+
+        const callback = function (mutationsList, observer) {
+            processChanges();
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, config);
+    }
+
+    // Wait for the DOM to be fully loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', observeDOM);
+    } else {
+        observeDOM();
+    }
+
+    // Initial call
+    setTimeout(processChanges, 1000);
 })();
 
 function copyHypertext(text, url, leftPart = '', rightPart = '') {
@@ -148,46 +184,47 @@ function attachFixedContainer(container, top, left) {
 function extractId(url) {
     const match = url.match(/\/browse\/(.+)$/);
     return match ? match[1] : null;
-  }
+}
 
-function main() {
-    // if (!document.getElementById('stalker')) return;
-
-    // const ticket_id = document.getElementById("key-val").childNodes[0].data;
+function main(ticketId, summary, contrainerLocSelectorStr) {
+    // old UI
+    // const ticketId = document.getElementById("key-val").childNodes[0].data; 
     // const summary = document.getElementById("summary-val").childNodes[0].data;
 
-    const ticket_url = window.location.href;
-    const ticket_id = extractId(ticket_url);
+    const ticket_url = "https://indeed.atlassian.net/browse/" + ticketId;
 
-    if (!ticket_id) {
-        return;
+    // Remove existing container if any
+    const containerId = 'container_id';
+    const existingContainer = document.getElementById(containerId);
+    if (existingContainer) {
+        existingContainer.remove();
     }
 
     const buttonContainer = createButtonContainer();
-    buttonContainer.id = "container_id";
+    buttonContainer.id = containerId;
 
     buttonContainer.append(
         createTextNode('text: '),
-        createButtonCopyText('ticket_id', ticket_id),
+        createButtonCopyText('ticketId', ticketId),
         createButtonCopyText('ticket_url', ticket_url),
-        // createButtonCopyText('summary', `${summary}`),
-        // createButtonCopyText('ticket: summary', `${ticket_id}: ${summary}`),
+        createButtonCopyText('summary', `${summary}`),
+        // createButtonCopyText('ticket: summary', `${ticketId}: ${summary}`),
 
         createTextNode('\thref: '),
-        createButton('href: (ticket)', () => copyHypertext(ticket_id, ticket_url, '(', ')')),
-        createButton('href: ticket', () => copyHypertext(ticket_id, ticket_url)),
-        // createButton('href: (ticket): summary', () => copyHypertext(ticket_id, ticket_url, '(', `) ${summary}`)),
+        createButton('href: ticket', () => copyHypertext(ticketId, ticket_url)),
+        // createButton('href: (ticket)', () => copyHypertext(ticketId, ticket_url, '(', ')')),
+        createButton('href: (ticket) summary', () => copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
 
         createTextNode('\tmd: '),
-        createButtonCopyText('md: [ticket](ticket_url)', `[${ticket_id}](${ticket_url})`),
-        // createButtonCopyText('md: [ticket|ticket_url]', `[${ticket_id}|${ticket_url}]`)
+        createButtonCopyText('md: [ticket](ticket_url)', `[${ticketId}](${ticket_url})`),
     );
 
     if (IS_FIXED_POS) {
-        attachFixedContainer(buttonContainer, top="50px", left="650px");
+        attachFixedContainer(buttonContainer, top = "50px", left = "650px");
     }
     else {
-        document.getElementById("key-val").parentNode.parentNode.appendChild(document.createElement("li").appendChild(buttonContainer));
+        const ticketIdElement = document.querySelector(contrainerLocSelectorStr);
+        ticketIdElement.parentNode.insertBefore(buttonContainer, ticketIdElement.parentNode.nextSibling);
     }
 
 }
