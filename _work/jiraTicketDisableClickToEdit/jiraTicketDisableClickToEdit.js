@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Jira Description disable 'click to Edit' for new UI
-// @version      0.0.1
-// @description  禁用点击内容区域编辑，保留编辑按钮功能 (适用于新UI)
+// @name         Jira Description disable 'click to Edit' and add custom edit buttons for new UI
+// @version      0.0.9
+// @description  禁用点击内容区域编辑，添加可用的自定义编辑按钮 (适用于新UI)
 // @author       gtfish
 // @match        http*://jira.*.com/*
 // @match        http*://bugs.indeed.com/*
@@ -14,62 +14,129 @@
 (function () {
     "use strict";
 
-    function getParents(elem, selector) {
-        for (; elem && elem !== document; elem = elem.parentNode) {
-            if (elem.matches(selector)) return elem;
+    // Define content areas to be managed
+    const contentAreas = [
+        {
+            selector: '[data-testid="issue.views.field.rich-text.description"]',
+            label: 'Description'
+        },
+        {
+            selector: '[data-testid="issue.views.field.rich-text.customfield_11767"]',
+            label: 'Planning Notes'
+        },
+        {
+            selector: '[data-testid="issue.views.field.rich-text.customfield_11768"]',
+            label: 'Implementation Details'
         }
-        return null;
-    }
+    ];
 
+    // Check if an element is within a content area
     function isInContentArea(element) {
-        const contentAreas = [
-            // Description
-            '[data-testid="issue.views.field.rich-text.description"]',
-            // Planning Notes
-            '[data-testid="issue.views.field.rich-text.customfield_11767"]',
-            // Implementation Details (assuming it's customfield_11768, adjust if different)
-            '[data-testid="issue.views.field.rich-text.customfield_11768"]'
-        ];
+        return contentAreas.some(area => element.closest(area.selector));
+    }
 
-        for (let selector of contentAreas) {
-            if (getParents(element, selector)) {
-                return true;
+    // Create a custom edit button
+    function createEditButton(label) {
+        const button = document.createElement('button');
+        button.textContent = 'Edit ' + label;
+        button.className = 'custom-edit-button';
+        button.style.cssText = `
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #0052CC;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        `;
+        return button;
+    }
+
+    // Add edit buttons to content areas
+    function addEditButtons() {
+        contentAreas.forEach(area => {
+            const contentElement = document.querySelector(area.selector);
+            if (contentElement && !document.querySelector(`${area.selector} + .custom-edit-button`)) {
+                const button = createEditButton(area.label);
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Try to find and click the edit button
+                    const editButton = contentElement.querySelector('button[aria-label*="Edit"]');
+                    if (editButton) {
+                        editButton.click();
+                    } else {
+                        // If edit button not found, try to trigger edit mode programmatically
+                        const editEvent = new CustomEvent('jira.issue.editable.trigger', { bubbles: true });
+                        contentElement.dispatchEvent(editEvent);
+                    }
+                    console.log('Edit attempted for', area.label);
+                });
+                contentElement.parentNode.insertBefore(button, contentElement.nextSibling);
             }
-        }
-        return false;
+        });
     }
 
-    function isEditButton(element) {
-        return element.tagName.toLowerCase() === 'button' && 
-               element.getAttribute('aria-label') && 
-               element.getAttribute('aria-label').includes('Edit');
+    // Debounce function to limit frequency of function calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
-    const $body = document.querySelector("body");
+    // Main function to set up the script
+    function main() {
+        // Debounced version of addEditButtons
+        const debouncedAddEditButtons = debounce(addEditButtons, 300);
 
-    $body.addEventListener(
-        "click",
-        event => {
+        // Set up MutationObserver to watch for DOM changes
+        const observer = new MutationObserver((mutations) => {
+            let shouldAddButtons = false;
+            for (let mutation of mutations) {
+                if (mutation.type === 'childList' && 
+                    mutation.addedNodes.length > 0 &&
+                    Array.from(mutation.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE)) {
+                    shouldAddButtons = true;
+                    break;
+                }
+            }
+            if (shouldAddButtons) {
+                debouncedAddEditButtons();
+            }
+        });
+
+        // Start observing the document body for changes
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Initial addition of edit buttons
+        setTimeout(addEditButtons, 1000);
+
+        // Add click event listener to prevent unwanted edits
+        document.body.addEventListener('click', event => {
             const targetEle = event.target;
             
-            // 允许点击链接和图片
-            if (["a", "img"].includes(targetEle.tagName.toLowerCase())) {
+            // Allow clicks on links, images, and custom edit buttons
+            if (["a", "img"].includes(targetEle.tagName.toLowerCase()) || 
+                targetEle.classList.contains('custom-edit-button')) {
                 return true;
             }
 
-            // 允许点击编辑按钮
-            if (isEditButton(targetEle) || getParents(targetEle, 'button[aria-label*="Edit"]')) {
-                return true;
-            }
-
-            // 检查是否在内容区域内
+            // Prevent edits when clicking directly on content areas
             if (isInContentArea(targetEle)) {
-                // 阻止编辑
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
             }
-        },
-        true
-    );
+        }, true);
+    }
+
+    // Run the main function
+    main();
 })();
