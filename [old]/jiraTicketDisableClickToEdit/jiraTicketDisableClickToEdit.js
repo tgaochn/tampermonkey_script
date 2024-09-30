@@ -43,7 +43,7 @@ IS_FIXED_POS = true;
     let editingEnabled = false;
     const ticketIdElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]';
 
-    const contentAreas = [
+    const contentAreasForDsiable = [
         {
             selector: '[data-testid="issue.views.field.rich-text.description"]',
             label: 'Description'
@@ -59,7 +59,7 @@ IS_FIXED_POS = true;
     ];
 
     function setClickToEdit(enabled) {
-        contentAreas.forEach(area => {
+        contentAreasForDsiable.forEach(area => {
             const element = document.querySelector(area.selector);
             if (element) {
                 element.style.pointerEvents = enabled ? 'auto' : 'none';

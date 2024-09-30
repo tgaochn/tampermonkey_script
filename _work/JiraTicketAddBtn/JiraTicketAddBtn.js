@@ -2,13 +2,14 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.6.0
+// @version      0.7.0
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
 
+// 0.7.0: add the function to disable the click to edit and the button to enable it
 // 0.6.0: improve the layout and fixed the bug with in-page links
 // 0.5.0: align the script with the new jira version
 // 0.4.0: added function to fix the position of the button
@@ -27,15 +28,21 @@ IS_FIXED_POS = false;
     let isProcessing = false;
     const ticketIdElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]';
     const summaryElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.summary.heading"]';
-
-    function safeQuerySelector(selector) {
-        try {
-            return document.querySelector(selector);
-        } catch (error) {
-            console.error('Error in querySelector:', error);
-            return null;
+    const contentAreasForDsiable = [
+        {
+            selector: '[data-testid="issue.views.field.rich-text.description"]',
+            label: 'Description'
+        },
+        {
+            selector: '[data-testid="issue.views.field.rich-text.customfield_11767"]',
+            label: 'Planning Notes'
+        },
+        {
+            selector: '[data-testid="issue.views.field.rich-text.customfield_11694"]',
+            label: 'Implementation Details'
         }
-    }
+    ];
+
 
     function processChanges() {
         if (isProcessing) return;
@@ -59,7 +66,7 @@ IS_FIXED_POS = false;
 
                         console.log('Fetched summary:', currentSummary);
 
-                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr);
+                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr, contentAreasForDsiable);
                     }, 1000); // 1000ms delay, adjust if needed
                 }
             }
@@ -92,6 +99,15 @@ IS_FIXED_POS = false;
     // Initial call
     setTimeout(processChanges, 1000);
 })();
+
+function safeQuerySelector(selector) {
+    try {
+        return document.querySelector(selector);
+    } catch (error) {
+        console.error('Error in querySelector:', error);
+        return null;
+    }
+}
 
 function copyHypertext(text, url, leftPart = '', rightPart = '') {
     // Create a new anchor element
@@ -136,7 +152,7 @@ function setBtnStyle(btn) {
     btn.style.boxSizing = 'border-box';
 }
 
-function createButton(title, callbackFunc) {
+function createButtonWithFunc(title, callbackFunc) {
     const button = document.createElement('button');
     button.className = 'text-nowrap btn btn-warning btn-sm';
     setBtnStyle(button);
@@ -146,7 +162,7 @@ function createButton(title, callbackFunc) {
 }
 
 function createButtonCopyText(title, copyText) {
-    return createButton(title, () => {
+    return createButtonWithFunc(title, () => {
         navigator.clipboard.writeText(copyText);
     });
 }
@@ -173,7 +189,9 @@ function createButtonContainerFixedPosition(top, left) {
     return container;
 }
 
-function attachFixedContainer(container, top, left) {
+// function attachFixedContainer(container, top, left) {
+function attachFixedContainer(container, { top, left }) {
+
     document.body.appendChild(container);
     container.style.position = 'fixed';
     container.style.zIndex = '1000';  // Ensure it's above other elements
@@ -186,12 +204,39 @@ function extractId(url) {
     return match ? match[1] : null;
 }
 
-function main(ticketId, summary, contrainerLocSelectorStr) {
+function setClickToEdit(enabled, contentAreasForDsiable) {
+    contentAreasForDsiable.forEach(area => {
+        const element = document.querySelector(area.selector);
+        if (element) {
+            element.style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+    });
+    editingEnabled = enabled;
+}
+
+function createEnableEditingBtn(contentAreasForDsiable) {
+    const enableEditBtn = document.createElement('button');
+    enableEditBtn.className = 'text-nowrap btn btn-warning btn-sm';
+    enableEditBtn.textContent = 'Enable Editing';
+    setBtnStyle(enableEditBtn);
+
+    enableEditBtn.onclick = () => {
+        setClickToEdit(true, contentAreasForDsiable);
+        enableEditBtn.textContent = 'Editing Enabled';
+        enableEditBtn.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
+    };
+
+    return enableEditBtn;
+}
+
+function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable) {
     // old UI
     // const ticketId = document.getElementById("key-val").childNodes[0].data; 
     // const summary = document.getElementById("summary-val").childNodes[0].data;
 
-    const ticket_url = "https://indeed.atlassian.net/browse/" + ticketId;
+    // setup the disabled editing and the btn to enable it
+    setClickToEdit(false, contentAreasForDsiable);
+    const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable);
 
     // Remove existing container if any
     const containerId = 'container_id';
@@ -200,10 +245,14 @@ function main(ticketId, summary, contrainerLocSelectorStr) {
         existingContainer.remove();
     }
 
+    const ticket_url = "https://indeed.atlassian.net/browse/" + ticketId;
+
     const buttonContainer = createButtonContainer();
     buttonContainer.id = containerId;
 
     buttonContainer.append(
+        enableEditBtn,
+
         createTextNode('text: '),
         createButtonCopyText('ticketId', ticketId),
         createButtonCopyText('ticket_url', ticket_url),
@@ -211,16 +260,17 @@ function main(ticketId, summary, contrainerLocSelectorStr) {
         // createButtonCopyText('ticket: summary', `${ticketId}: ${summary}`),
 
         createTextNode('\thref: '),
-        createButton('href: ticket', () => copyHypertext(ticketId, ticket_url)),
-        // createButton('href: (ticket)', () => copyHypertext(ticketId, ticket_url, '(', ')')),
-        createButton('href: (ticket) summary', () => copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
+        createButtonWithFunc('href: ticket', () => copyHypertext(ticketId, ticket_url)),
+        // createButtonWithFunc('href: (ticket)', () => copyHypertext(ticketId, ticket_url, '(', ')')),
+        createButtonWithFunc('href: (ticket) summary', () => copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: [ticket](ticket_url)', `[${ticketId}](${ticket_url})`),
     );
 
     if (IS_FIXED_POS) {
-        attachFixedContainer(buttonContainer, top = "50px", left = "650px");
+        // attachFixedContainer(buttonContainer, top = "50px", left = "650px");
+        attachFixedContainer(buttonContainer, { top: "50px", left: "650px" });
     }
     else {
         const ticketIdElement = document.querySelector(contrainerLocSelectorStr);
