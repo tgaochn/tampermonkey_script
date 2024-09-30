@@ -78,7 +78,7 @@ IS_FIXED_POS = true;
         btn.style.borderRadius = '4px';
         btn.style.cursor = 'pointer';
         btn.style.outline = 'none';
-        btn.style.boxSizing = 'border-box';        
+        btn.style.boxSizing = 'border-box';
     }
 
     function attachFixedContainer(btn, { top, left }) {
@@ -98,20 +98,24 @@ IS_FIXED_POS = true;
         return button;
     }
 
+    // Modify createGlobalEditButton to add an ID to the button
     function createGlobalEditButton() {
         const button = createButton('Enable Editing', () => {
             if (!editingEnabled) {
                 setClickToEdit(true);
-                button.id = 'btn_id';
                 button.textContent = 'Editing Enabled';
                 button.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
             }
         });
-    
+
+        button.id = 'global-edit-button'; // Add this line
+
         if (IS_FIXED_POS) {
             attachFixedContainer(button, { top: "200px", left: "500px" });
         } else {
             const ticketIdElement = document.querySelector(ticketIdElementSelectorStr);
+            // const ticketIdElement = document.getElementById("createGlobalItem");
+            
             if (ticketIdElement && ticketIdElement.parentNode) {
                 ticketIdElement.parentNode.insertBefore(button, ticketIdElement.nextSibling);
             } else {
@@ -122,13 +126,27 @@ IS_FIXED_POS = true;
 
     function main() {
         setClickToEdit(false);
-        createGlobalEditButton();
+
+        // Function to add the button
+        const addButton = () => {
+            if (!document.querySelector('#global-edit-button')) {
+                createGlobalEditButton();
+            }
+        };
+
+        // Try to add the button immediately
+        addButton();
+
+        // If the button couldn't be added, observe the DOM for changes
+        if (!document.querySelector('#global-edit-button')) {
+            observeDOM(document.body, addButton);
+        }
 
         // Re-apply disableClickToEdit when the page content changes, but only if editing is not enabled
         const observer = new MutationObserver((mutations) => {
             if (!editingEnabled) {
                 for (let mutation of mutations) {
-                    if (mutation.type === 'childList' && 
+                    if (mutation.type === 'childList' &&
                         mutation.addedNodes.length > 0 &&
                         Array.from(mutation.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE)) {
                         setClickToEdit(false);
@@ -140,15 +158,6 @@ IS_FIXED_POS = true;
 
         observer.observe(document.body, { childList: true, subtree: true });
     }
-
-    // // Check if the target element exists, if not, add the buttons
-    // const observeTarget = document.body;
-    // const targetElementId = "btn_id";
-    // observeDOM(observeTarget, () => {
-    //     if (!document.getElementById(targetElementId)) {
-    //         main();
-    //     }
-    // });
 
     // Run the main function when the page is fully loaded
     if (document.readyState === 'loading') {
