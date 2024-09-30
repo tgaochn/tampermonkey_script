@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Jira Description disable 'click to Edit' and add custom edit buttons for new UI
-// @version      0.0.9
-// @description  禁用点击内容区域编辑，添加可用的自定义编辑按钮 (适用于新UI)
+// @name         Jira Description disable 'click to Edit' with global enable button
+// @version      0.1.2
+// @description  禁用点击内容区域编辑，添加全局启用编辑按钮 (适用于新UI)
 // @author       gtfish
 // @match        http*://jira.*.com/*
 // @match        http*://bugs.indeed.com/*
@@ -14,7 +14,6 @@
 (function () {
     "use strict";
 
-    // Define content areas to be managed
     const contentAreas = [
         {
             selector: '[data-testid="issue.views.field.rich-text.description"]',
@@ -25,23 +24,38 @@
             label: 'Planning Notes'
         },
         {
-            selector: '[data-testid="issue.views.field.rich-text.customfield_11768"]',
+            selector: '[data-testid="issue.views.field.rich-text.customfield_11694"]',
             label: 'Implementation Details'
         }
     ];
 
-    // Check if an element is within a content area
-    function isInContentArea(element) {
-        return contentAreas.some(area => element.closest(area.selector));
+    function disableClickToEdit() {
+        contentAreas.forEach(area => {
+            const element = document.querySelector(area.selector);
+            if (element) {
+                element.style.pointerEvents = 'none';
+            }
+        });
     }
 
-    // Create a custom edit button
-    function createEditButton(label) {
+    function enableClickToEdit() {
+        contentAreas.forEach(area => {
+            const element = document.querySelector(area.selector);
+            if (element) {
+                element.style.pointerEvents = 'auto';
+            }
+        });
+    }
+
+    function createGlobalEditButton() {
         const button = document.createElement('button');
-        button.textContent = 'Edit ' + label;
-        button.className = 'custom-edit-button';
+        button.textContent = 'Enable Editing';
+        button.id = 'global-edit-button';
         button.style.cssText = `
-            margin-left: 10px;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
             padding: 5px 10px;
             background-color: #0052CC;
             color: white;
@@ -49,94 +63,42 @@
             border-radius: 3px;
             cursor: pointer;
         `;
-        return button;
-    }
-
-    // Add edit buttons to content areas
-    function addEditButtons() {
-        contentAreas.forEach(area => {
-            const contentElement = document.querySelector(area.selector);
-            if (contentElement && !document.querySelector(`${area.selector} + .custom-edit-button`)) {
-                const button = createEditButton(area.label);
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
-                    // Try to find and click the edit button
-                    const editButton = contentElement.querySelector('button[aria-label*="Edit"]');
-                    if (editButton) {
-                        editButton.click();
-                    } else {
-                        // If edit button not found, try to trigger edit mode programmatically
-                        const editEvent = new CustomEvent('jira.issue.editable.trigger', { bubbles: true });
-                        contentElement.dispatchEvent(editEvent);
-                    }
-                    console.log('Edit attempted for', area.label);
-                });
-                contentElement.parentNode.insertBefore(button, contentElement.nextSibling);
-            }
+        button.addEventListener('click', () => {
+            enableClickToEdit();
+            button.textContent = 'Editing Enabled';
+            button.disabled = true;
+            // setTimeout(() => {
+            //     disableClickToEdit();
+            //     button.textContent = 'Enable Editing';
+            //     button.disabled = false;
+            // }, 30000); // Disable editing after 30 seconds
         });
+        document.body.appendChild(button);
     }
 
-    // Debounce function to limit frequency of function calls
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // Main function to set up the script
     function main() {
-        // Debounced version of addEditButtons
-        const debouncedAddEditButtons = debounce(addEditButtons, 300);
+        disableClickToEdit();
+        createGlobalEditButton();
 
-        // Set up MutationObserver to watch for DOM changes
+        // Re-apply disableClickToEdit when the page content changes
         const observer = new MutationObserver((mutations) => {
-            let shouldAddButtons = false;
             for (let mutation of mutations) {
                 if (mutation.type === 'childList' && 
                     mutation.addedNodes.length > 0 &&
                     Array.from(mutation.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE)) {
-                    shouldAddButtons = true;
+                    disableClickToEdit();
                     break;
                 }
             }
-            if (shouldAddButtons) {
-                debouncedAddEditButtons();
-            }
         });
 
-        // Start observing the document body for changes
         observer.observe(document.body, { childList: true, subtree: true });
-
-        // Initial addition of edit buttons
-        setTimeout(addEditButtons, 1000);
-
-        // Add click event listener to prevent unwanted edits
-        document.body.addEventListener('click', event => {
-            const targetEle = event.target;
-            
-            // Allow clicks on links, images, and custom edit buttons
-            if (["a", "img"].includes(targetEle.tagName.toLowerCase()) || 
-                targetEle.classList.contains('custom-edit-button')) {
-                return true;
-            }
-
-            // Prevent edits when clicking directly on content areas
-            if (isInContentArea(targetEle)) {
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
-            }
-        }, true);
     }
 
-    // Run the main function
-    main();
+    // Run the main function when the page is fully loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', main);
+    } else {
+        main();
+    }
 })();
