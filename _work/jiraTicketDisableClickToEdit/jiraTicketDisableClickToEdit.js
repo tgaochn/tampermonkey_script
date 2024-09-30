@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Jira Description disable 'click to Edit' with global enable button
-// @version      0.1.2
+// @version      0.1.3
 // @description  禁用点击内容区域编辑，添加全局启用编辑按钮 (适用于新UI)
 // @author       gtfish
 // @match        http*://jira.*.com/*
@@ -13,6 +13,8 @@
 
 (function () {
     "use strict";
+
+    let editingEnabled = false;
 
     const contentAreas = [
         {
@@ -29,32 +31,40 @@
         }
     ];
 
-    function disableClickToEdit() {
+    function setClickToEdit(enabled) {
         contentAreas.forEach(area => {
             const element = document.querySelector(area.selector);
             if (element) {
-                element.style.pointerEvents = 'none';
+                element.style.pointerEvents = enabled ? 'auto' : 'none';
             }
         });
+        editingEnabled = enabled;
     }
 
-    function enableClickToEdit() {
-        contentAreas.forEach(area => {
-            const element = document.querySelector(area.selector);
-            if (element) {
-                element.style.pointerEvents = 'auto';
-            }
-        });
+    function setBtnStyle(btn) {
+        btn.style.backgroundColor = '#009688';
+        btn.style.color = 'white';
+        btn.style.padding = '5px 5px';
+        btn.style.height = '30px';
+        btn.style.fontSize = '14px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.outline = 'none';
+        btn.style.boxSizing = 'border-box';
     }
 
     function createGlobalEditButton() {
         const button = document.createElement('button');
-        button.textContent = 'Enable Editing';
+        button.className = 'text-nowrap btn btn-warning btn-sm';
         button.id = 'global-edit-button';
+        button.textContent = 'Enable Editing';
+        // setBtnStyle(button);
+
         button.style.cssText = `
             position: fixed;
             top: 10px;
-            right: 10px;
+            left: 1000px;
             z-index: 10000;
             padding: 5px 10px;
             background-color: #0052CC;
@@ -63,31 +73,31 @@
             border-radius: 3px;
             cursor: pointer;
         `;
+
         button.addEventListener('click', () => {
-            enableClickToEdit();
-            button.textContent = 'Editing Enabled';
-            button.disabled = true;
-            // setTimeout(() => {
-            //     disableClickToEdit();
-            //     button.textContent = 'Enable Editing';
-            //     button.disabled = false;
-            // }, 30000); // Disable editing after 30 seconds
+            if (!editingEnabled) {
+                setClickToEdit(true);
+                button.textContent = 'Editing Enabled';
+                button.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
+            }
         });
         document.body.appendChild(button);
     }
 
     function main() {
-        disableClickToEdit();
+        setClickToEdit(false);
         createGlobalEditButton();
 
-        // Re-apply disableClickToEdit when the page content changes
+        // Re-apply disableClickToEdit when the page content changes, but only if editing is not enabled
         const observer = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                if (mutation.type === 'childList' && 
-                    mutation.addedNodes.length > 0 &&
-                    Array.from(mutation.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE)) {
-                    disableClickToEdit();
-                    break;
+            if (!editingEnabled) {
+                for (let mutation of mutations) {
+                    if (mutation.type === 'childList' && 
+                        mutation.addedNodes.length > 0 &&
+                        Array.from(mutation.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE)) {
+                        setClickToEdit(false);
+                        break;
+                    }
                 }
             }
         });
