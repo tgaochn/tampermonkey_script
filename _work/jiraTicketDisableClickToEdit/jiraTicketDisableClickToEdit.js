@@ -11,10 +11,37 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/jiraTicketDisableClickToEdit/jiraTicketDisableClickToEdit.js
 // ==/UserScript==
 
+IS_FIXED_POS = true;
+
 (function () {
     "use strict";
 
+    const observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
+
+        return function (targetNode, onAddCallback, onRemoveCallback) {
+            if (MutationObserver) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
+                        onAddCallback();
+                    }
+                });
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
+                });
+            } else if (eventListenerSupported) {
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            }
+        };
+    })();
+
     let editingEnabled = false;
+    const ticketIdElementSelectorStr = '[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]';
 
     const contentAreas = [
         {
@@ -51,37 +78,46 @@
         btn.style.borderRadius = '4px';
         btn.style.cursor = 'pointer';
         btn.style.outline = 'none';
-        btn.style.boxSizing = 'border-box';
+        btn.style.boxSizing = 'border-box';        
+    }
+
+    function attachFixedContainer(btn, { top, left }) {
+        btn.style.position = 'fixed';
+        btn.style.zIndex = '1000';  // Ensure it's above other elements
+        btn.style.top = top;
+        btn.style.left = left;
+        document.body.appendChild(btn);
+    }
+
+    function createButton(title, callbackFunc) {
+        const button = document.createElement('button');
+        button.className = 'text-nowrap btn btn-warning btn-sm';
+        setBtnStyle(button);
+        button.textContent = title;
+        button.onclick = callbackFunc;
+        return button;
     }
 
     function createGlobalEditButton() {
-        const button = document.createElement('button');
-        button.className = 'text-nowrap btn btn-warning btn-sm';
-        button.id = 'global-edit-button';
-        button.textContent = 'Enable Editing';
-        // setBtnStyle(button);
-
-        button.style.cssText = `
-            position: fixed;
-            top: 10px;
-            left: 1000px;
-            z-index: 10000;
-            padding: 5px 10px;
-            background-color: #0052CC;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        `;
-
-        button.addEventListener('click', () => {
+        const button = createButton('Enable Editing', () => {
             if (!editingEnabled) {
                 setClickToEdit(true);
+                button.id = 'btn_id';
                 button.textContent = 'Editing Enabled';
                 button.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
             }
         });
-        document.body.appendChild(button);
+    
+        if (IS_FIXED_POS) {
+            attachFixedContainer(button, { top: "200px", left: "500px" });
+        } else {
+            const ticketIdElement = document.querySelector(ticketIdElementSelectorStr);
+            if (ticketIdElement && ticketIdElement.parentNode) {
+                ticketIdElement.parentNode.insertBefore(button, ticketIdElement.nextSibling);
+            } else {
+                document.body.appendChild(button);
+            }
+        }
     }
 
     function main() {
@@ -104,6 +140,15 @@
 
         observer.observe(document.body, { childList: true, subtree: true });
     }
+
+    // // Check if the target element exists, if not, add the buttons
+    // const observeTarget = document.body;
+    // const targetElementId = "btn_id";
+    // observeDOM(observeTarget, () => {
+    //     if (!document.getElementById(targetElementId)) {
+    //         main();
+    //     }
+    // });
 
     // Run the main function when the page is fully loaded
     if (document.readyState === 'loading') {
