@@ -208,7 +208,17 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
     contentAreasForDsiable.forEach(area => {
         const element = document.querySelector(area.selector);
         if (element) {
-            element.style.pointerEvents = enabled ? 'auto' : 'none';
+            if (enabled) {
+                element.style.pointerEvents = 'auto';
+                element.querySelectorAll('a').forEach(link => {
+                    link.style.pointerEvents = 'auto';
+                });
+            } else {
+                element.style.pointerEvents = 'none';
+                element.querySelectorAll('a').forEach(link => {
+                    link.style.pointerEvents = 'auto';
+                });
+            }
         }
     });
     editingEnabled = enabled;
