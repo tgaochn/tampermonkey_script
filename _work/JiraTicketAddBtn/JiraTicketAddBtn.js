@@ -2,13 +2,14 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.7.0
+// @version      0.7.1
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
 
+// 0.7.1: fix the bug which cause the links not clickable
 // 0.7.0: add the function to disable the click to edit and the button to enable it
 // 0.6.0: improve the layout and fixed the bug with in-page links
 // 0.5.0: align the script with the new jira version
@@ -210,14 +211,31 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
         if (element) {
             if (enabled) {
                 element.style.pointerEvents = 'auto';
-                element.querySelectorAll('a').forEach(link => {
-                    link.style.pointerEvents = 'auto';
-                });
             } else {
+                // ! disable all except some elements below
                 element.style.pointerEvents = 'none';
+                
+                // Enable regular links
                 element.querySelectorAll('a').forEach(link => {
                     link.style.pointerEvents = 'auto';
+                    link.style.cursor = 'pointer';
                 });
+                
+                // Enable inline card structures (ticket)
+                element.querySelectorAll('[data-inline-card="true"]').forEach(card => {
+                    card.style.pointerEvents = 'auto';
+                    let link = card.querySelector('a[data-testid="inline-card-resolved-view"]');
+                    if (link) {
+                        link.style.pointerEvents = 'auto';
+                        link.style.cursor = 'pointer';
+                    }
+                });
+
+                // Enable name tags 
+                element.querySelectorAll('[data-testid="mention-with-profilecard-trigger"]').forEach(mention => {
+                    mention.style.pointerEvents = 'auto';
+                    mention.style.cursor = 'pointer';
+                });                
             }
         }
     });
@@ -229,6 +247,7 @@ function createEnableEditingBtn(contentAreasForDsiable) {
     enableEditBtn.className = 'text-nowrap btn btn-warning btn-sm';
     enableEditBtn.textContent = 'Enable Editing';
     setBtnStyle(enableEditBtn);
+    enableEditBtn.style.backgroundColor = '#ff991f';
 
     enableEditBtn.onclick = () => {
         setClickToEdit(true, contentAreasForDsiable);
