@@ -2,13 +2,13 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.7.1
+// @version      0.7.2
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // ==/UserScript==
-
+// 0.7.2: change the disable btn tex
 // 0.7.1: fix the bug which cause the links not clickable
 // 0.7.0: add the function to disable the click to edit and the button to enable it
 // 0.6.0: improve the layout and fixed the bug with in-page links
@@ -251,7 +251,7 @@ function createEnableEditingBtn(contentAreasForDsiable) {
 
     enableEditBtn.onclick = () => {
         setClickToEdit(true, contentAreasForDsiable);
-        enableEditBtn.textContent = 'Editing Enabled';
+        enableEditBtn.textContent = 'Editing Disabled';
         enableEditBtn.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
     };
 
