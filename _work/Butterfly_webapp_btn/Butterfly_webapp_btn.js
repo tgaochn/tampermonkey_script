@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.4.6
+// @version             0.4.7
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -12,7 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // ==/UserScript==
-// 0.4.6: improve the btn text
+// 0.4.7: improve the btn text
 // 0.4.5: bug fixed
 // 0.4.4: bug fixed
 // 0.4.3: add more btn
@@ -111,8 +111,8 @@ function main() {
         createButtonCopyText('config_url', modelConfUrl),
 
         createTextNode('\thref: '),
-        createButton('href: (model)', () => copyHypertext('model', modelUrl, '(', ')')),
-        createButton('href: model', () => copyHypertext('model', modelUrl)),
+        createButton('href: "model"', () => copyHypertext('model', modelUrl)),
+        createButton('href: {model_id}', () => copyHypertext(modelId, modelUrl)),
 
         createTextNode('\tmd: '),
         createButtonCopyText('md: ["model"](url)', `[model](${modelUrl})`),
