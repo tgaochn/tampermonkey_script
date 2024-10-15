@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.0.4
+// @version      0.0.5
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -10,6 +10,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.0.5: added RJQ ticket pattern
 // 0.0.4: added more models pattern
 // 0.0.3: added I2A models template - elephant-multi-en-all_en-4e18057
 // 0.0.2: 修改link, 添加更多的model pattern
@@ -24,6 +25,12 @@
         //     regex: /(gtfish)/g,
         //     urlTemplate: 'http://www.$1.com'
         // },
+
+        // RJQ tickets
+        {
+            regex: /^RJQ-[0-9]{1,6}$/ig,
+            urlTemplate: 'https://indeed.atlassian.net/browse/$1'
+        },
 
         // ! single/multiple target hp/serp models
         // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
