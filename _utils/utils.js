@@ -54,9 +54,9 @@ module.exports = class Utils {
 
     // ! 使用json生成装btn的容器
     createButtonContainerFromJson(prompts) {
-        const buttonContainer = createButtonContainer();
+        const buttonContainer = this.createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(createButton(prompts, promptKey));
+            buttonContainer.append(this.createButton(prompts, promptKey));
         }
         return buttonContainer;
     }
