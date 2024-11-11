@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.9
+// @version      0.0.10
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
 // @match        https://butterfly.sandbox.indeed.net/*
 // @match        https://proctor-v2.sandbox.indeed.net/*
-// @match        https://indeed.atlassian.net/*
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
@@ -48,7 +47,7 @@
         { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, title: 'RuleSet' },
         { pattern: /^https:\/\/proctor-v2\.sandbox\.indeed\.net.*$/, title: 'proctor' },
         { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
-        { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
+        // { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
 
