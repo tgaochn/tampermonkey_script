@@ -56,6 +56,7 @@ module.exports = class Utils {
         })
     }
 
+    // ! btn: 改变样式, 变成绿底白字按钮 
     setBtnStyle(btn) {
         btn.style.backgroundColor = '#009688';
         btn.style.color = 'white';
@@ -110,4 +111,16 @@ module.exports = class Utils {
         container.style.top = top;
         container.style.left = left;
     }
+
+    observeDOM() {
+        const targetNode = document.body;
+        const config = { childList: true, subtree: true };
+
+        const callback = function (mutationsList, observer) {
+            processChanges();
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, config);
+    }    
 };
