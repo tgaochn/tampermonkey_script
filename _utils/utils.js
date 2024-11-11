@@ -1,5 +1,5 @@
 // 根据url pattern判断是否执行脚本, 只有非空pattern list才会匹配
-function shouldRunScript(inclusionPatterns, exclusionPatterns) {
+window.shouldRunScript = function shouldRunScript(inclusionPatterns, exclusionPatterns) {
     const url = window.location.href;
 
     // Check if the URL matches any inclusion pattern
@@ -17,7 +17,7 @@ function shouldRunScript(inclusionPatterns, exclusionPatterns) {
 }
 
 
-function copyHypertext(text, url, leftPart = '', rightPart = '') {
+window.copyHypertext = function copyHypertext(text, url, leftPart = '', rightPart = '') {
     // Create a new anchor element
     const hyperlinkElem = document.createElement('a');
     hyperlinkElem.textContent = text;
@@ -47,58 +47,3 @@ function copyHypertext(text, url, leftPart = '', rightPart = '') {
     document.body.removeChild(tempContainerElem);
 }
 
-
-function setBtnStyle(btn) {
-    btn.style.backgroundColor = '#009688';
-    btn.style.color = 'white';
-    btn.style.padding = '5px 5px';
-    btn.style.height = '30px';
-    btn.style.fontSize = '14px';
-    btn.style.border = '1px solid #ccc';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.outline = 'none';
-    btn.style.boxSizing = 'border-box';
-
-    return btn;
-}
-
-function createButton(text, callbackFunc) {
-    var button = document.createElement('button');
-    button = setBtnStyle(button);
-    button.innerHTML = text;
-    button.onclick = callbackFunc;
-    return button;
-}
-
-function createButtonOpenUrl(text, targetUrl) {
-    return createButton(text, () => {
-        window.open(targetUrl);
-    })
-}
-
-function createButtonCopyText(text, copyText) {
-    return createButton(text, () => {
-        navigator.clipboard.writeText(copyText);
-    });
-}
-
-function createTextNode(text) {
-    return document.createTextNode(text);
-}
-
-function createButtonContainer(document) {
-    const container = document.createElement('div');
-    container.style.display = 'inline-block';
-    container.style.marginTop = '10px';
-    container.style.marginLeft = '10px';
-    return container;
-}
-
-function attachFixedContainer(container, { top, left }) {
-    document.body.appendChild(container);
-    container.style.position = 'fixed';
-    container.style.zIndex = '1000';  // Ensure it's above other elements
-    container.style.top = top;
-    container.style.left = left;
-}
