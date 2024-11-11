@@ -1,3 +1,4 @@
+// 根据url pattern判断是否执行脚本, 只有非空pattern list才会匹配
 function shouldRunScript(inclusionPatterns, exclusionPatterns) {
     const url = window.location.href;
 
@@ -86,7 +87,7 @@ function createTextNode(text) {
     return document.createTextNode(text);
 }
 
-function createButtonContainer() {
+function createButtonContainer(document) {
     const container = document.createElement('div');
     container.style.display = 'inline-block';
     container.style.marginTop = '10px';
