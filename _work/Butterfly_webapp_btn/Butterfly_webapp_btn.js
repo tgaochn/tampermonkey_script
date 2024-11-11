@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.5.0
+// @version             0.5.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @grant               GM_xmlhttpRequest
 
 // ==/UserScript==
+// 0.5.1: bug fixed
 // 0.5.0: 重构代码, 使用外部函数
 // 0.4.7: improve the btn text
 // 0.4.5: bug fixed
@@ -127,3 +128,27 @@
         table.appendChild(newRow);
     }    
 })();
+
+function loadExternalScript(url) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            onload: function (response) {
+                try {
+                    // Create a function from the response text
+                    const functionCode = response.responseText;
+                    const module = { exports: {} };
+                    const wrapper = Function('module', 'exports', functionCode);
+                    wrapper(module, module.exports);
+                    resolve(module.exports);
+                } catch (error) {
+                    reject(error);
+                }
+            },
+            onerror: function (error) {
+                reject(error);
+            }
+        });
+    });
+}
