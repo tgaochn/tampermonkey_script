@@ -13,6 +13,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.1.0: 重构代码, 使用外部函数
 // 0.0.9: aligned with the new version of jira 
 // 0.0.8: bug fixed
 // 0.0.7: added datadog, set default text to "link"
@@ -22,11 +23,12 @@
 // 0.0.2: adjust the btn position
 // 0.0.1: init
 
-(function () {
+(async function () {
     'use strict';
+    const UtilsClass = await loadExternalScript('https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js');
+    const utils = new UtilsClass();
 
     const inclusionPatterns = [
-        /.*/,
     ];
     // https://indeed.atlassian.net/browse
     const exclusionPatterns = [
@@ -34,7 +36,7 @@
         /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
 
-    if (!shouldRunScript(inclusionPatterns, exclusionPatterns)) {
+    if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
         return;
     }
 
@@ -47,215 +49,85 @@
         { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, title: 'RuleSet' },
         { pattern: /^https:\/\/proctor-v2\.sandbox\.indeed\.net.*$/, title: 'proctor' },
         { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
-        // { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
 
     ];
 
-    const observeDOM = (function () {
-        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        const eventListenerSupported = window.addEventListener;
-
-        return function (targetNode, onAddCallback, onRemoveCallback) {
-            if (MutationObserver) {
-                // Define a new observer
-                const mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback) {
-                        onAddCallback();
-                    }
-                });
-
-                // Have the observer observe target node for changes in children
-                mutationObserver.observe(targetNode, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (eventListenerSupported) {
-                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
-            }
-        };
-    })();
-
     // Check if the target element exists, if not, add the buttons
     const observeTarget = document.body;
     const targetElementId = "container_id";
-    observeDOM(observeTarget, () => {
+    utils.observeDOM(observeTarget, () => {
         if (!document.getElementById(targetElementId)) {
             main(url2title);
         }
     });
+
+    async function main() {
+        const btnContainer = utils.createButtonContainer();
+        const btnSubContainer1 = utils.createButtonContainer();
+        // const btnSubContainer2 = utils.createButtonContainer();
+
+        btnContainer.id = "container_id";
+        btnContainer.appendChild(btnSubContainer1);
+        // btnContainer.appendChild(btnSubContainer2);
+        btnContainer.style.display = 'flex';
+        btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
+        // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
+    
+        const curURL = window.location.href;
+        const pageTitle = utils.findBestMatch(curURL, url2title);
+    
+        // ! add buttons in the containers
+        btnSubContainer1.append(
+            // 按钮: copy url
+            utils.createButton('url', async () => {
+                navigator.clipboard.writeText(curURL);
+                // navigator.clipboard.writeText(curHost);
+            }),
+    
+            // 按钮: copy 超链接
+            utils.createTextNode('\thref: '),
+            utils.createButton(`href: ${pageTitle}`, async () => {
+                utils.copyHypertext(pageTitle, curURL);
+            }),
+    
+    
+            // 按钮: copy md 形式的链接
+            utils.createTextNode('\tmd: '),
+            utils.createButton(`md: [${pageTitle}](url)`, async () => {
+                navigator.clipboard.writeText(`[${pageTitle}](${curURL})`);
+            }),
+    
+            // 按钮: 打开 link
+            // utils.createTextNode('\tlink: '),
+            // utils.createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
+        );
+    
+        utils.addFixedPosContainerToPage(buttonContainer, { top: "-10px", left: "1200px" });
+    }    
 })();
 
-function shouldRunScript(inclusionPatterns, exclusionPatterns) {
-    const url = window.location.href;
-
-    // Check if the URL matches any inclusion pattern
-    if (!inclusionPatterns.some(pattern => pattern.test(url))) {
-        return false;
-    }
-
-    // Check if the URL matches any exclusion pattern
-    if (exclusionPatterns.some(pattern => pattern.test(url))) {
-        return false;
-    }
-
-    // Default behavior for other pages
-    return true;
-}
-
-function main(url2title) {
-    const btnContainer = createButtonContainer();
-    const btnSubContainer1 = createButtonContainer();
-    // const btnSubContainer2 = createButtonContainer();
-    btnContainer.id = "container_id";
-    btnContainer.appendChild(btnSubContainer1);
-    // btnContainer.appendChild(btnSubContainer2);
-    btnContainer.style.display = 'flex';
-    btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
-    // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
-
-    const curURL = window.location.href;
-    const pageTitle = findBestMatch(curURL, url2title);
-
-    // ! add buttons in the containers
-    btnSubContainer1.append(
-        // 按钮: copy url
-        createButton('url', async () => {
-            navigator.clipboard.writeText(curURL);
-            // navigator.clipboard.writeText(curHost);
-        }),
-
-        // 按钮: copy 超链接
-        createTextNode('\thref: '),
-        createButton(`href: ${pageTitle}`, async () => {
-            copyHypertext(pageTitle, curURL);
-        }),
-
-
-        // 按钮: copy md 形式的链接
-        createTextNode('\tmd: '),
-        createButton(`md: [${pageTitle}](url)`, async () => {
-            navigator.clipboard.writeText(`[${pageTitle}](${curURL})`);
-        }),
-
-        // 按钮: 打开 link
-        // createTextNode('\tlink: '),
-        // createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
-    );
-
-    attachFixedContainer(btnContainer, top = "-10px", left = "1200px");
-}
-
-function findBestMatch(url, patterns) {
-    // console.log("Finding best match for:", url); // Debugging line
-    for (const { pattern, title } of patterns) {
-        // console.log("Checking pattern:", pattern); // Debugging line
-        if (pattern.test(url)) {
-            // console.log("Match found:", title); // Debugging line
-            return title;
-        }
-    }
-    // console.log("No match found, returning URL"); // Debugging line
-    // return new URL(url).hostname; // Default to the hostname if no match found
-    return "link"; // Default to the hostname if no match found
-}
-
-function createButtonContainerFixedPosition(top, left) {
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.zIndex = '1000';  // Ensure it's above other elements
-    container.style.top = top;
-    container.style.left = left;
-
-    return container;
-}
-
-function attachFixedContainer(container, top, left) {
-    document.body.appendChild(container);
-    container.style.position = 'fixed';
-    container.style.zIndex = '1000';  // Ensure it's above other elements
-    container.style.top = top;
-    container.style.left = left;
-}
-
-function createButtonContainer() {
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'inline-block';
-    buttonContainer.style.justifyContent = 'center';
-    buttonContainer.style.marginTop = '10px';
-    buttonContainer.style.marginLeft = '10px';
-
-    return buttonContainer;
-}
-
-function setBtnStyle(btn) {
-    btn.style.backgroundColor = '#009688';
-    btn.style.color = 'white';
-    btn.style.padding = '5px 5px';
-    btn.style.height = '30px';
-    btn.style.fontSize = '14px';
-    btn.style.border = '1px solid #ccc';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.outline = 'none';
-    btn.style.boxSizing = 'border-box';
-}
-
-function createButton(text, callbackFunc) {
-    const button = document.createElement('button');
-    setBtnStyle(button);
-    button.innerHTML = text;
-    button.onclick = callbackFunc;
-    return button;
-}
-
-function createButtonCopyText(title, copyText) {
-    return createButton(title, () => {
-        navigator.clipboard.writeText(copyText);
+function loadExternalScript(url) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            onload: function (response) {
+                try {
+                    // Create a function from the response text
+                    const functionCode = response.responseText;
+                    const module = { exports: {} };
+                    const wrapper = Function('module', 'exports', functionCode);
+                    wrapper(module, module.exports);
+                    resolve(module.exports);
+                } catch (error) {
+                    reject(error);
+                }
+            },
+            onerror: function (error) {
+                reject(error);
+            }
+        });
     });
-}
-
-function createTextNode(text) {
-    const textElement = document.createElement('span');
-    const textNode = document.createTextNode(text);
-    textElement.appendChild(textNode);
-    textElement.style.color = 'black';
-    return textElement;
-}
-
-function createButtonOpenUrl(text, targetUrl) {
-    return createButton(text, () => {
-        window.open(targetUrl);
-    })
-}
-
-function copyHypertext(text, url, leftPart = '', rightPart = '') {
-    // Create a new anchor element
-    const hyperlinkElem = document.createElement('a');
-    hyperlinkElem.textContent = text;
-    hyperlinkElem.href = url;
-
-    // 创建一个新的span元素,用于包裹超链接和括号
-    const tempContainerElem = document.createElement('span');
-    tempContainerElem.appendChild(document.createTextNode(leftPart));
-    tempContainerElem.appendChild(hyperlinkElem);
-    tempContainerElem.appendChild(document.createTextNode(rightPart));
-
-    // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-    tempContainerElem.style.position = 'absolute';
-    tempContainerElem.style.left = '-9999px';
-    document.body.appendChild(tempContainerElem);
-
-    // 选择临时元素并复制
-    const range = document.createRange();
-    range.selectNode(tempContainerElem);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.execCommand('copy');
-    selection.removeAllRanges();
-
-    // 把临时的元素从页面中移除
-    document.body.removeChild(tempContainerElem);
 }

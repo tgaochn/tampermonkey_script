@@ -143,4 +143,14 @@ module.exports = class Utils {
     addContainerNextToElement2(container, element) {
         element.parentNode.insertBefore(container, element.nextSibling);
     }
+
+    // ! 根据url找到匹配的pattern, 返回title
+    findBestMatch(url, patterns) {
+        for (const { pattern, title } of patterns) {
+            if (pattern.test(url)) {
+                return title;
+            }
+        }
+        return "link"; // Default to the hostname if no match found
+    }
 };
