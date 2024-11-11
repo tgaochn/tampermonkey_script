@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wiki_btn
 // @namespace    wiki_btn
-// @version      0.1.1
+// @version      0.1.2
 // @description  wiki加入相关按钮
 // @author       gtfish
 // @match        https://indeed.atlassian.net/*
@@ -10,6 +10,7 @@
 // @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
+// 0.1.2: 重构代码, btn位置不固定
 // 0.1.1: 继续提取出外部函数
 // 0.1.0: 使用外部函数的方式实现固定位置的按钮
 // 0.0.1: init, btn with fixed position and internal functions
@@ -45,8 +46,8 @@
         const pageTitleElementSelectorStr = '[data-testid="title-text"] > span';
         const pageTitleElement = document.querySelector(pageTitleElementSelectorStr);
         const pageTitle = pageTitleElement.firstChild.textContent.trim();
-        // const createBtnElementSelectorStr = '[data-testid="app-navigation-create"]';
-        // const createBtnElement = document.querySelector(createBtnElementSelectorStr);
+        const createBtnElementSelectorStr = '[data-testid="app-navigation-create"]';
+        const createBtnElement = document.querySelector(createBtnElementSelectorStr);
 
         const btnContainer = utils.createButtonContainer();
         btnContainer.id = "container_id";
@@ -65,32 +66,30 @@
         );
 
         // ! add container to the page
-        // createBtnElement.parentNode.insertBefore(btnContainer, createBtnElement.parentNode.nextSibling);
-        utils.addFixedPosContainerToPage(btnContainer, { top: "10px", left: "1000px" });
+        utils.addContainerNextToElement2(btnContainer, createBtnElement);
     }
+})();
 
-    function loadExternalScript(url) {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: url,
-                onload: function (response) {
-                    try {
-                        // Create a function from the response text
-                        const functionCode = response.responseText;
-                        const module = { exports: {} };
-                        const wrapper = Function('module', 'exports', functionCode);
-                        wrapper(module, module.exports);
-                        resolve(module.exports);
-                    } catch (error) {
-                        reject(error);
-                    }
-                },
-                onerror: function (error) {
+function loadExternalScript(url) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            onload: function (response) {
+                try {
+                    // Create a function from the response text
+                    const functionCode = response.responseText;
+                    const module = { exports: {} };
+                    const wrapper = Function('module', 'exports', functionCode);
+                    wrapper(module, module.exports);
+                    resolve(module.exports);
+                } catch (error) {
                     reject(error);
                 }
-            });
+            },
+            onerror: function (error) {
+                reject(error);
+            }
         });
-    }
-
-})();
+    });
+}

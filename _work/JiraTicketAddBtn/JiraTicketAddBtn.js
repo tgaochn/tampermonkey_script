@@ -2,12 +2,15 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.7.3
+// @version      0.8.0
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
-// @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
-// @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
+// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
+// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
+// @grant        GM_xmlhttpRequest
+
 // ==/UserScript==
+// 0.8.0: 重构代码, 提取函数
 // 0.7.3: change the disable btn tex
 // 0.7.1: fix the bug which cause the links not clickable
 // 0.7.0: add the function to disable the click to edit and the button to enable it
@@ -22,8 +25,10 @@
 
 IS_FIXED_POS = false;
 
-(function () {
+(async function () {
     'use strict';
+    const UtilsClass = await loadExternalScript('https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js');
+    const utils = new UtilsClass();
 
     let lastProcessedTicketId = null;
     let isProcessing = false;
@@ -44,6 +49,15 @@ IS_FIXED_POS = false;
         }
     ];
 
+    // Wait for the DOM to be fully loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', observeDOM);
+    } else {
+        observeDOM();
+    }
+
+    // Initial call
+    setTimeout(processChanges, 1000);
 
     function processChanges() {
         if (isProcessing) return;
@@ -51,7 +65,7 @@ IS_FIXED_POS = false;
 
         try {
             // !! new UI (2024-09-29)
-            const ticketIdElement = safeQuerySelector(ticketIdElementSelectorStr);
+            const ticketIdElement = document.querySelector(ticketIdElementSelectorStr);
 
             if (ticketIdElement) {
                 const currentTicketId = ticketIdElement.textContent.trim();
@@ -62,7 +76,7 @@ IS_FIXED_POS = false;
                     // Add a small delay before fetching the summary
                     setTimeout(() => {
                         // !! new UI (2024-09-29)
-                        const summaryElement = safeQuerySelector(summaryElementSelectorStr);
+                        const summaryElement = document.querySelector(summaryElementSelectorStr);
                         const currentSummary = summaryElement ? summaryElement.textContent.trim() : '';
 
                         console.log('Fetched summary:', currentSummary);
@@ -90,54 +104,73 @@ IS_FIXED_POS = false;
         observer.observe(targetNode, config);
     }
 
-    // Wait for the DOM to be fully loaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', observeDOM);
-    } else {
-        observeDOM();
-    }
+    async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable) {
+        // setup the disabled editing and the btn to enable it
+        setClickToEdit(false, contentAreasForDsiable);
+        const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable);
 
-    // Initial call
-    setTimeout(processChanges, 1000);
+        // Remove existing container if any
+        const containerId = 'container_id';
+        const existingContainer = document.getElementById(containerId);
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+
+        const ticket_url = "https://indeed.atlassian.net/browse/" + ticketId;
+
+        const buttonContainer = utils.createButtonContainer();
+        buttonContainer.id = containerId;
+
+        buttonContainer.append(
+            enableEditBtn,
+
+            utils.createTextNode('text: '),
+            utils.createButtonCopyText('ticketId', ticketId),
+            utils.createButtonCopyText('ticket_url', ticket_url),
+            utils.createButtonCopyText('summary', `${summary}`),
+            // utils.createButtonCopyText('ticket: summary', `${ticketId}: ${summary}`),
+
+            utils.createTextNode('\thref: '),
+            utils.createButton('href: ticket', () => utils.copyHypertext(ticketId, ticket_url)),
+            // utils.createButton('href: (ticket)', () => utils.copyHypertext(ticketId, ticket_url, '(', ')')),
+            utils.createButton('href: (ticket) summary', () => utils.copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
+
+            utils.createTextNode('\tmd: '),
+            utils.createButtonCopyText('md: [ticket](ticket_url)', `[${ticketId}](${ticket_url})`),
+        );
+
+        if (IS_FIXED_POS) {
+            utils.addFixedPosContainerToPage(buttonContainer, { top: "50px", left: "650px" });
+        }
+        else {
+            const ticketIdElement = document.querySelector(contrainerLocSelectorStr);
+            utils.addContainerNextToElement1(buttonContainer, ticketIdElement);
+        }
+    }
 })();
 
-function safeQuerySelector(selector) {
-    try {
-        return document.querySelector(selector);
-    } catch (error) {
-        console.error('Error in querySelector:', error);
-        return null;
-    }
-}
-
-function copyHypertext(text, url, leftPart = '', rightPart = '') {
-    // Create a new anchor element
-    const hyperlinkElem = document.createElement('a');
-    hyperlinkElem.textContent = text;
-    hyperlinkElem.href = url;
-
-    // 创建一个新的span元素,用于包裹超链接和括号
-    const tempContainerElem = document.createElement('span');
-    tempContainerElem.appendChild(document.createTextNode(leftPart));
-    tempContainerElem.appendChild(hyperlinkElem);
-    tempContainerElem.appendChild(document.createTextNode(rightPart));
-
-    // 临时将span元素插入到页面中(隐藏不可见), 这样才能选中并复制
-    tempContainerElem.style.position = 'absolute';
-    tempContainerElem.style.left = '-9999px';
-    document.body.appendChild(tempContainerElem);
-
-    // 选择临时元素并复制
-    const range = document.createRange();
-    range.selectNode(tempContainerElem);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.execCommand('copy');
-    selection.removeAllRanges();
-
-    // 把临时的元素从页面中移除
-    document.body.removeChild(tempContainerElem);
+function loadExternalScript(url) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            onload: function (response) {
+                try {
+                    // Create a function from the response text
+                    const functionCode = response.responseText;
+                    const module = { exports: {} };
+                    const wrapper = Function('module', 'exports', functionCode);
+                    wrapper(module, module.exports);
+                    resolve(module.exports);
+                } catch (error) {
+                    reject(error);
+                }
+            },
+            onerror: function (error) {
+                reject(error);
+            }
+        });
+    });
 }
 
 function setBtnStyle(btn) {
@@ -153,58 +186,6 @@ function setBtnStyle(btn) {
     btn.style.boxSizing = 'border-box';
 }
 
-function createButtonWithFunc(title, callbackFunc) {
-    const button = document.createElement('button');
-    button.className = 'text-nowrap btn btn-warning btn-sm';
-    setBtnStyle(button);
-    button.innerHTML = title;
-    button.onclick = callbackFunc;
-    return button;
-}
-
-function createButtonCopyText(title, copyText) {
-    return createButtonWithFunc(title, () => {
-        navigator.clipboard.writeText(copyText);
-    });
-}
-
-function createTextNode(text) {
-    return document.createTextNode(text);
-}
-
-function createButtonContainer() {
-    const container = document.createElement('div');
-    container.style.display = 'inline-block';
-    container.style.marginTop = '10px';
-    container.style.marginLeft = '100px';
-    return container;
-}
-
-function createButtonContainerFixedPosition(top, left) {
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.zIndex = '1000';  // Ensure it's above other elements
-    container.style.top = top;
-    container.style.left = left;
-
-    return container;
-}
-
-// function attachFixedContainer(container, top, left) {
-function attachFixedContainer(container, { top, left }) {
-
-    document.body.appendChild(container);
-    container.style.position = 'fixed';
-    container.style.zIndex = '1000';  // Ensure it's above other elements
-    container.style.top = top;
-    container.style.left = left;
-}
-
-function extractId(url) {
-    const match = url.match(/\/browse\/(.+)$/);
-    return match ? match[1] : null;
-}
-
 function setClickToEdit(enabled, contentAreasForDsiable) {
     contentAreasForDsiable.forEach(area => {
         const element = document.querySelector(area.selector);
@@ -214,13 +195,13 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
             } else {
                 // ! disable all except some elements below
                 element.style.pointerEvents = 'none';
-                
+
                 // Enable regular links
                 element.querySelectorAll('a').forEach(link => {
                     link.style.pointerEvents = 'auto';
                     link.style.cursor = 'pointer';
                 });
-                
+
                 // Enable inline card structures (ticket)
                 element.querySelectorAll('[data-inline-card="true"]').forEach(card => {
                     card.style.pointerEvents = 'auto';
@@ -235,7 +216,7 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
                 element.querySelectorAll('[data-testid="mention-with-profilecard-trigger"]').forEach(mention => {
                     mention.style.pointerEvents = 'auto';
                     mention.style.cursor = 'pointer';
-                });                
+                });
             }
         }
     });
@@ -257,54 +238,3 @@ function createEnableEditingBtn(contentAreasForDsiable) {
 
     return enableEditBtn;
 }
-
-function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable) {
-    // old UI
-    // const ticketId = document.getElementById("key-val").childNodes[0].data; 
-    // const summary = document.getElementById("summary-val").childNodes[0].data;
-
-    // setup the disabled editing and the btn to enable it
-    setClickToEdit(false, contentAreasForDsiable);
-    const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable);
-
-    // Remove existing container if any
-    const containerId = 'container_id';
-    const existingContainer = document.getElementById(containerId);
-    if (existingContainer) {
-        existingContainer.remove();
-    }
-
-    const ticket_url = "https://indeed.atlassian.net/browse/" + ticketId;
-
-    const buttonContainer = createButtonContainer();
-    buttonContainer.id = containerId;
-
-    buttonContainer.append(
-        enableEditBtn,
-
-        createTextNode('text: '),
-        createButtonCopyText('ticketId', ticketId),
-        createButtonCopyText('ticket_url', ticket_url),
-        createButtonCopyText('summary', `${summary}`),
-        // createButtonCopyText('ticket: summary', `${ticketId}: ${summary}`),
-
-        createTextNode('\thref: '),
-        createButtonWithFunc('href: ticket', () => copyHypertext(ticketId, ticket_url)),
-        // createButtonWithFunc('href: (ticket)', () => copyHypertext(ticketId, ticket_url, '(', ')')),
-        createButtonWithFunc('href: (ticket) summary', () => copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
-
-        createTextNode('\tmd: '),
-        createButtonCopyText('md: [ticket](ticket_url)', `[${ticketId}](${ticket_url})`),
-    );
-
-    if (IS_FIXED_POS) {
-        // attachFixedContainer(buttonContainer, top = "50px", left = "650px");
-        attachFixedContainer(buttonContainer, { top: "50px", left: "650px" });
-    }
-    else {
-        const ticketIdElement = document.querySelector(contrainerLocSelectorStr);
-        ticketIdElement.parentNode.insertBefore(buttonContainer, ticketIdElement.parentNode.nextSibling);
-    }
-
-}
-
