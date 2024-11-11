@@ -19,8 +19,8 @@ module.exports = class Utils {
         return true;
     }
 
-    // ! 装btn的容器
-    createButtonContainer(document) {
+    // ! 生成装btn的容器
+    createButtonContainer() {
         const container = document.createElement('div');
         container.style.display = 'inline-block';
         container.style.marginTop = '10px';
@@ -71,6 +71,7 @@ module.exports = class Utils {
         return btn;
     }
 
+    // ! 根据text/url生成href
     copyHypertext(text, url, leftPart = '', rightPart = '') {
         // Create a new anchor element
         const hyperlinkElem = document.createElement('a');
@@ -101,7 +102,8 @@ module.exports = class Utils {
         document.body.removeChild(tempContainerElem);
     }
 
-    attachFixedContainer(container, { top, left }) {
+    // ! 把container添加到页面固定位置
+    addFixedPosContainerToPage(container, { top, left }) {
         document.body.appendChild(container);
         container.style.position = 'fixed';
         container.style.zIndex = '1000';  // Ensure it's above other elements
