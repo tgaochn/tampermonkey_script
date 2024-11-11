@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wiki_btn
 // @namespace    wiki_btn
-// @version      0.1.0
+// @version      0.1.1
 // @description  wiki加入相关按钮
 // @author       gtfish
 // @match        https://indeed.atlassian.net/*
@@ -10,6 +10,7 @@
 // @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
+// 0.1.1: 继续提取出外部函数
 // 0.1.0: 使用外部函数的方式实现固定位置的按钮
 // 0.0.1: init, btn with fixed position and internal functions
 
@@ -30,34 +31,10 @@
         return;
     }
 
-    const observeDOM = (function () {
-        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        const eventListenerSupported = window.addEventListener;
-
-        return function (targetNode, onAddCallback, onRemoveCallback) {
-            if (MutationObserver) {
-                // Define a new observer
-                const mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback) {
-                        onAddCallback();
-                    }
-                });
-
-                // Have the observer observe target node for changes in children
-                mutationObserver.observe(targetNode, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (eventListenerSupported) {
-                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
-            }
-        };
-    })();
-
     // Check if the target element exists, if not, add the buttons
     const observeTarget = document.body;
     const targetElementId = "container_id";
-    observeDOM(observeTarget, () => {
+    utils.observeDOM(observeTarget, () => {
         if (!document.getElementById(targetElementId)) {
             main();
         }
