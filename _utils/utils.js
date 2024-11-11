@@ -138,7 +138,7 @@ module.exports = class Utils {
 
     // ! 把container添加到页面某元素旁边
     addContainerNextToElement(container, element) {
-        element.parentNode.insertBefore(container, element.nextSibling);
-        // element.parentNode.insertBefore(container, element.parentNode.nextSibling);
+        // element.parentNode.insertBefore(container, element.nextSibling);
+        element.parentNode.insertBefore(container, element.parentNode.nextSibling);
     }
 };
