@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.0.10
+// @version      0.1.0
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -11,6 +11,7 @@
 // @match        https://app.datadoghq.com/*
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
+// @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
 // 0.1.0: 重构代码, 使用外部函数
