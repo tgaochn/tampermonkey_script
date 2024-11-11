@@ -112,15 +112,28 @@ module.exports = class Utils {
         container.style.left = left;
     }
 
-    observeDOM() {
-        const targetNode = document.body;
-        const config = { childList: true, subtree: true };
+    observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
 
-        const callback = function (mutationsList, observer) {
-            processChanges();
+        return function (targetNode, onAddCallback, onRemoveCallback) {
+            if (MutationObserver) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
+                        onAddCallback();
+                    }
+                });
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
+                });
+            } else if (eventListenerSupported) {
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            }
         };
+    })();
 
-        const observer = new MutationObserver(callback);
-        observer.observe(targetNode, config);
-    }    
 };
