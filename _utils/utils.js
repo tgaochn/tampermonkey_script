@@ -136,9 +136,11 @@ module.exports = class Utils {
         container.style.left = left;
     }
 
-    // ! 把container添加到页面某元素旁边
-    addContainerNextToElement(container, element) {
-        // element.parentNode.insertBefore(container, element.nextSibling);
+    // ! 把container添加到页面某元素旁边, 有两种方式...
+    addContainerNextToElement1(container, element) {
         element.parentNode.insertBefore(container, element.parentNode.nextSibling);
+    }
+    addContainerNextToElement2(container, element) {
+        element.parentNode.insertBefore(container, element.nextSibling);
     }
 };
