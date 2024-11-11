@@ -3,6 +3,30 @@ module.exports = class Utils {
     constructor() {
     }
 
+    observeDOM = (function () {
+        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        const eventListenerSupported = window.addEventListener;
+
+        return function (targetNode, onAddCallback, onRemoveCallback) {
+            if (MutationObserver) {
+                // Define a new observer
+                const mutationObserver = new MutationObserver(function (mutations, observer) {
+                    if (mutations[0].addedNodes.length && onAddCallback) {
+                        onAddCallback();
+                    }
+                });
+
+                // Have the observer observe target node for changes in children
+                mutationObserver.observe(targetNode, {
+                    childList: true,
+                    subtree: true
+                });
+            } else if (eventListenerSupported) {
+                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            }
+        };
+    })();
+
     // ! 额外的pattern判断是否执行脚本
     shouldRunScript(inclusionPatterns, exclusionPatterns, url) {
         // Check if the URL matches any inclusion pattern
@@ -112,28 +136,9 @@ module.exports = class Utils {
         container.style.left = left;
     }
 
-    observeDOM = (function () {
-        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        const eventListenerSupported = window.addEventListener;
-
-        return function (targetNode, onAddCallback, onRemoveCallback) {
-            if (MutationObserver) {
-                // Define a new observer
-                const mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback) {
-                        onAddCallback();
-                    }
-                });
-
-                // Have the observer observe target node for changes in children
-                mutationObserver.observe(targetNode, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (eventListenerSupported) {
-                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
-            }
-        };
-    })();
-
+    // ! 把container添加到页面某元素旁边
+    addContainerNextToElement(container, element) {
+        element.parentNode.insertBefore(container, element.nextSibling);
+        // element.parentNode.insertBefore(container, element.parentNode.nextSibling);
+    }
 };
