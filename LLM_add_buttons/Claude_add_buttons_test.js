@@ -7,6 +7,7 @@
 // @match       https://claude.ai/*
 // @grant       none
 // @license     GPL
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/explore_require_utils/_utils/utils1.js
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
@@ -26,35 +27,63 @@
 
 (function () {
     'use strict';
+    // Wait for utils to load
+    function waitForUtils(timeout = 10000) {
+        const requiredFunctions = [
+            'createButtonContainerFromJson',
+            'createButton',
+            'observeDOM'
+        ];
 
-    const observeDOM = (function () {
-        const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        const eventListenerSupported = window.addEventListener;
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
 
-        return function (targetNode, onAddCallback, onRemoveCallback) {
-            if (MutationObserver) {
-                // Define a new observer
-                const mutationObserver = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length && onAddCallback) {
-                        onAddCallback();
-                    }
-                });
-
-                // Have the observer observe target node for changes in children
-                mutationObserver.observe(targetNode, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (eventListenerSupported) {
-                targetNode.addEventListener('DOMNodeInserted', onAddCallback, { once: true });
+            function checkUtils() {
+                if (window.utils && requiredFunctions.every(func => typeof window.utils[func] === 'function')) {
+                    resolve(window.utils);
+                } else if (Date.now() - startTime >= timeout) {
+                    const missingFunctions = requiredFunctions.filter(func =>
+                        !window.utils || typeof window.utils[func] !== 'function'
+                    );
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                } else {
+                    setTimeout(checkUtils, 100);
+                }
             }
-        };
-    })();
+
+            checkUtils();
+        });
+    }
+
+    async function main() {
+        try {
+            const utils = await waitForUtils();
+            const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
+            // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
+            const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
+            const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+
+            btnContainer.style.display = 'flex';
+            btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
+            // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
+
+            const btnSubContainer1 = utils.createButtonContainerFromJson(myPromptJson1);
+            const btnSubContainer2 = utils.createButtonContainerFromJson(myPromptJson2);
+            const btnSubContainer3 = utils.createButtonContainerFromJson(myPromptJson3);
+            btnSubContainer1.id = "container_id";
+
+            btnContainer.appendChild(btnSubContainer1);
+            btnContainer.appendChild(btnSubContainer2);
+            btnContainer.appendChild(btnSubContainer3);
+        } catch (error) {
+            console.error('Failed to initialize:', error);
+        }
+    }
 
     // Check if the target element exists, if not, add the buttons
     const observeTarget = document.body;
     const targetElementId = "container_id";
-    observeDOM(observeTarget, () => {
+    utils.observeDOM(observeTarget, () => {
         if (!document.getElementById(targetElementId)) {
             main();
         }
@@ -108,7 +137,7 @@ const myPromptJson2 = {
 1. The text will be used in discussion on slack btw colleagues.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
-// 3. The revised text should be simple and easy to understand.\n
+        // 3. The revised text should be simple and easy to understand.\n
     },
     "explain_translate": {
         "btnNm": "日常-解释翻译",
@@ -268,113 +297,3 @@ Give me a detailed response following these backgrounds and instructions:\n
     //     }
 
 };
-
-function main() {
-    const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
-    // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
-    const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
-    const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
-
-    btnContainer.style.display = 'flex';
-    btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
-    // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
-
-    const btnSubContainer1 = createButtonContainerFromJson(myPromptJson1);
-    const btnSubContainer2 = createButtonContainerFromJson(myPromptJson2);
-    const btnSubContainer3 = createButtonContainerFromJson(myPromptJson3);
-    btnSubContainer1.id = "container_id";
-
-    btnContainer.appendChild(btnSubContainer1);
-    btnContainer.appendChild(btnSubContainer2);
-    btnContainer.appendChild(btnSubContainer3);
-}
-
-// ! function to create button/container/selection
-function setBtnStyle(btn) {
-    btn.style.backgroundColor = '#009688';
-    btn.style.color = 'white';
-    btn.style.padding = '5px 5px';
-    btn.style.fontSize = '14px';
-    btn.style.border = '1px solid #ccc';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.outline = 'none';
-    btn.style.boxSizing = 'border-box';
-}
-
-// claude need <p></p> tags to format the long string into multiple lines
-function claudeLongStringProcessor(longString) {
-    let lines = longString.split('\n');
-    let formattedLines = lines.map(line => `<p>${line}</p>`);
-    let formattedString = formattedLines.join('');
-
-    return formattedString;
-}
-
-function sendEnterKey(element) {
-    const enterKeyEvent = new KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13
-    });
-    element.focus();
-    element.dispatchEvent(enterKeyEvent);
-}
-
-function createButton(promptJson, promptKey) {
-    const inputBoxSelector = "div[enterkeyhint='enter']";
-    const button = document.createElement('button');
-    setBtnStyle(button);
-    button.innerHTML = promptJson[promptKey].btnNm;
-    button.onclick = () => {
-        const input = document.querySelector(inputBoxSelector);
-        const inputNewCont = promptJson[promptKey].prompt;
-        if (input && input instanceof HTMLElement) {
-            input.innerHTML = claudeLongStringProcessor(inputNewCont);
-            setSelection(input);
-        }
-
-        // send enter key to submit response after 1 second if specified
-        if (promptJson[promptKey].sendOutPrompt) {
-            setTimeout(() => {
-                sendEnterKey(input);
-            }, 1000);
-        }
-
-    };
-
-    return button;
-}
-
-function setSelection(input) {
-    const range = document.createRange();
-    range.selectNodeContents(input);
-    range.collapse(false);
-    const sel = window.getSelection();
-    if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-}
-
-function createButtonContainer() {
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'inline-block';
-    buttonContainer.style.justifyContent = 'center';
-    buttonContainer.style.marginTop = '10px';
-    // buttonContainer.style.marginBottom = '10px';
-    buttonContainer.style.marginLeft = '10px';
-
-    return buttonContainer;
-}
-
-function createButtonContainerFromJson(prompts) {
-    const buttonContainer = createButtonContainer();
-    for (const promptKey in prompts) {
-        buttonContainer.append(createButton(prompts, promptKey));
-    }
-    return buttonContainer;
-}
