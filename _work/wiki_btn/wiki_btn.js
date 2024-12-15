@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         wiki_btn
 // @namespace    wiki_btn
-// @version      0.1.3
+// @version      0.2.0
 // @description  wiki加入相关按钮
 // @author       gtfish
 // @match        https://indeed.atlassian.net/wiki/*
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/wiki_btn/wiki_btn.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/wiki_btn/wiki_btn.js
-// @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
 // 0.1.3: update matched url
@@ -19,28 +19,75 @@
 (async function () {
     'use strict';
 
-    // !! Load the external functions
-    const UtilsClass = await loadExternalScript('https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js');
-    const utils = new UtilsClass();
-
     const inclusionPatterns = [
     ];
 
     const exclusionPatterns = [
     ];
 
-    if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
-        return;
+    // Wait for utils to load
+    function waitForUtils(timeout = 10000) {
+        console.log('Starting to wait for utils...');
+        const requiredFunctions = [
+            'observeDOM',
+            'shouldRunScript',
+            'createTextNode',
+            'createButtonCopyText',
+            'addContainerNextToElement2',
+        ];
+
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+
+            function checkUtils() {
+                console.log('Checking utils:', window.utils);
+                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+
+                if (window.utils && requiredFunctions.every(func => {
+                    const hasFunc = typeof window.utils[func] === 'function';
+                    console.log(`Checking function ${func}:`, hasFunc);
+                    return hasFunc;
+                })) {
+                    console.log('All required functions found');
+                    resolve(window.utils);
+                } else if (Date.now() - startTime >= timeout) {
+                    const missingFunctions = requiredFunctions.filter(func =>
+                        !window.utils || typeof window.utils[func] !== 'function'
+                    );
+                    console.log('Timeout reached. Missing functions:', missingFunctions);
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                } else {
+                    console.log('Not all functions available yet, checking again in 100ms');
+                    setTimeout(checkUtils, 100);
+                }
+            }
+
+            checkUtils();
+        });
     }
 
-    // Check if the target element exists, if not, add the buttons
-    const observeTarget = document.body;
-    const targetElementId = "container_id";
-    utils.observeDOM(observeTarget, () => {
-        if (!document.getElementById(targetElementId)) {
-            main();
+    async function initScript() {
+        try {
+            const utils = await waitForUtils();
+
+            if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
+                return;
+            }
+
+            const observeTarget = document.body;
+            const targetElementId = "container_id";
+
+            // Check if the target element exists, if not, add the buttons
+            utils.observeDOM(observeTarget, () => {
+                if (!document.getElementById(targetElementId)) {
+                    main(utils);
+                }
+            });
+
+        } catch (error) {
+            console.error('Failed to initialize:', error);
         }
-    });
+    }
 
     async function main() {
         // ! add button in the container and define click func
@@ -59,7 +106,7 @@
             utils.createButtonCopyText('url', curURL),
 
             utils.createTextNode('\thref: '),
-            utils.createButton('href: "wiki"', () => utils.copyHypertext('wiki', curURL)),
+            utils.createButtonFromCallback('href: "wiki"', () => utils.copyHypertext('wiki', curURL)),
 
             utils.createTextNode('\tmd: '),
             utils.createButtonCopyText('md: ["wiki"](url)', `[wiki](${curURL})`),
@@ -69,28 +116,6 @@
         // ! add container to the page
         utils.addContainerNextToElement2(btnContainer, createBtnElement);
     }
-})();
 
-function loadExternalScript(url) {
-    return new Promise((resolve, reject) => {
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            onload: function (response) {
-                try {
-                    // Create a function from the response text
-                    const functionCode = response.responseText;
-                    const module = { exports: {} };
-                    const wrapper = Function('module', 'exports', functionCode);
-                    wrapper(module, module.exports);
-                    resolve(module.exports);
-                } catch (error) {
-                    reject(error);
-                }
-            },
-            onerror: function (error) {
-                reject(error);
-            }
-        });
-    });
-}
+    initScript();
+})();

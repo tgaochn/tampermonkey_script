@@ -242,7 +242,6 @@ Give me a detailed response following these backgrounds and instructions:\n
         console.log('Starting to wait for utils...');
         const requiredFunctions = [
             'createButtonContainerFromJson',
-            'createButton',
             'observeDOM'
         ];
 
@@ -276,6 +275,24 @@ Give me a detailed response following these backgrounds and instructions:\n
         });
     }
 
+    async function initScript() {
+        try {
+            const utils = await waitForUtils();
+
+            const observeTarget = document.body;
+            const targetElementId = "container_id";
+
+            utils.observeDOM(observeTarget, () => {
+                if (!document.getElementById(targetElementId)) {
+                    main(utils);
+                }
+            });
+
+        } catch (error) {
+            console.error('Failed to initialize:', error);
+        }
+    }
+
     async function main(utils) {
         // const utils = await waitForUtils();
         const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
@@ -295,24 +312,6 @@ Give me a detailed response following these backgrounds and instructions:\n
         btnContainer.appendChild(btnSubContainer1);
         btnContainer.appendChild(btnSubContainer2);
         btnContainer.appendChild(btnSubContainer3);
-    }
-
-    async function initScript() {
-        try {
-            const utils = await waitForUtils();
-
-            const observeTarget = document.body;
-            const targetElementId = "container_id";
-
-            utils.observeDOM(observeTarget, () => {
-                if (!document.getElementById(targetElementId)) {
-                    main(utils);
-                }
-            });
-
-        } catch (error) {
-            console.error('Failed to initialize:', error);
-        }
     }
 
     // Start the script

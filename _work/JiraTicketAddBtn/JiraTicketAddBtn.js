@@ -5,9 +5,9 @@
 // @version      0.8.0
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
-// @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
 // 0.8.0: 重构代码, 提取函数
