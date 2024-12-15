@@ -27,7 +27,8 @@
 
 (function () {
     'use strict';
-    // Wait for utils to load
+
+    // Wait for btnUtils to load
     function waitForUtils(timeout = 10000) {
         const requiredFunctions = [
             'createButtonContainerFromJson',
@@ -39,13 +40,13 @@
             const startTime = Date.now();
 
             function checkUtils() {
-                if (window.utils && requiredFunctions.every(func => typeof window.utils[func] === 'function')) {
-                    resolve(window.utils);
+                if (window.btnUtils && requiredFunctions.every(func => typeof window.btnUtils[func] === 'function')) {
+                    resolve(window.btnUtils);
                 } else if (Date.now() - startTime >= timeout) {
-                    const missingFunctions = requiredFunctions.filter(func =>
-                        !window.utils || typeof window.utils[func] !== 'function'
+                    const missingFunctions = requiredFunctions.filter(func => 
+                        !window.btnUtils || typeof window.btnUtils[func] !== 'function'
                     );
-                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                    reject(new Error(`Timeout waiting for btnUtils. Missing functions: ${missingFunctions.join(', ')}`));
                 } else {
                     setTimeout(checkUtils, 100);
                 }
@@ -55,39 +56,48 @@
         });
     }
 
-    async function main() {
+    async function main(btnUtils) {
+        const btnUtils = await waitForUtils();
+        const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
+        // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
+        const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
+        const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+
+        btnContainer.style.display = 'flex';
+        btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
+        // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
+
+        const btnSubContainer1 = btnUtils.createButtonContainerFromJson(myPromptJson1);
+        const btnSubContainer2 = btnUtils.createButtonContainerFromJson(myPromptJson2);
+        const btnSubContainer3 = btnUtils.createButtonContainerFromJson(myPromptJson3);
+        btnSubContainer1.id = "container_id";
+
+        btnContainer.appendChild(btnSubContainer1);
+        btnContainer.appendChild(btnSubContainer2);
+        btnContainer.appendChild(btnSubContainer3);
+    }
+
+    async function initScript() {
         try {
-            const utils = await waitForUtils();
-            const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
-            // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
-            const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
-            const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+            const btnUtils = await waitForUtils();
+            
+            const observeTarget = document.body;
+            const targetElementId = "container_id";
+            
+            btnUtils.observeDOM(observeTarget, () => {
+                if (!document.getElementById(targetElementId)) {
+                    main(btnUtils);
+                }
+            });
 
-            btnContainer.style.display = 'flex';
-            btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
-            // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
-
-            const btnSubContainer1 = utils.createButtonContainerFromJson(myPromptJson1);
-            const btnSubContainer2 = utils.createButtonContainerFromJson(myPromptJson2);
-            const btnSubContainer3 = utils.createButtonContainerFromJson(myPromptJson3);
-            btnSubContainer1.id = "container_id";
-
-            btnContainer.appendChild(btnSubContainer1);
-            btnContainer.appendChild(btnSubContainer2);
-            btnContainer.appendChild(btnSubContainer3);
         } catch (error) {
             console.error('Failed to initialize:', error);
         }
     }
 
-    // Check if the target element exists, if not, add the buttons
-    const observeTarget = document.body;
-    const targetElementId = "container_id";
-    utils.observeDOM(observeTarget, () => {
-        if (!document.getElementById(targetElementId)) {
-            main();
-        }
-    });
+    // Start the script
+    initScript();
+
 })();
 
 // ! define all the prompt
