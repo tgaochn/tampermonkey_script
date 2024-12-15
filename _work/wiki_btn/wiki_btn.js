@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wiki_btn
 // @namespace    wiki_btn
-// @version      0.2.0
+// @version      0.3.0
 // @description  wiki加入相关按钮
 // @author       gtfish
 // @match        https://indeed.atlassian.net/wiki/*
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/wiki_btn/wiki_btn.js
 
 // ==/UserScript==
+// 0.3.0: use @require to load external script
 // 0.1.3: update matched url
 // 0.1.2: 重构代码, btn位置不固定
 // 0.1.1: 继续提取出外部函数
