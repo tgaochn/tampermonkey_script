@@ -3,9 +3,9 @@
     'use strict';
 
     // At the start of utils1.js
-    console.log('Utils script loaded');
-
+    console.log('Utils script starting to load');
     const btnUtils = {};
+    console.log('btnUtils object created');
 
     /* !! -------------------------------------------------------------------------- */
     /*                     !! Internal functions - not exposed                       */
@@ -67,6 +67,8 @@
     /* !! -------------------------------------------------------------------------- */
 
     btnUtils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
+        console.log('observeDOM function added to btnUtils');
+
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         const eventListenerSupported = window.addEventListener;
 
@@ -87,6 +89,8 @@
     };
 
     btnUtils.createButton = function (prompts, promptKey) {
+        console.log('createButton function added to btnUtils');
+        
         const inputBoxSelector = "div[enterkeyhint='enter']";
         const button = document.createElement('button');
         setBtnStyle(button);
@@ -109,6 +113,8 @@
     };
 
     btnUtils.createButtonContainerFromJson = function (prompts) {
+        console.log('createButtonContainerFromJson function added to btnUtils');
+
         const buttonContainer = createButtonContainer();
         for (const promptKey in prompts) {
             buttonContainer.append(btnUtils.createButton(prompts, promptKey));
@@ -117,4 +123,6 @@
     };
 
     window.btnUtils = btnUtils;
+    console.log('createButtonContainerFromJson function added to btnUtils');
+
 })(window);
