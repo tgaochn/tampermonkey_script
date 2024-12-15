@@ -1,11 +1,11 @@
-// utils.js
+// btnUtils.js
 (function (window) {
     'use strict';
 
     // At the start of utils1.js
     console.log('Utils script starting to load');
-    const utils = {};
-    console.log('utils object created');
+    const btnUtils = {};
+    console.log('btnUtils object created');
 
     /* !! -------------------------------------------------------------------------- */
     /*                     !! Internal functions - not exposed                       */
@@ -66,8 +66,8 @@
     /*                            !! Exposed functions                               */
     /* !! -------------------------------------------------------------------------- */
 
-    utils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
-        console.log('observeDOM function added to utils');
+    btnUtils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
+        console.log('observeDOM function added to btnUtils');
 
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         const eventListenerSupported = window.addEventListener;
@@ -88,8 +88,8 @@
         }
     };
 
-    utils.createButton = function (prompts, promptKey) {
-        console.log('createButton function added to utils');
+    btnUtils.createButton = function (prompts, promptKey) {
+        console.log('createButton function added to btnUtils');
         
         const inputBoxSelector = "div[enterkeyhint='enter']";
         const button = document.createElement('button');
@@ -112,17 +112,17 @@
         return button;
     };
 
-    utils.createButtonContainerFromJson = function (prompts) {
-        console.log('createButtonContainerFromJson function added to utils');
+    btnUtils.createButtonContainerFromJson = function (prompts) {
+        console.log('createButtonContainerFromJson function added to btnUtils');
 
         const buttonContainer = createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(utils.createButton(prompts, promptKey));
+            buttonContainer.append(btnUtils.createButton(prompts, promptKey));
         }
         return buttonContainer;
     };
 
-    window.utils = utils;
-    console.log('createButtonContainerFromJson function added to utils');
+    window.btnUtils = btnUtils;
+    console.log('createButtonContainerFromJson function added to btnUtils');
 
 })(window);

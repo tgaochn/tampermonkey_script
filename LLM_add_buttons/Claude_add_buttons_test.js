@@ -236,7 +236,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 
     };
 
-    // Wait for utils to load
+    // Wait for btnUtils to load
     function waitForUtils(timeout = 10000) {
         console.log('Starting to wait for utils...');
         const requiredFunctions = [
@@ -249,22 +249,22 @@ Give me a detailed response following these backgrounds and instructions:\n
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log('Checking utils:', window.utils);
-                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+                console.log('Checking btnUtils:', window.btnUtils);
+                console.log('Available functions:', window.btnUtils ? Object.keys(window.btnUtils) : 'none');
 
-                if (window.utils && requiredFunctions.every(func => {
-                    const hasFunc = typeof window.utils[func] === 'function';
+                if (window.btnUtils && requiredFunctions.every(func => {
+                    const hasFunc = typeof window.btnUtils[func] === 'function';
                     console.log(`Checking function ${func}:`, hasFunc);
                     return hasFunc;
                 })) {
                     console.log('All required functions found');
-                    resolve(window.utils);
+                    resolve(window.btnUtils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(func =>
-                        !window.utils || typeof window.utils[func] !== 'function'
+                        !window.btnUtils || typeof window.btnUtils[func] !== 'function'
                     );
                     console.log('Timeout reached. Missing functions:', missingFunctions);
-                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                    reject(new Error(`Timeout waiting for btnUtils. Missing functions: ${missingFunctions.join(', ')}`));
                 } else {
                     console.log('Not all functions available yet, checking again in 100ms');
                     setTimeout(checkUtils, 100);
@@ -275,8 +275,8 @@ Give me a detailed response following these backgrounds and instructions:\n
         });
     }
 
-    async function main(utils) {
-        // const utils = await waitForUtils();
+    async function main(btnUtils) {
+        // const btnUtils = await waitForUtils();
         const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
         // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
         const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
@@ -286,9 +286,9 @@ Give me a detailed response following these backgrounds and instructions:\n
         btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
         // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-        const btnSubContainer1 = utils.createButtonContainerFromJson(myPromptJson1);
-        const btnSubContainer2 = utils.createButtonContainerFromJson(myPromptJson2);
-        const btnSubContainer3 = utils.createButtonContainerFromJson(myPromptJson3);
+        const btnSubContainer1 = btnUtils.createButtonContainerFromJson(myPromptJson1);
+        const btnSubContainer2 = btnUtils.createButtonContainerFromJson(myPromptJson2);
+        const btnSubContainer3 = btnUtils.createButtonContainerFromJson(myPromptJson3);
         btnSubContainer1.id = "container_id";
 
         btnContainer.appendChild(btnSubContainer1);
@@ -298,14 +298,14 @@ Give me a detailed response following these backgrounds and instructions:\n
 
     async function initScript() {
         try {
-            const utils = await waitForUtils();
+            const btnUtils = await waitForUtils();
 
             const observeTarget = document.body;
             const targetElementId = "container_id";
 
-            utils.observeDOM(observeTarget, () => {
+            btnUtils.observeDOM(observeTarget, () => {
                 if (!document.getElementById(targetElementId)) {
-                    main(utils);
+                    main(btnUtils);
                 }
             });
 
