@@ -7,7 +7,7 @@
 // @match       https://claude.ai/*
 // @grant       none
 // @license     GPL
-// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/explore_require_utils/_utils/utils1.js
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils1.js
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
@@ -28,7 +28,7 @@
 (function () {
     'use strict';
 
-    // Wait for btnUtils to load
+    // Wait for utils to load
     function waitForUtils(timeout = 10000) {
         const requiredFunctions = [
             'createButtonContainerFromJson',
@@ -40,13 +40,13 @@
             const startTime = Date.now();
 
             function checkUtils() {
-                if (window.btnUtils && requiredFunctions.every(func => typeof window.btnUtils[func] === 'function')) {
-                    resolve(window.btnUtils);
+                if (window.utils && requiredFunctions.every(func => typeof window.utils[func] === 'function')) {
+                    resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(func => 
-                        !window.btnUtils || typeof window.btnUtils[func] !== 'function'
+                        !window.utils || typeof window.utils[func] !== 'function'
                     );
-                    reject(new Error(`Timeout waiting for btnUtils. Missing functions: ${missingFunctions.join(', ')}`));
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
                 } else {
                     setTimeout(checkUtils, 100);
                 }
@@ -56,8 +56,8 @@
         });
     }
 
-    async function main(btnUtils) {
-        // const btnUtils = await waitForUtils();
+    async function main(utils) {
+        // const utils = await waitForUtils();
         const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
         // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
         const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
@@ -67,9 +67,9 @@
         btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
         // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-        const btnSubContainer1 = btnUtils.createButtonContainerFromJson(myPromptJson1);
-        const btnSubContainer2 = btnUtils.createButtonContainerFromJson(myPromptJson2);
-        const btnSubContainer3 = btnUtils.createButtonContainerFromJson(myPromptJson3);
+        const btnSubContainer1 = utils.createButtonContainerFromJson(myPromptJson1);
+        const btnSubContainer2 = utils.createButtonContainerFromJson(myPromptJson2);
+        const btnSubContainer3 = utils.createButtonContainerFromJson(myPromptJson3);
         btnSubContainer1.id = "container_id";
 
         btnContainer.appendChild(btnSubContainer1);
@@ -79,14 +79,14 @@
 
     async function initScript() {
         try {
-            const btnUtils = await waitForUtils();
+            const utils = await waitForUtils();
             
             const observeTarget = document.body;
             const targetElementId = "container_id";
             
-            btnUtils.observeDOM(observeTarget, () => {
+            utils.observeDOM(observeTarget, () => {
                 if (!document.getElementById(targetElementId)) {
-                    main(btnUtils);
+                    main(utils);
                 }
             });
 
