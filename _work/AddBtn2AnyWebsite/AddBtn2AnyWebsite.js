@@ -9,7 +9,6 @@
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
-// @match        https://indeed.atlassian.net/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
@@ -26,6 +25,9 @@
 // 0.0.4: specify enabled sites for butterfly
 // 0.0.2: adjust the btn position
 // 0.0.1: init
+
+// wiki page for debugging
+// @match        https://indeed.atlassian.net/*
 
 (async function () {
     'use strict';
@@ -133,25 +135,13 @@
             // 按钮: copy url
             utils.createButtonCopyText('url', curURL),
 
-            // utils.createButtonFromCallback('url', async () => {
-            //     navigator.clipboard.writeText(curURL);
-            //     // navigator.clipboard.writeText(curHost);
-            // }),
-
             // 按钮: copy 超链接
             utils.createTextNode('\thref: '),
             utils.createButtonCopyHypertext(`href: ${pageTitle}`, pageTitle, curURL),
-            // utils.createButtonFromCallback(`href: ${pageTitle}`, async () => {
-            //     utils.copyHypertext(pageTitle, curURL);
-            // }),
-
 
             // 按钮: copy md 形式的链接
             utils.createTextNode('\tmd: '),
             utils.createButtonCopyText(`md: [${pageTitle}](url)`, `[${pageTitle}](${curURL})`),
-            // utils.createButtonFromCallback(`md: [${pageTitle}](url)`, async () => {
-            //     navigator.clipboard.writeText(`[${pageTitle}](${curURL})`);
-            // }),
 
             // 按钮: 打开 link
             // utils.createTextNode('\tlink: '),
