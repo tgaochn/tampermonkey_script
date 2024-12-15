@@ -1,4 +1,3 @@
-// btnUtils.js
 (function (window) {
     'use strict';
 
