@@ -57,7 +57,7 @@
     }
 
     async function main(btnUtils) {
-        const btnUtils = await waitForUtils();
+        // const btnUtils = await waitForUtils();
         const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
         // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
         const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框

@@ -2,6 +2,9 @@
 (function (window) {
     'use strict';
 
+    // At the start of utils1.js
+    console.log('Utils script loaded');
+
     const btnUtils = {};
 
     /* !! -------------------------------------------------------------------------- */
