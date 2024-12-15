@@ -207,7 +207,10 @@
         return "link";
     };
 
-    // !! Expose
+    /* !! -------------------------------------------------------------------------- */
+    /*                            !! Expose all the functions and log                */
+    /* !! -------------------------------------------------------------------------- */
+
     window.utils = utils;
     console.log('createButtonContainerFromJson function added to utils');
 
