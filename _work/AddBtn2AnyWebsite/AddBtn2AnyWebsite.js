@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.1.1
+// @version      0.2.0
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -9,11 +9,13 @@
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
+// @match        https://indeed.atlassian.net/*
+// @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
-// @grant        GM_xmlhttpRequest
 
 // ==/UserScript==
+// 0.2.0: use @require to load external script
 // 0.1.1: bug fixed
 // 0.1.0: 重构代码, 使用外部函数
 // 0.0.9: aligned with the new version of jira 
@@ -27,8 +29,6 @@
 
 (async function () {
     'use strict';
-    const UtilsClass = await loadExternalScript('https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js');
-    const utils = new UtilsClass();
 
     const inclusionPatterns = [
     ];
@@ -37,10 +37,6 @@
         /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
         /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
-
-    if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
-        return;
-    }
 
     const url2title = [
         // google for testing
@@ -53,19 +49,71 @@
         { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
+        { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
 
     ];
 
-    // Check if the target element exists, if not, add the buttons
-    const observeTarget = document.body;
-    const targetElementId = "container_id";
-    utils.observeDOM(observeTarget, () => {
-        if (!document.getElementById(targetElementId)) {
-            main(url2title);
-        }
-    });
+    // Wait for utils to load
+    function waitForUtils(timeout = 10000) {
+        console.log('Starting to wait for utils...');
+        const requiredFunctions = [
+            'observeDOM',
+        ];
 
-    async function main() {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+
+            function checkUtils() {
+                console.log('Checking utils:', window.utils);
+                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+
+                if (window.utils && requiredFunctions.every(func => {
+                    const hasFunc = typeof window.utils[func] === 'function';
+                    console.log(`Checking function ${func}:`, hasFunc);
+                    return hasFunc;
+                })) {
+                    console.log('All required functions found');
+                    resolve(window.utils);
+                } else if (Date.now() - startTime >= timeout) {
+                    const missingFunctions = requiredFunctions.filter(func =>
+                        !window.utils || typeof window.utils[func] !== 'function'
+                    );
+                    console.log('Timeout reached. Missing functions:', missingFunctions);
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                } else {
+                    console.log('Not all functions available yet, checking again in 100ms');
+                    setTimeout(checkUtils, 100);
+                }
+            }
+
+            checkUtils();
+        });
+    }
+
+    async function initScript() {
+        try {
+            const utils = await waitForUtils();
+
+            if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
+                return;
+            }
+
+            const observeTarget = document.body;
+            const targetElementId = "container_id";
+
+            // Check if the target element exists, if not, add the buttons
+            utils.observeDOM(observeTarget, () => {
+                if (!document.getElementById(targetElementId)) {
+                    main(utils);
+                }
+            });
+
+        } catch (error) {
+            console.error('Failed to initialize:', error);
+        }
+    }
+
+    async function main(utils) {
         const btnContainer = utils.createButtonContainer();
         const btnSubContainer1 = utils.createButtonContainer();
         // const btnSubContainer2 = utils.createButtonContainer();
@@ -76,60 +124,42 @@
         btnContainer.style.display = 'flex';
         btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
         // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
-    
+
         const curURL = window.location.href;
         const pageTitle = utils.findBestMatch(curURL, url2title);
-    
+
         // ! add buttons in the containers
         btnSubContainer1.append(
             // 按钮: copy url
-            utils.createButton('url', async () => {
-                navigator.clipboard.writeText(curURL);
-                // navigator.clipboard.writeText(curHost);
-            }),
-    
+            utils.createButtonCopyText('url', curURL),
+
+            // utils.createButtonFromCallback('url', async () => {
+            //     navigator.clipboard.writeText(curURL);
+            //     // navigator.clipboard.writeText(curHost);
+            // }),
+
             // 按钮: copy 超链接
             utils.createTextNode('\thref: '),
-            utils.createButton(`href: ${pageTitle}`, async () => {
-                utils.copyHypertext(pageTitle, curURL);
-            }),
-    
-    
+            utils.createButtonCopyHypertext(`href: ${pageTitle}`, pageTitle, curURL),
+            // utils.createButtonFromCallback(`href: ${pageTitle}`, async () => {
+            //     utils.copyHypertext(pageTitle, curURL);
+            // }),
+
+
             // 按钮: copy md 形式的链接
             utils.createTextNode('\tmd: '),
-            utils.createButton(`md: [${pageTitle}](url)`, async () => {
-                navigator.clipboard.writeText(`[${pageTitle}](${curURL})`);
-            }),
-    
+            utils.createButtonCopyText(`md: [${pageTitle}](url)`, `[${pageTitle}](${curURL})`),
+            // utils.createButtonFromCallback(`md: [${pageTitle}](url)`, async () => {
+            //     navigator.clipboard.writeText(`[${pageTitle}](${curURL})`);
+            // }),
+
             // 按钮: 打开 link
             // utils.createTextNode('\tlink: '),
             // utils.createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
         );
-    
-        utils.addFixedPosContainerToPage(btnContainer, { top: "-10px", left: "1200px" });
-    }    
-})();
 
-function loadExternalScript(url) {
-    return new Promise((resolve, reject) => {
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            onload: function (response) {
-                try {
-                    // Create a function from the response text
-                    const functionCode = response.responseText;
-                    const module = { exports: {} };
-                    const wrapper = Function('module', 'exports', functionCode);
-                    wrapper(module, module.exports);
-                    resolve(module.exports);
-                } catch (error) {
-                    reject(error);
-                }
-            },
-            onerror: function (error) {
-                reject(error);
-            }
-        });
-    });
-}
+        utils.addFixedPosContainerToPage(btnContainer, { top: "-10px", left: "1200px" });
+    }
+
+    initScript();
+})();

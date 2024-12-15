@@ -119,26 +119,32 @@
         return true;
     };    
 
-    utils.createButtonFromCallback = function(text, callbackFunc) {
+    utils.createButtonFromCallback = function(btnText, callbackFunc) {
         var button = document.createElement('button');
         button = setBtnStyle(button);
-        button.innerHTML = text;
+        button.innerHTML = btnText;
         button.onclick = callbackFunc;
         return button;
     };    
 
-    utils.createTextNode = function(text) {
-        return document.createTextNode(text);
+    utils.createTextNode = function(btnText) {
+        return document.createTextNode(btnText);
     };
 
-    utils.createButtonCopyText = function(text, copyText) {
-        return this.createButtonFromCallback(text, () => {
+    utils.createButtonCopyText = function(btnText, copyText) {
+        return this.createButtonFromCallback(btnText, () => {
             navigator.clipboard.writeText(copyText);
         });
     };
 
-    utils.createButtonOpenUrl = function(text, targetUrl) {
-        return this.createButtonFromCallback(text, () => {
+    utils.createButtonCopyHypertext = function(btnText, pageTitle, curURL) {
+        return this.createButtonFromCallback(btnText, () => {
+            this.copyHypertext(pageTitle, curURL);
+        });
+    };
+
+    utils.createButtonOpenUrl = function(btnText, targetUrl) {
+        return this.createButtonFromCallback(btnText, () => {
             window.open(targetUrl);
         });
     };
