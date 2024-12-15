@@ -19,6 +19,8 @@
         btn.style.cursor = 'pointer';
         btn.style.outline = 'none';
         btn.style.boxSizing = 'border-box';
+
+        return btn;
     }
 
     function createButtonContainer() {

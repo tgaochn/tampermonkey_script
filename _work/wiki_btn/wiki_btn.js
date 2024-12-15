@@ -89,7 +89,7 @@
         }
     }
 
-    async function main() {
+    async function main(utils) {
         // ! add button in the container and define click func
         const pageTitleElementSelectorStr = '[data-testid="title-text"] > span';
         const pageTitleElement = document.querySelector(pageTitleElementSelectorStr);
