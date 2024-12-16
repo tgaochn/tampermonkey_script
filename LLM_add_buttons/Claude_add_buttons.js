@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons 
 // @namespace   https://claude.ai/
-// @version     0.6.0
+// @version     0.6.1
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,6 +11,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// Claude_Add_Buttons 0.6.1: 更新selector
 // Claude_Add_Buttons 0.6.0: use utils from external script
 // Claude_Add_Buttons 0.5.9: bug fixed which caused the buttons not showing up on Claude homepage
 // Claude_Add_Buttons 0.5.8: 改进prompt
@@ -294,10 +295,9 @@ Give me a detailed response following these backgrounds and instructions:\n
     }
 
     async function main(utils) {
-        // const utils = await waitForUtils();
-        const btnContainerSelector1 = "div[class='sticky bottom-0 mx-auto w-full pt-6']"; // 已进入对话时的输入框
-        // const btnContainerSelector2 = "div[class='flex md:px-2 flex-col']"; // 主页未进入对话时的输入框
-        const btnContainerSelector2 = "fieldset[class='flex w-full min-w-0 flex-col']"; // 主页未进入对话时的输入框
+        // !! 版本更新时需要修改这两个selector
+        const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']"; // 已进入对话时的输入框
+        const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']"; // 主页未进入对话时的输入框
         const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
 
         btnContainer.style.display = 'flex';
