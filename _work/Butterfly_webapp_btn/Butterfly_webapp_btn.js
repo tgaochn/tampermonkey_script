@@ -9,6 +9,7 @@
 // @grant               GM_getValue
 // @grant               GM_setValue
 // @grant               GM_registerMenuCommand
+// @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
