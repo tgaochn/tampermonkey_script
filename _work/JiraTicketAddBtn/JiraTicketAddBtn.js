@@ -10,7 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
-// 0.9.0: 重构代码, use utils from external script
+// 0.9.0: 重构代码, use utils from external script; 
 // 0.8.0: 重构代码, 提取函数
 // 0.7.3: change the disable btn tex
 // 0.7.1: fix the bug which cause the links not clickable
@@ -24,7 +24,7 @@
 // 0.1.0: 优化了copy hypertext
 // 0.0.1: 修改部分btn
 
-IS_FIXED_POS = false;
+const IS_FIXED_POS = false;
 
 (async function () {
     'use strict';
@@ -47,6 +47,43 @@ IS_FIXED_POS = false;
             label: 'Implementation Details'
         }
     ];
+
+    // Define text2url_patterns and their corresponding URL templates
+    const text2url_patterns = [
+        // {
+        //     regex: /(gtfish)/g,
+        //     urlTemplate: 'http://www.$1.com'
+        // },
+
+        // RJQ tickets
+        {
+            regex: /^RJQ-[0-9]{1,6}$/ig,
+            urlTemplate: 'https://indeed.atlassian.net/browse/$1'
+        },
+
+        // ! single/multiple target hp/serp models
+        // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
+        // bidding: ac-per-click_rj_hp_us_5a303d3 / apply_rj_hp_us_fbed164
+        // post-apply: qualifiedapply_mob_global_6156574 / qualified_mob_global_e9b72c9 
+        // default MTM: multi_rj_hp_us_15339e0
+        // others: dislike_rj_hp_us_b734f31 
+        {
+            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
+        },
+
+        // ! SERP models: sjmobweb_us_15339e0
+        {
+            regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
+        },
+
+        // ! I2A models: elephant-multi-en-all_en-4e18057
+        {
+            regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
+            urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
+        },
+    ];    
 
     const utils = await waitForUtils();
 
@@ -82,7 +119,7 @@ IS_FIXED_POS = false;
 
                         console.log('Fetched summary:', currentSummary);
 
-                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr, contentAreasForDsiable, utils);
+                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr, contentAreasForDsiable, text2url_patterns, utils);
                     }, 1000); // 1000ms delay, adjust if needed
                 }
             }
@@ -143,10 +180,10 @@ IS_FIXED_POS = false;
         });
     }    
 
-    async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable, utils) {
+    async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable, text2url_patterns, utils) {
         // setup the disabled editing and the btn to enable it
-        setClickToEdit(false, contentAreasForDsiable);
-        const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable, utils);
+        setClickToEdit(false, contentAreasForDsiable, text2url_patterns, utils);
+        const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable, text2url_patterns, utils);
 
         // Remove existing container if any
         const containerId = 'container_id';
@@ -186,7 +223,7 @@ IS_FIXED_POS = false;
     }
 })();
 
-function setClickToEdit(enabled, contentAreasForDsiable) {
+function setClickToEdit(enabled, contentAreasForDsiable, text2url_patterns, utils) {
     contentAreasForDsiable.forEach(area => {
         const element = document.querySelector(area.selector);
         if (element) {
@@ -195,6 +232,8 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
             } else {
                 // ! disable all except some elements below
                 element.style.pointerEvents = 'none';
+
+                utils.convertTextToLinks(element, text2url_patterns);
 
                 // Enable regular links
                 element.querySelectorAll('a').forEach(link => {
@@ -220,10 +259,9 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
             }
         }
     });
-    editingEnabled = enabled;
 }
 
-function createEnableEditingBtn(contentAreasForDsiable, utils) {
+function createEnableEditingBtn(contentAreasForDsiable, text2url_patterns, utils) {
     let enableEditBtn = document.createElement('button');
     enableEditBtn.className = 'text-nowrap btn btn-warning btn-sm';
     enableEditBtn.textContent = 'Editing Disabled';
@@ -231,7 +269,7 @@ function createEnableEditingBtn(contentAreasForDsiable, utils) {
     enableEditBtn.style.backgroundColor = '#ff991f';
 
     enableEditBtn.onclick = () => {
-        setClickToEdit(true, contentAreasForDsiable);
+        setClickToEdit(true, contentAreasForDsiable, text2url_patterns, utils);
         enableEditBtn.textContent = 'Editing Enabled';
         enableEditBtn.style.backgroundColor = '#00875A'; // Change color to indicate enabled state
     };

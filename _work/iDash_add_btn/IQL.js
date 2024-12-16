@@ -19,7 +19,7 @@
 // 0.1.0: 增加format IQL url的各种按钮
 // 2024-02-06: IQL 增加 google sheet to md table 的网站链接
 
-IS_FIXED_POS = true;
+const IS_FIXED_POS = true;
 
 (function () {
     'use strict';
