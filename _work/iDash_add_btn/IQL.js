@@ -6,6 +6,7 @@
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
 // @require      https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
