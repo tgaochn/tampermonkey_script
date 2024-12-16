@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.8.0
+// @version      0.9.0
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.0: 重构代码, use utils from external script
 // 0.8.0: 重构代码, 提取函数
 // 0.7.3: change the disable btn tex
 // 0.7.1: fix the bug which cause the links not clickable
@@ -27,8 +28,6 @@ IS_FIXED_POS = false;
 
 (async function () {
     'use strict';
-    const UtilsClass = await loadExternalScript('https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js');
-    const utils = new UtilsClass();
 
     let lastProcessedTicketId = null;
     let isProcessing = false;
@@ -49,6 +48,8 @@ IS_FIXED_POS = false;
         }
     ];
 
+    const utils = await waitForUtils();
+
     // Wait for the DOM to be fully loaded
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', observeDOM);
@@ -56,7 +57,7 @@ IS_FIXED_POS = false;
         observeDOM();
     }
 
-    // Initial call
+    // run main
     setTimeout(processChanges, 1000);
 
     function processChanges() {
@@ -81,7 +82,7 @@ IS_FIXED_POS = false;
 
                         console.log('Fetched summary:', currentSummary);
 
-                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr, contentAreasForDsiable);
+                        main(currentTicketId, currentSummary, ticketIdElementSelectorStr, contentAreasForDsiable, utils);
                     }, 1000); // 1000ms delay, adjust if needed
                 }
             }
@@ -104,10 +105,48 @@ IS_FIXED_POS = false;
         observer.observe(targetNode, config);
     }
 
-    async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable) {
+    // Wait for utils to load
+    function waitForUtils(timeout = 10000) {
+        console.log('Starting to wait for utils...');
+        const requiredFunctions = [
+            'createButtonContainerFromJson',
+            'observeDOM'
+        ];
+
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+
+            function checkUtils() {
+                console.log('Checking utils:', window.utils);
+                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+
+                if (window.utils && requiredFunctions.every(func => {
+                    const hasFunc = typeof window.utils[func] === 'function';
+                    console.log(`Checking function ${func}:`, hasFunc);
+                    return hasFunc;
+                })) {
+                    console.log('All required functions found');
+                    resolve(window.utils);
+                } else if (Date.now() - startTime >= timeout) {
+                    const missingFunctions = requiredFunctions.filter(func =>
+                        !window.utils || typeof window.utils[func] !== 'function'
+                    );
+                    console.log('Timeout reached. Missing functions:', missingFunctions);
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                } else {
+                    console.log('Not all functions available yet, checking again in 100ms');
+                    setTimeout(checkUtils, 100);
+                }
+            }
+
+            checkUtils();
+        });
+    }    
+
+    async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable, utils) {
         // setup the disabled editing and the btn to enable it
         setClickToEdit(false, contentAreasForDsiable);
-        const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable);
+        const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable, utils);
 
         // Remove existing container if any
         const containerId = 'container_id';
@@ -128,12 +167,10 @@ IS_FIXED_POS = false;
             utils.createButtonCopyText('ticketId', ticketId),
             utils.createButtonCopyText('ticket_url', ticket_url),
             utils.createButtonCopyText('summary', `${summary}`),
-            // utils.createButtonCopyText('ticket: summary', `${ticketId}: ${summary}`),
 
             utils.createTextNode('\thref: '),
-            utils.createButton('href: ticket', () => utils.copyHypertext(ticketId, ticket_url)),
-            // utils.createButton('href: (ticket)', () => utils.copyHypertext(ticketId, ticket_url, '(', ')')),
-            utils.createButton('href: (ticket) summary', () => utils.copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
+            utils.createButtonCopyHypertext('href: ticket', ticketId, ticket_url),
+            utils.createButtonFromCallback('href: (ticket) summary', () => utils.copyHypertext(ticketId, ticket_url, '(', `) ${summary}`)),
 
             utils.createTextNode('\tmd: '),
             utils.createButtonCopyText('md: [ticket](ticket_url)', `[${ticketId}](${ticket_url})`),
@@ -148,43 +185,6 @@ IS_FIXED_POS = false;
         }
     }
 })();
-
-function loadExternalScript(url) {
-    return new Promise((resolve, reject) => {
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            onload: function (response) {
-                try {
-                    // Create a function from the response text
-                    const functionCode = response.responseText;
-                    const module = { exports: {} };
-                    const wrapper = Function('module', 'exports', functionCode);
-                    wrapper(module, module.exports);
-                    resolve(module.exports);
-                } catch (error) {
-                    reject(error);
-                }
-            },
-            onerror: function (error) {
-                reject(error);
-            }
-        });
-    });
-}
-
-function setBtnStyle(btn) {
-    btn.style.backgroundColor = '#009688';
-    btn.style.color = 'white';
-    btn.style.padding = '5px 5px';
-    btn.style.height = '30px';
-    btn.style.fontSize = '14px';
-    btn.style.border = '1px solid #ccc';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.outline = 'none';
-    btn.style.boxSizing = 'border-box';
-}
 
 function setClickToEdit(enabled, contentAreasForDsiable) {
     contentAreasForDsiable.forEach(area => {
@@ -223,11 +223,11 @@ function setClickToEdit(enabled, contentAreasForDsiable) {
     editingEnabled = enabled;
 }
 
-function createEnableEditingBtn(contentAreasForDsiable) {
-    const enableEditBtn = document.createElement('button');
+function createEnableEditingBtn(contentAreasForDsiable, utils) {
+    let enableEditBtn = document.createElement('button');
     enableEditBtn.className = 'text-nowrap btn btn-warning btn-sm';
     enableEditBtn.textContent = 'Editing Disabled';
-    setBtnStyle(enableEditBtn);
+    enableEditBtn = utils.setBtnStyle(enableEditBtn);
     enableEditBtn.style.backgroundColor = '#ff991f';
 
     enableEditBtn.onclick = () => {
