@@ -109,6 +109,7 @@
         }
     };
 
+    // decide whether to run the script based on inclusion and exclusion patterns
     utils.shouldRunScript = function(inclusionPatterns, exclusionPatterns, url) {
         if (inclusionPatterns.length > 0 && !inclusionPatterns.some(pattern => pattern.test(url))) {
             return false;
@@ -119,6 +120,7 @@
         return true;
     };    
 
+    // ! create buttons
     utils.createButtonFromCallback = function(btnText, callbackFunc) {
         var button = document.createElement('button');
         button = setBtnStyle(button);
@@ -149,6 +151,7 @@
         });
     };
 
+    // ! create button containers
     utils.createButtonContainer = function() {
         const container = document.createElement('div');
         container.style.display = 'inline-block';
@@ -165,6 +168,7 @@
         return buttonContainer;
     };
 
+    // ! button behaviors
     utils.copyHypertext = function(text, url, leftPart = '', rightPart = '') {
         const hyperlinkElem = document.createElement('a');
         hyperlinkElem.textContent = text;
@@ -190,6 +194,7 @@
         document.body.removeChild(tempContainerElem);
     };
 
+    // ! add buttons and containers to the page
     utils.addFixedPosContainerToPage = function(container, { top, left }) {
         document.body.appendChild(container);
         container.style.position = 'fixed';
@@ -206,6 +211,7 @@
         element.parentNode.insertBefore(container, element.nextSibling);
     };
 
+    // ! helper functions
     utils.findBestMatch = function(url, patterns) {
         for (const { pattern, title } of patterns) {
             if (pattern.test(url)) {
@@ -214,6 +220,43 @@
         }
         return "link";
     };
+
+    utils.convertTextToLinks = function(node, patterns) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            let shouldReplace = false;
+            let html = node.textContent;
+    
+            patterns.forEach(({ regex, urlTemplate }) => {
+                if (regex.test(html)) {
+                    shouldReplace = true;
+                    html = html.replace(regex, (match, p1) => {
+                        const url = urlTemplate.replace('$1', p1);
+                        return `<a href="${url}">${match}</a>`;
+                    });
+                }
+            });
+    
+            if (shouldReplace) {
+                const span = document.createElement('span');
+                span.innerHTML = html;
+                node.parentNode.replaceChild(span, node);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE && !['SCRIPT', 'STYLE', 'TEXTAREA', 'A'].includes(node.tagName)) {
+            Array.from(node.childNodes).forEach(child => utils.convertTextToLinks(child, patterns));
+        }
+    };    
+
+    utils.debounce = function(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    };    
 
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Expose all the functions and log                */
