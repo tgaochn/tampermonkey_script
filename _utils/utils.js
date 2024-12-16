@@ -9,20 +9,6 @@
     /* !! -------------------------------------------------------------------------- */
     /*                     !! Internal functions - not exposed                       */
     /* !! -------------------------------------------------------------------------- */
-    function setBtnStyle(btn) {
-        btn.style.backgroundColor = '#009688';
-        btn.style.color = 'white';
-        btn.style.padding = '5px 5px';
-        btn.style.fontSize = '14px';
-        btn.style.border = '1px solid #ccc';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
-        btn.style.outline = 'none';
-        btn.style.boxSizing = 'border-box';
-
-        return btn;
-    }
-
     function createButtonContainer() {
         const buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'inline-block';
@@ -66,7 +52,7 @@
     function createButtonFromPromptKey(prompts, promptKey) {
         const inputBoxSelector = "div[enterkeyhint='enter']";
         const button = document.createElement('button');
-        setBtnStyle(button);
+        this.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
         button.onclick = () => {
             const input = document.querySelector(inputBoxSelector);
@@ -88,6 +74,19 @@
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions                               */
     /* !! -------------------------------------------------------------------------- */
+    utils.setBtnStyle = function (btn) {
+        btn.style.backgroundColor = '#009688';
+        btn.style.color = 'white';
+        btn.style.padding = '5px 5px';
+        btn.style.fontSize = '14px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.outline = 'none';
+        btn.style.boxSizing = 'border-box';
+
+        return btn;
+    }
 
     utils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -123,7 +122,7 @@
     // ! create buttons
     utils.createButtonFromCallback = function(btnText, callbackFunc) {
         var button = document.createElement('button');
-        button = setBtnStyle(button);
+        button = this.setBtnStyle(button);
         button.innerHTML = btnText;
         button.onclick = callbackFunc;
         return button;
