@@ -131,12 +131,12 @@
 
         buildInfoButtonContainer.append(
             utils.createTextNode('builds: '),
-            utils.createButton('last_build_id', () => {
+            utils.createButtonFromCallback('last_build_id', () => {
                 const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
                 const lastBuildId = buildsTags[buildsTags.length - 1].id;
                 navigator.clipboard.writeText(lastBuildId);
             }),
-            utils.createButton('all_build_id', () => {
+            utils.createButtonFromCallback('all_build_id', () => {
                 const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
                 const buildIds = [];
 
