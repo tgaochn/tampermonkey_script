@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.0
+// @version      0.9.1
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.1: 更新 model patterns
 // 0.9.0: 重构代码, use utils from external script; 
 // 0.8.0: 重构代码, 提取函数
 // 0.7.3: change the disable btn tex
@@ -68,7 +69,7 @@ const IS_FIXED_POS = false;
         // default MTM: multi_rj_hp_us_15339e0
         // others: dislike_rj_hp_us_b734f31 
         {
-            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
