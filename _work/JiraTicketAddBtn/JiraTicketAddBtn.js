@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.1
+// @version      0.9.2
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.2: 更新 model patterns 的替换范围为全局页面
 // 0.9.1: 更新 model patterns
 // 0.9.0: 重构代码, use utils from external script; 
 // 0.8.0: 重构代码, 提取函数
@@ -234,7 +235,7 @@ function setClickToEdit(enabled, contentAreasForDsiable, text2url_patterns, util
                 // ! disable all except some elements below
                 element.style.pointerEvents = 'none';
 
-                utils.convertTextToLinks(element, text2url_patterns);
+                utils.convertTextToLinks(document.body, text2url_patterns);
 
                 // Enable regular links
                 element.querySelectorAll('a').forEach(link => {
