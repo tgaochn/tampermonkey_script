@@ -71,20 +71,6 @@
         return button;
     }
 
-    // 节流函数，防止过于频繁的调用
-    function throttle(func, delay) {
-        let timer = null;
-        return function () {
-            if (timer) {
-                return;
-            }
-            timer = setTimeout(() => {
-                func.apply(this, arguments);
-                timer = null;
-            }, delay);
-        };
-    }
-
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions - buttons related             */
     /* !! -------------------------------------------------------------------------- */
@@ -418,6 +404,20 @@
     /*                            !! Exposed functions - general page                */
     /* !! -------------------------------------------------------------------------- */
 
+    // 节流函数，防止过于频繁的调用
+    utils.throttle = function(func, delay) {
+        let timer = null;
+        return function () {
+            if (timer) {
+                return;
+            }
+            timer = setTimeout(() => {
+                func.apply(this, arguments);
+                timer = null;
+            }, delay);
+        };
+    }
+
     // button 的 observeDOM
     utils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -450,7 +450,7 @@
         throttleDelay = 400
     ) {
         // Throttle the callback
-        const throttledCallback = throttle(callback, throttleDelay);
+        const throttledCallback = utils.throttle(callback, throttleDelay);
 
         // Create observer
         const observer = new MutationObserver(throttledCallback);
