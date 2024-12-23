@@ -405,7 +405,7 @@
     /* !! -------------------------------------------------------------------------- */
 
     // 节流函数，防止过于频繁的调用
-    utils.throttle = function(func, delay) {
+    utils.throttle = function (func, delay) {
         let timer = null;
         return function () {
             if (timer) {
@@ -416,7 +416,7 @@
                 timer = null;
             }, delay);
         };
-    }
+    };
 
     // button 的 observeDOM
     utils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
