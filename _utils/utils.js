@@ -395,6 +395,8 @@
     /*                            !! Exposed functions - general page                */
     /* !! -------------------------------------------------------------------------- */
     utils.createPageObserver = function (targetId, callback, config = { childList: true, subtree: true }) {
+        // ! targetId is the added element's id to avoid duplication (for example, the btnContainer on LLM pages)
+
         // Disconnect previous observer if exists
         if (window._pageObservers && window._pageObservers[targetId]) {
             window._pageObservers[targetId].disconnect();
