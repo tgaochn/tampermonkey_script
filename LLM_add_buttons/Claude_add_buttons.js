@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        Claude_Add_Buttons 
+// @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
 // @version     0.6.1
 // @description Adds buttons for Claude
@@ -11,7 +11,8 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
-// Claude_Add_Buttons 0.6.1: 更新selector
+// Claude_Add_Buttons 0.6.2: 更新 wait for selector
+// Claude_Add_Buttons 0.6.1: 更新 selector
 // Claude_Add_Buttons 0.6.0: use utils from external script
 // Claude_Add_Buttons 0.5.9: bug fixed which caused the buttons not showing up on Claude homepage
 // Claude_Add_Buttons 0.5.8: 改进prompt
@@ -28,83 +29,83 @@
 // Claude_Add_Buttons 0.0.1: init, 添加若干按钮, 不过提交prompt没有实现
 
 (function () {
-    'use strict';
+    "use strict";
 
     // ! define all the prompt
     // 带下划线的会直接提交
     const myPromptJson1 = {
-        "continue_": {
-            "btnNm": "Continue⏎",
-            "sendOutPrompt": true,
-            "prompt": "Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with \"The answer is finished.\""
+        continue_: {
+            btnNm: "Continue⏎",
+            sendOutPrompt: true,
+            prompt: 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."',
         },
-        "chn_": {
-            "btnNm": "中文⏎",
-            "sendOutPrompt": true,
-            "prompt": "repeat the response in Chinese. Only the explanation should be in Chinese, the code blocks with comments should be in English. If there is no existing explanation, please further explain the response in detail about what it implies. The explanation should be easy to understand.",
+        chn_: {
+            btnNm: "中文⏎",
+            sendOutPrompt: true,
+            prompt: "repeat the response in Chinese. Only the explanation should be in Chinese, the code blocks with comments should be in English. If there is no existing explanation, please further explain the response in detail about what it implies. The explanation should be easy to understand.",
         },
-        "md_": {
-            "btnNm": "markdown⏎",
-            "sendOutPrompt": true,
-            "prompt": "Reformat the response in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.",
+        md_: {
+            btnNm: "markdown⏎",
+            sendOutPrompt: true,
+            prompt: "Reformat the response in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.",
         },
-        "example_": {
-            "btnNm": "加例子⏎",
-            "sendOutPrompt": true,
-            "prompt": "give me more examples to explain the response. The examples should be easy to understand and explain why the example supports the response if applicable."
+        example_: {
+            btnNm: "加例子⏎",
+            sendOutPrompt: true,
+            prompt: "give me more examples to explain the response. The examples should be easy to understand and explain why the example supports the response if applicable.",
         },
-        "rewrite_": {
-            "btnNm": "改写⏎",
-            "sendOutPrompt": true,
-            "prompt": "Rewrite the response and make the response more understandable."
+        rewrite_: {
+            btnNm: "改写⏎",
+            sendOutPrompt: true,
+            prompt: "Rewrite the response and make the response more understandable.",
         },
     };
 
     // 不带下划线的prompt会在输入框中显示并等待继续输入内容
     const myPromptJson2 = {
-        "rewrite_doc": {
-            "btnNm": "日常-改写-doc",
-            "sendOutPrompt": false,
-            "prompt": `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+        rewrite_doc: {
+            btnNm: "日常-改写-doc",
+            sendOutPrompt: false,
+            prompt: `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
 1. The text will be used in project documentation.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
         },
-        "rewrite_slack": {
-            "btnNm": "日常-改写-slack",
-            "sendOutPrompt": false,
-            "prompt": `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
+        rewrite_slack: {
+            btnNm: "日常-改写-slack",
+            sendOutPrompt: false,
+            prompt: `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: \n
 1. The text will be used in discussion on slack btw colleagues.\n
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 `,
             // 3. The revised text should be simple and easy to understand.\n
         },
-        "explain_translate": {
-            "btnNm": "日常-解释翻译",
-            "sendOutPrompt": false,
-            "prompt": `I'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? More background or requirements of the text are shown below. They should be applied to all the follow-up responses.\n
+        explain_translate: {
+            btnNm: "日常-解释翻译",
+            sendOutPrompt: false,
+            prompt: `I'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? More background or requirements of the text are shown below. They should be applied to all the follow-up responses.\n
 1. The response should be in Chinese, but the comments in the code block should be in English if applicable.\n
 2. The text is from a discussion on Slack between American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.\n
 3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys.\n
 4. If it is a question, explain the background and the main points. Then provide a possible answer.\n
 5. If it is a request, explain the main points and the objective. Then provide a possible answer.\n
 6. If it is a suggestion, explain the main points, the objective, and the reasons.\n
-The text is:`
+The text is:`,
         },
-        "summarize": {
-            "btnNm": "日常-总结",
-            "sendOutPrompt": false,
-            "prompt": "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n"
+        summarize: {
+            btnNm: "日常-总结",
+            sendOutPrompt: false,
+            prompt: "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n",
         },
-        "chn2eng": {
-            "btnNm": "日常-中翻英",
-            "sendOutPrompt": false,
-            "prompt": "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n"
+        chn2eng: {
+            btnNm: "日常-中翻英",
+            sendOutPrompt: false,
+            prompt: "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: \n",
         },
-        "ocr": {
-            "btnNm": "img_OCR",
-            "sendOutPrompt": false,
-            "prompt": `Please OCR the attached image following these backgrounds and instructions:\n
+        ocr: {
+            btnNm: "img_OCR",
+            sendOutPrompt: false,
+            prompt: `Please OCR the attached image following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to identify the content, same as what OCR software does.\n
 3. The content could be a piece of code, some plain text, or a table. \n
@@ -112,12 +113,12 @@ The text is:`
 5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`
+`,
         },
-        "fix_ocr": {
-            "btnNm": "fix_cont_OCR",
-            "sendOutPrompt": false,
-            "prompt": `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
+        fix_ocr: {
+            btnNm: "fix_cont_OCR",
+            sendOutPrompt: false,
+            prompt: `Response based on the given content obtained from OCR software following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to manually improve the raw results from OCR software.\n
 3. The content could be a piece of code, some plain text or a table. \n
@@ -126,13 +127,13 @@ The text is:`
 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.\n
 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
 It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.\n
-`
+`,
         },
 
-        "format_tex_formula": {
-            "btnNm": "format tex formula",
-            "sendOutPrompt": false,
-            "prompt": `Could you format the following tex formula and make it more readable?\n\n 
+        format_tex_formula: {
+            btnNm: "format tex formula",
+            sendOutPrompt: false,
+            prompt: `Could you format the following tex formula and make it more readable?\n\n 
 Please provide the response following these backgrounds and instructions:\n
 1. You need to act as a senior latex expert and a senior machine learning engineer.\n
 2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
@@ -140,15 +141,15 @@ Please provide the response following these backgrounds and instructions:\n
 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
 5. Please follow these instructions in all the responses in this session for further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
-`
-        }
+`,
+        },
     };
 
     const myPromptJson3 = {
-        "what1_mle": {
-            "btnNm": "MLE-what1",
-            "sendOutPrompt": false,
-            "prompt": `What is XXX?\n\n
+        what1_mle: {
+            btnNm: "MLE-what1",
+            sendOutPrompt: false,
+            prompt: `What is XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
@@ -158,13 +159,13 @@ Give me a detailed response following these backgrounds and instructions:\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`
+`,
         },
 
-        "what2_mle": {
-            "btnNm": "MLE-what2",
-            "sendOutPrompt": false,
-            "prompt": `What does it mean when people say XXX?\n\n
+        what2_mle: {
+            btnNm: "MLE-what2",
+            sendOutPrompt: false,
+            prompt: `What does it mean when people say XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
@@ -174,13 +175,13 @@ Give me a detailed response following these backgrounds and instructions:\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`
+`,
         },
 
-        "how_mle": {
-            "btnNm": "MLE-how",
-            "sendOutPrompt": false,
-            "prompt": `How to XXX?\n\n
+        how_mle: {
+            btnNm: "MLE-how",
+            sendOutPrompt: false,
+            prompt: `How to XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
@@ -190,13 +191,13 @@ Give me a detailed response following these backgrounds and instructions:\n
 6. Please follow these instructions in all the responses in this session for the further questions.\n
 7. Take a deep breath and work on this problem step-by-step.\n
 8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`
+`,
         },
 
-        "compare_mle": {
-            "btnNm": "MLE-比较",
-            "sendOutPrompt": false,
-            "prompt": `What is the difference between \"XXX\" and \"YYY\"?\n\n
+        compare_mle: {
+            btnNm: "MLE-比较",
+            sendOutPrompt: false,
+            prompt: `What is the difference between \"XXX\" and \"YYY\"?\n\n
 Give me a detailed relationship explanation and comparison following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer.\n
 2. The task is to make some explanations to the newbie interns.\n
@@ -205,13 +206,13 @@ Give me a detailed relationship explanation and comparison following these backg
 5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`
+`,
         },
 
-        "improve_code_mle": {
-            "btnNm": "MLE-改code",
-            "sendOutPrompt": false,
-            "prompt": `Fix or improve the code.\n\n 
+        improve_code_mle: {
+            btnNm: "MLE-改code",
+            sendOutPrompt: false,
+            prompt: `Fix or improve the code.\n\n 
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer.\n
 2. The task is to debug the code in pair programming or to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.\n
@@ -219,13 +220,13 @@ Give me a detailed response following these backgrounds and instructions:\n
 4. The explanation needs to be in Chinese, but the comments in the code block should be in English.\n
 5. Please follow these instructions in all the responses in this session for the further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
-`
+`,
         },
 
         //     "eb1_pl": {
         //         "btnNm": "PL for eb1a",
         //         "sendOutPrompt": false,
-        //         "prompt": `Could you revise the following content?\n\n 
+        //         "prompt": `Could you revise the following content?\n\n
         // Please provide a detailed response following these backgrounds and instructions:\n
         // 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
         // 2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
@@ -235,39 +236,38 @@ Give me a detailed response following these backgrounds and instructions:\n
         // 6. Take a deep breath and work on this problem step-by-step.\n
         // `
         //     }
-
     };
 
     // Wait for utils to load
     function waitForUtils(timeout = 10000) {
-        console.log('Starting to wait for utils...');
-        const requiredFunctions = [
-            'createButtonContainerFromJson',
-            'observeDOM'
-        ];
+        console.log("Starting to wait for utils...");
+        const requiredFunctions = ["createButtonContainerFromJson", "observeDOM"];
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log('Checking utils:', window.utils);
-                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+                console.log("Checking utils:", window.utils);
+                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
 
-                if (window.utils && requiredFunctions.every(func => {
-                    const hasFunc = typeof window.utils[func] === 'function';
-                    console.log(`Checking function ${func}:`, hasFunc);
-                    return hasFunc;
-                })) {
-                    console.log('All required functions found');
+                if (
+                    window.utils &&
+                    requiredFunctions.every((func) => {
+                        const hasFunc = typeof window.utils[func] === "function";
+                        console.log(`Checking function ${func}:`, hasFunc);
+                        return hasFunc;
+                    })
+                ) {
+                    console.log("All required functions found");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
-                    const missingFunctions = requiredFunctions.filter(func =>
-                        !window.utils || typeof window.utils[func] !== 'function'
+                    const missingFunctions = requiredFunctions.filter(
+                        (func) => !window.utils || typeof window.utils[func] !== "function"
                     );
-                    console.log('Timeout reached. Missing functions:', missingFunctions);
-                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                    console.log("Timeout reached. Missing functions:", missingFunctions);
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    console.log('Not all functions available yet, checking again in 100ms');
+                    console.log("Not all functions available yet, checking again in 100ms");
                     setTimeout(checkUtils, 100);
                 }
             }
@@ -288,25 +288,53 @@ Give me a detailed response following these backgrounds and instructions:\n
                     main(utils);
                 }
             });
-
         } catch (error) {
-            console.error('Failed to initialize:', error);
+            console.error("Failed to initialize:", error);
         }
     }
 
+    async function waitForElement(selector, maxAttempts = 10, interval = 500) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+
+            const checkElement = () => {
+                attempts++;
+                const element = document.querySelector(selector);
+
+                if (element) {
+                    resolve(element);
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error(`Element ${selector} not found after ${maxAttempts} attempts`));
+                } else {
+                    setTimeout(checkElement, interval);
+                }
+            };
+
+            checkElement();
+        });
+    }
+
     async function main(utils) {
-        // !! 版本更新时需要修改这两个selector
+        // !! 版本更新时需要修改这些 selector
+        const inputBoxSelector = "div[enterkeyhint='enter']";
         const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']"; // 已进入对话时的输入框
         const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']"; // 主页未进入对话时的输入框
-        const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+        // const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
+        // const btnContainer =
+            // (await waitForElement(btnContainerSelector1)) || (await waitForElement(btnContainerSelector2));
+        // const btnContainer = await waitForElement("div[aria-label='Write your prompt to Claude']");
+        const btnContainer = await utils.waitForAliasedElement([
+            btnContainerSelector1,
+            btnContainerSelector2,
+        ]);
 
-        btnContainer.style.display = 'flex';
-        btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
+        btnContainer.style.display = "flex";
+        btnContainer.style.flexDirection = "column"; // contrainer 上下排列
         // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-        const btnSubContainer1 = utils.createButtonContainerFromJson(myPromptJson1);
-        const btnSubContainer2 = utils.createButtonContainerFromJson(myPromptJson2);
-        const btnSubContainer3 = utils.createButtonContainerFromJson(myPromptJson3);
+        const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson1);
+        const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson2);
+        const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson3);
         btnSubContainer1.id = "container_id";
 
         btnContainer.appendChild(btnSubContainer1);
@@ -316,5 +344,4 @@ Give me a detailed response following these backgrounds and instructions:\n
 
     // Start the script
     initScript();
-
 })();

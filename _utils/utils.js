@@ -9,15 +9,6 @@
     /* !! -------------------------------------------------------------------------- */
     /*                     !! Internal functions - not exposed                       */
     /* !! -------------------------------------------------------------------------- */
-    function createButtonContainer() {
-        const buttonContainer = document.createElement("div");
-        buttonContainer.style.display = "inline-block";
-        buttonContainer.style.justifyContent = "center";
-        buttonContainer.style.marginTop = "10px";
-        buttonContainer.style.marginLeft = "10px";
-        return buttonContainer;
-    }
-
     function setSelection(input) {
         const range = document.createRange();
         range.selectNodeContents(input);
@@ -49,28 +40,6 @@
         element.dispatchEvent(enterKeyEvent);
     }
 
-    function createButtonFromPromptKey(prompts, promptKey) {
-        const inputBoxSelector = "div[enterkeyhint='enter']";
-        const button = document.createElement("button");
-        this.setBtnStyle(button);
-        button.innerHTML = prompts[promptKey].btnNm;
-        button.onclick = () => {
-            const input = document.querySelector(inputBoxSelector);
-            const inputNewCont = prompts[promptKey].prompt;
-            if (input && input instanceof HTMLElement) {
-                input.innerHTML = claudeLongStringProcessor(inputNewCont);
-                setSelection(input);
-            }
-
-            if (prompts[promptKey].sendOutPrompt) {
-                setTimeout(() => {
-                    sendEnterKey(input);
-                }, 1000);
-            }
-        };
-        return button;
-    }
-
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions - buttons related             */
     /* !! -------------------------------------------------------------------------- */
@@ -86,54 +55,6 @@
         btn.style.boxSizing = "border-box";
 
         return btn;
-    };
-
-    // ! create buttons
-    utils.createButtonFromCallback = function (btnText, callbackFunc) {
-        var button = document.createElement("button");
-        button = this.setBtnStyle(button);
-        button.innerHTML = btnText;
-        button.onclick = callbackFunc;
-        return button;
-    };
-
-    utils.createTextNode = function (btnText) {
-        return document.createTextNode(btnText);
-    };
-
-    utils.createButtonCopyText = function (btnText, copyText) {
-        return this.createButtonFromCallback(btnText, () => {
-            navigator.clipboard.writeText(copyText);
-        });
-    };
-
-    utils.createButtonCopyHypertext = function (btnText, pageTitle, curURL) {
-        return this.createButtonFromCallback(btnText, () => {
-            this.copyHypertext(pageTitle, curURL);
-        });
-    };
-
-    utils.createButtonOpenUrl = function (btnText, targetUrl) {
-        return this.createButtonFromCallback(btnText, () => {
-            window.open(targetUrl);
-        });
-    };
-
-    // ! create button containers
-    utils.createButtonContainer = function () {
-        const container = document.createElement("div");
-        container.style.display = "inline-block";
-        container.style.marginTop = "10px";
-        container.style.marginLeft = "10px";
-        return container;
-    };
-
-    utils.createButtonContainerFromJson = function (prompts) {
-        const buttonContainer = createButtonContainer();
-        for (const promptKey in prompts) {
-            buttonContainer.append(createButtonFromPromptKey(prompts, promptKey));
-        }
-        return buttonContainer;
     };
 
     // ! button behaviors
@@ -160,6 +81,76 @@
         selection.removeAllRanges();
 
         document.body.removeChild(tempContainerElem);
+    };
+
+    // ! create buttons
+    utils.createButtonFromCallback = function (btnText, callbackFunc) {
+        let button = document.createElement("button");
+        button = utils.setBtnStyle(button);
+        button.innerHTML = btnText;
+        button.onclick = callbackFunc;
+        return button;
+    };
+
+    utils.createButtonFromPromptKey = function (inputBoxSelector, prompts, promptKey) {
+        const button = document.createElement("button");
+        utils.setBtnStyle(button);
+        button.innerHTML = prompts[promptKey].btnNm;
+        button.onclick = () => {
+            const input = document.querySelector(inputBoxSelector);
+            const inputNewCont = prompts[promptKey].prompt;
+            if (input && input instanceof HTMLElement) {
+                input.innerHTML = claudeLongStringProcessor(inputNewCont);
+                setSelection(input);
+            }
+
+            if (prompts[promptKey].sendOutPrompt) {
+                setTimeout(() => {
+                    sendEnterKey(input);
+                }, 1000);
+            }
+        };
+        return button;
+    };
+
+    utils.createTextNode = function (btnText) {
+        return document.createTextNode(btnText);
+    };
+
+    utils.createButtonCopyText = function (btnText, copyText) {
+        return utils.createButtonFromCallback(btnText, () => {
+            navigator.clipboard.writeText(copyText);
+        });
+    };
+
+    utils.createButtonCopyHypertext = function (btnText, pageTitle, curURL) {
+        return utils.createButtonFromCallback(btnText, () => {
+            utils.copyHypertext(pageTitle, curURL);
+        });
+    };
+
+    utils.createButtonOpenUrl = function (btnText, targetUrl) {
+        return utils.createButtonFromCallback(btnText, () => {
+            window.open(targetUrl);
+        });
+    };
+
+    // ! create button containers
+    utils.createButtonContainer = function () {
+        const container = document.createElement("div");
+        container.style.display = "inline-block";
+        container.style.justifyContent = "center";
+        container.style.marginTop = "10px";
+        container.style.marginLeft = "10px";
+        return container;
+    };
+
+    utils.createButtonContainerFromJson = function (inputBoxSelector, prompts) {
+        const buttonContainer = utils.createButtonContainer();
+        for (const promptKey in prompts) {
+            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxSelector, prompts, promptKey));
+        }
+        return buttonContainer;
     };
 
     // ! add buttons and containers to the page
@@ -403,6 +394,57 @@
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions - general page                */
     /* !! -------------------------------------------------------------------------- */
+    // For waiting on a single element with one selector
+    utils.waitForElement = function (selector, maxAttempts = 10, interval = 500) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+
+            const checkElement = () => {
+                attempts++;
+                const element = document.querySelector(selector);
+
+                if (element) {
+                    resolve(element);
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error(`Element "${selector}" not found after ${maxAttempts} attempts`));
+                } else {
+                    setTimeout(checkElement, interval);
+                }
+            };
+
+            checkElement();
+        });
+    };
+
+    // For waiting on multiple different elements, all must exist
+    utils.waitForElementList = async function (selectors, maxAttempts = 10, interval = 500) {
+        try {
+            const elements = await Promise.all(
+                selectors.map((selector) => utils.waitForElement(selector, maxAttempts, interval))
+            );
+            return elements;
+        } catch (error) {
+            throw new Error(`Failed to find all elements: ${error.message}`);
+        }
+    };
+
+    // For waiting on one element that might have different selectors in different contexts
+    utils.waitForAliasedElement = async function (selectors, maxAttempts = 10, interval = 500) {
+        for (let attempts = 0; attempts < maxAttempts; attempts++) {
+            for (const selector of selectors) {
+                try {
+                    const element = await utils.waitForElement(selector, 1, 0); // Quick check
+                    if (element) return element;
+                } catch (e) {
+                    continue; // Try next selector
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+        throw new Error(
+            `None of the aliased selectors "${selectors.join('", "')}" found after ${maxAttempts} attempts`
+        );
+    };
 
     // 节流函数，防止过于频繁的调用
     utils.throttle = function (func, delay) {
@@ -490,5 +532,4 @@
     /* !! -------------------------------------------------------------------------- */
 
     window.utils = utils;
-    console.log("createButtonContainerFromJson function added to utils");
 })(window);
