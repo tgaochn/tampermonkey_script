@@ -394,6 +394,35 @@
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions - general page                */
     /* !! -------------------------------------------------------------------------- */
+    utils.createPageObserver = function (targetId, callback, config = { childList: true, subtree: true }) {
+        // Disconnect previous observer if exists
+        if (window._pageObservers && window._pageObservers[targetId]) {
+            window._pageObservers[targetId].disconnect();
+        }
+
+        // Initialize observers storage if doesn't exist
+        window._pageObservers = window._pageObservers || {};
+
+        const observer = new MutationObserver(async () => {
+            const container = document.getElementById(targetId);
+            if (container) return; // Exit if container exists
+
+            await callback();
+        });
+
+        // Store observer reference for potential cleanup
+        window._pageObservers[targetId] = observer;
+
+        observer.observe(document.body, config);
+
+        // Initial check
+        if (!document.getElementById(targetId)) {
+            callback();
+        }
+
+        return observer;
+    };
+
     // For waiting on a single element with one selector
     utils.waitForElement = function (selector, maxAttempts = 10, interval = 500) {
         return new Promise((resolve, reject) => {

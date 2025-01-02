@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
-// @version     0.6.1
+// @version     0.6.2
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -30,6 +30,9 @@
 
 (function () {
     "use strict";
+
+    let isButtonsAdded = false;
+    const addedContainerId = "container_id";
 
     // ! define all the prompt
     // 带下划线的会直接提交
@@ -279,67 +282,43 @@ Give me a detailed response following these backgrounds and instructions:\n
     async function initScript() {
         try {
             const utils = await waitForUtils();
-
-            const observeTarget = document.body;
-            const targetElementId = "container_id";
-
-            utils.observeDOM(observeTarget, () => {
-                if (!document.getElementById(targetElementId)) {
-                    main(utils);
-                }
-            });
+            utils.createPageObserver(addedContainerId, () => main(utils));
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
     }
 
-    async function waitForElement(selector, maxAttempts = 10, interval = 500) {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-
-            const checkElement = () => {
-                attempts++;
-                const element = document.querySelector(selector);
-
-                if (element) {
-                    resolve(element);
-                } else if (attempts >= maxAttempts) {
-                    reject(new Error(`Element ${selector} not found after ${maxAttempts} attempts`));
-                } else {
-                    setTimeout(checkElement, interval);
-                }
-            };
-
-            checkElement();
-        });
-    }
-
     async function main(utils) {
-        // !! 版本更新时需要修改这些 selector
-        const inputBoxSelector = "div[enterkeyhint='enter']";
-        const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']"; // 已进入对话时的输入框
-        const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']"; // 主页未进入对话时的输入框
-        // const btnContainer = document.querySelector(btnContainerSelector1) || document.querySelector(btnContainerSelector2);
-        // const btnContainer =
-            // (await waitForElement(btnContainerSelector1)) || (await waitForElement(btnContainerSelector2));
-        // const btnContainer = await waitForElement("div[aria-label='Write your prompt to Claude']");
-        const btnContainer = await utils.waitForAliasedElement([
-            btnContainerSelector1,
-            btnContainerSelector2,
-        ]);
+        try {
+            if (isButtonsAdded || document.getElementById(addedContainerId)) return;
 
-        btnContainer.style.display = "flex";
-        btnContainer.style.flexDirection = "column"; // contrainer 上下排列
-        // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
+            const inputBoxSelector = "div[enterkeyhint='enter']";
+            const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']";
+            const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']";
 
-        const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson1);
-        const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson2);
-        const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson3);
-        btnSubContainer1.id = "container_id";
+            const btnContainer = await utils.waitForAliasedElement([btnContainerSelector1, btnContainerSelector2]);
 
-        btnContainer.appendChild(btnSubContainer1);
-        btnContainer.appendChild(btnSubContainer2);
-        btnContainer.appendChild(btnSubContainer3);
+            // Double-check again after await
+            if (isButtonsAdded || document.getElementById(addedContainerId)) return;
+
+            btnContainer.style.display = "flex";
+            btnContainer.style.flexDirection = "column";
+
+            const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson1);
+            const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson2);
+            const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson3);
+
+            btnSubContainer1.id = addedContainerId;
+
+            btnContainer.appendChild(btnSubContainer1);
+            btnContainer.appendChild(btnSubContainer2);
+            btnContainer.appendChild(btnSubContainer3);
+
+            isButtonsAdded = true;
+        } catch (error) {
+            console.error("Failed to add buttons:", error);
+            isButtonsAdded = false; // Reset flag if failed
+        }
     }
 
     // Start the script
