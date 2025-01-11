@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.6.0
+// @version             0.6.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 0.6.1: add btn to fetch model version
 // 0.6.0: use @require to load external script
 // 0.5.1: bug fixed
 // 0.5.0: 重构代码, 使用外部函数
@@ -112,6 +113,7 @@
         const modelId = modelNameElem.childNodes[0].innerText;
         const modelUrl = 'https://butterfly.sandbox.indeed.net/#/model/' + modelId;
         const modelConfUrl = modelUrl + '/PUBLISHED/config';
+
         modelInfoButtonContainer.id = "container_id";
 
         modelInfoButtonContainer.append(
@@ -131,11 +133,18 @@
 
         buildInfoButtonContainer.append(
             utils.createTextNode('builds: '),
+            utils.createButtonFromCallback('current_version', () => {
+                const modelVersionSelector = 'div[class="model-version-selector-option-title"]';
+                const modelVersion = document.querySelector(modelVersionSelector).childNodes[0].textContent;
+                navigator.clipboard.writeText(modelVersion);
+            }),
+
             utils.createButtonFromCallback('last_build_id', () => {
                 const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
                 const lastBuildId = buildsTags[buildsTags.length - 1].id;
                 navigator.clipboard.writeText(lastBuildId);
             }),
+
             utils.createButtonFromCallback('all_build_id', () => {
                 const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
                 const buildIds = [];
