@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
-// @version     0.6.2
+// @version     0.6.3
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,6 +11,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// Claude_Add_Buttons 0.6.3: 增加 prompt
 // Claude_Add_Buttons 0.6.2: 更新 wait for selector
 // Claude_Add_Buttons 0.6.1: 更新 selector
 // Claude_Add_Buttons 0.6.0: use utils from external script
@@ -144,6 +145,39 @@ Please provide the response following these backgrounds and instructions:\n
 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
 5. Please follow these instructions in all the responses in this session for further questions.\n
 6. Take a deep breath and work on this problem step-by-step.\n
+`,
+        },
+
+        online_debate: {
+            btnNm: "网上吵架",
+            sendOutPrompt: false,
+            prompt: `请你作为一位资深的网络辩论专家，精通分析对方观点中的漏洞并激怒对方. 帮我分析并改进以下网络辩论中的回复。我的一部分目的是激怒对方, 所以请不要在意语气和态度. 可以使用反讽、挖苦等语言技巧. 重点是论据的锐利性和对方情绪的操控.\n
+1. 如果不改变我回复的大致结构, 请分析我的回复中有什么逻辑漏洞. 对方之前的论述中有什么我遗漏的弱点可以利用. 以及对方的情绪触发点在哪里, 如何让对方失去理性陷入情绪化. 另外请预判对方可能的反驳并给出后续应对策略.\n
+2. 如果完全改变我回复的结构, 请给出新的回复建议并说明理由. 另外请预判对方可能的反驳并给出后续应对策略\n
+争论背景：\n
+\n\n
+我的预计回复：\n
+\n\n
+`,
+        },
+
+        reply_on_slack: {
+            btnNm: "slack 回复优化",
+            sendOutPrompt: false,
+            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?\n
+Requirements:\n
+1. Please analyze this from the perspective of a senior ML engineer and native English speaker\n
+2. Provide your response in Chinese\n
+3. Format suggestions as raw markdown code using triple backticks\n
+4. Consider:\n
+   - Clarity and professionalism of the response\n
+   - Technical accuracy\n
+   - Cultural appropriateness in a tech workplace\n
+   - Any areas where I may have misunderstood the discussion\n
+Context:\n
+\n\n
+My draft reply:\n
+\n\n
 `,
         },
     };
