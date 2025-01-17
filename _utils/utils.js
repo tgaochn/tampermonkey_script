@@ -92,7 +92,7 @@
         return button;
     };
 
-    utils.createButtonFromPromptKey = function (inputBoxSelector, prompts, promptKey) {
+    utils.createButtonFromPromptKey = function (inputBoxSelector, prompts, promptKey, mode = 'replace') {
         const button = document.createElement("button");
         utils.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
@@ -100,10 +100,17 @@
             const input = document.querySelector(inputBoxSelector);
             const inputNewCont = prompts[promptKey].prompt;
             if (input && input instanceof HTMLElement) {
-                input.innerHTML = claudeLongStringProcessor(inputNewCont);
+                if (mode === 'append') {
+                    // Append new content to existing content
+                    const currentContent = input.innerHTML;
+                    input.innerHTML = currentContent + claudeLongStringProcessor(inputNewCont);
+                } else {
+                    // Replace existing content (default behavior)
+                    input.innerHTML = claudeLongStringProcessor(inputNewCont);
+                }
                 setSelection(input);
             }
-
+    
             if (prompts[promptKey].sendOutPrompt) {
                 setTimeout(() => {
                     sendEnterKey(input);
@@ -145,10 +152,10 @@
         return container;
     };
 
-    utils.createButtonContainerFromJson = function (inputBoxSelector, prompts) {
+    utils.createButtonContainerFromJson = function (inputBoxSelector, prompts, mode = 'replace') {
         const buttonContainer = utils.createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxSelector, prompts, promptKey));
+            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxSelector, prompts, promptKey, mode));
         }
         return buttonContainer;
     };
