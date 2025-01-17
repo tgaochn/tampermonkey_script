@@ -183,26 +183,10 @@ My draft reply:\n
     };
 
     const myPromptJson3 = {
-        what1_mle: {
-            btnNm: "MLE-what1",
+        what_mle: {
+            btnNm: "MLE-what",
             sendOutPrompt: false,
             prompt: `What is XXX?\n\n
-Give me a detailed response following these backgrounds and instructions:\n
-1. You need to act as a senior machine learning engineer. \n
-2. The task is to make some explanations to the newbie interns. \n
-3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
-4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
-5. The response needs to be in Chinese.\n
-6. Please follow these instructions in all the responses in this session for the further questions.\n
-7. Take a deep breath and work on this problem step-by-step.\n
-8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-`,
-        },
-
-        what2_mle: {
-            btnNm: "MLE-what2",
-            sendOutPrompt: false,
-            prompt: `What does it mean when people say XXX?\n\n
 Give me a detailed response following these backgrounds and instructions:\n
 1. You need to act as a senior machine learning engineer. \n
 2. The task is to make some explanations to the newbie interns. \n
@@ -259,20 +243,49 @@ Give me a detailed response following these backgrounds and instructions:\n
 6. Take a deep breath and work on this problem step-by-step.\n
 `,
         },
+    };
 
-        //     "eb1_pl": {
-        //         "btnNm": "PL for eb1a",
-        //         "sendOutPrompt": false,
-        //         "prompt": `Could you revise the following content?\n\n
-        // Please provide a detailed response following these backgrounds and instructions:\n
-        // 1. You need to act as a senior migration lawyer to process US EB1a migration cases, who can provide valuable suggestions on the petition content.\n
-        // 2. The overall purpose of the revision is to prove Dr. Gao has a significant impact in the fields and that the US will benefit if Dr. Gao's migration petition is approved.\n
-        // 3. The response should include revised content in English and an explanation of why the revision is provided in Chinese.\n
-        // 4. The revised content should be in a formal tone and easy to understand for the officers who review Dr. Gao's case.\n
-        // 5. Please follow these instructions in all the responses in this session for the further questions.\n
-        // 6. Take a deep breath and work on this problem step-by-step.\n
-        // `
-        //     }
+    const myPromptJson4 = {
+        in_chn: {
+            btnNm: "中文",
+            sendOutPrompt: false,
+            prompt: `\n
+The response should be in Chinese. To be exact, only the explanation should be in Chinese, the possible code blocks with comments/table should be in English. \n
+`,
+        },
+
+        in_md: {
+            btnNm: "markdown",
+            sendOutPrompt: false,
+            prompt: `\n
+The response should be in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.
+`,
+        },
+
+        in_chn_md: {
+            btnNm: "md且中文",
+            sendOutPrompt: false,
+            prompt: `\n
+The response should be in Chinese. To be exact, only the explanation should be in Chinese, the possible code blocks with comments/table should be in English. \n
+The response should be in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.
+`,
+        },
+
+        as_mle: {
+            btnNm: "MLE身份",
+            sendOutPrompt: false,
+            prompt: `\n
+Give me a detailed response following these backgrounds and instructions:\n
+1. You need to act as a senior machine learning engineer. \n
+2. The task is to make some explanations to the newbie interns. \n
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n
+5. The response needs to be in Chinese.\n
+6. Please follow these instructions in all the responses in this session for the further questions.\n
+7. Take a deep breath and work on this problem step-by-step.\n
+8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
+`,
+        },
     };
 
     // Wait for utils to load
@@ -341,12 +354,14 @@ Give me a detailed response following these backgrounds and instructions:\n
             const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson1);
             const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson2);
             const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson3);
+            const btnSubContainer4 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson4, 'append');
 
             btnSubContainer1.id = addedContainerId;
 
             btnContainer.appendChild(btnSubContainer1);
             btnContainer.appendChild(btnSubContainer2);
             btnContainer.appendChild(btnSubContainer3);
+            btnContainer.appendChild(btnSubContainer4);
 
             isButtonsAdded = true;
         } catch (error) {
