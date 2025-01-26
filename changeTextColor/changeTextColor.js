@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.1.1
+// @version             0.1.2
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.1.2: bug fixed
 // 0.1.1: 增加 Butterfly proctor allocation 的颜色匹配
 // 0.1.0: beta version, 优化脚本; 增加cpu/gpu天梯匹配
 // 0.0.1: init, 匹配url/text_pattern则文本修改成对应颜色. skidrow/amazon_return
@@ -51,72 +52,72 @@
                 // !! allocation color
                 // HP US
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/ IS$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,228,181)",
                 },
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/ IS Shadow Traffic$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
          
                 // HP ROW
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/ IS$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,218,171)",
                 },
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/ IS Shadow Traffic$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
          
                 // HP JP
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/ IS$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,208,161)",
                 },
                 {
-                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/ IS Shadow Traffic$/,
+                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
          
                 // SERP US
                 {
-                    regex: /^SERP US w\/ IS$/,
+                    regex: /^SERP US w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,182,193)",
                 },
                 {
-                    regex: /^SERP US w\/ IS Shadow Traffic$/,
+                    regex: /^SERP US w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
          
                 // SERP ROW
                 {
-                    regex: /^SERP (ROW)|(ROTW) w\/ IS$/,
+                    regex: /^SERP (ROW)|(ROTW) w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,172,183)",
                 },
                 {
-                    regex: /^SERP (ROW)|(ROTW) w\/ IS Shadow Traffic$/,
+                    regex: /^SERP (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
          
                 // SERP JP
                 {
-                    regex: /^SERP JP w\/ IS$/,
+                    regex: /^SERP JP w\/\s*IS$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,162,173)",
                 },
                 {
-                    regex: /^SERP JP w\/ IS Shadow Traffic$/,
+                    regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
