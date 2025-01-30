@@ -92,28 +92,27 @@
         return button;
     };
 
-    utils.createButtonFromPromptKey = function (inputBoxSelector, prompts, promptKey, mode = 'replace') {
+    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, mode = 'replace') {
         const button = document.createElement("button");
         utils.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
         button.onclick = () => {
-            const input = document.querySelector(inputBoxSelector);
             const inputNewCont = prompts[promptKey].prompt;
-            if (input && input instanceof HTMLElement) {
+            if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
                 if (mode === 'append') {
                     // Append new content to existing content
-                    const currentContent = input.innerHTML;
-                    input.innerHTML = currentContent + claudeLongStringProcessor(inputNewCont);
+                    const currentContent = inputBoxElement.innerHTML;
+                    inputBoxElement.innerHTML = currentContent + claudeLongStringProcessor(inputNewCont);
                 } else {
                     // Replace existing content (default behavior)
-                    input.innerHTML = claudeLongStringProcessor(inputNewCont);
+                    inputBoxElement.innerHTML = claudeLongStringProcessor(inputNewCont);
                 }
-                setSelection(input);
+                setSelection(inputBoxElement);
             }
     
             if (prompts[promptKey].sendOutPrompt) {
                 setTimeout(() => {
-                    sendEnterKey(input);
+                    sendEnterKey(inputBoxElement);
                 }, 1000);
             }
         };
@@ -152,10 +151,10 @@
         return container;
     };
 
-    utils.createButtonContainerFromJson = function (inputBoxSelector, prompts, mode = 'replace') {
+    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, mode = 'replace') {
         const buttonContainer = utils.createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxSelector, prompts, promptKey, mode));
+            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, mode));
         }
         return buttonContainer;
     };

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
-// @version     0.6.4
+// @version     0.6.5
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,6 +11,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// Claude_Add_Buttons 0.6.5: 部分重构代码, 用于适配 deepseek
 // Claude_Add_Buttons 0.6.4: 增加 prompt; 增加了追加内容的模式
 // Claude_Add_Buttons 0.6.3: 增加 prompt
 // Claude_Add_Buttons 0.6.2: 更新 wait for selector
@@ -352,10 +353,11 @@ Give me a detailed response following these backgrounds and instructions:\n
             btnContainer.style.display = "flex";
             btnContainer.style.flexDirection = "column";
 
-            const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson1);
-            const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson2);
-            const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson3);
-            const btnSubContainer4 = utils.createButtonContainerFromJson(inputBoxSelector, myPromptJson4, 'append');
+            const inputBoxElement = document.querySelector(inputBoxSelector);
+            const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson1);
+            const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson2);
+            const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson3);
+            const btnSubContainer4 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson4, 'append');
 
             btnSubContainer1.id = addedContainerId;
 
