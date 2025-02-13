@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.1.2
+// @version             0.1.3
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配 
 // 0.1.2: bug fixed
 // 0.1.1: 增加 Butterfly proctor allocation 的颜色匹配
 // 0.1.0: beta version, 优化脚本; 增加cpu/gpu天梯匹配
@@ -27,25 +28,47 @@
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
                 // !! title colors
+                // Group 1 - ranking targets
                 {
                     regex: /^IDX P\(AS \| seen\)$/,
-                    textColor: "rgb(0,0,0)",
+                    textColor: "rgb(0,0,128)",  // Dark blue
                     backColor: "rgb(255,192,255)",
                 },
                 {
                     regex: /^IDX Spon P\(click \| seen\)$/,
-                    textColor: "rgb(0,0,0)",
+                    textColor: "rgb(0,0,128)",  // Dark blue
                     backColor: "rgb(255,192,255)", 
                 },
-
+                {
+                    regex: /^Online Ranker Apply Model$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
+                    backColor: "rgb(255,192,255)",
+                },
+                {
+                    regex: /^Online Ranker CTR Model$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
+                    backColor: "rgb(255,192,255)", 
+                },
+            
+                // Group 2 - bidding targets
                 {
                     regex: /^IDX Spon P\(AC \| clicked\)$/,
-                    textColor: "rgb(0,0,0)",
+                    textColor: "rgb(0,0,128)",  // Dark blue
                     backColor: "rgb(144,238,144)",
                 },
                 {
                     regex: /^IDX Spon P\(AS \| clicked\)$/,
-                    textColor: "rgb(0,0,0)",
+                    textColor: "rgb(0,0,128)",  // Dark blue
+                    backColor: "rgb(144,238,144)",
+                },
+                {
+                    regex: /^Online Ranker Spon P\(AC \| clicked\)$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
+                    backColor: "rgb(144,238,144)",
+                },
+                {
+                    regex: /^Online Ranker Spon P\(AS \| Clicked\)$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
                     backColor: "rgb(144,238,144)",
                 },
          
