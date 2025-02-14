@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.3
+// @version      0.9.4
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.4: add more model patterns
 // 0.9.3: add more model patterns
 // 0.9.2: 更新 model patterns 的替换范围为全局页面
 // 0.9.1: 更新 model patterns
@@ -68,10 +69,11 @@ const IS_FIXED_POS = false;
         // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
         // bidding: ac-per-click_rj_hp_us_5a303d3 / apply_rj_hp_us_fbed164 / ac-per-click_sjmobweb_rotw_60306c6 / apply_sjmobweb_rotw_e60cca4
         // post-apply: qualifiedapply_mob_global_6156574 / qualified_mob_global_e9b72c9 
+        // glassdoor model: gd_sjmobweb_rotw_3c86644
         // default MTM: multi_rj_hp_us_15339e0
         // others: dislike_rj_hp_us_b734f31 
         {
-            regex: /^(((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            regex: /^((gd_)?((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: 'https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config'
         },
 
