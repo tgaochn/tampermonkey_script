@@ -151,7 +151,7 @@ The text is:`,
 1. You need to act as a very senior machine learning engineer in an OCR software developing company.\n
 2. The task is to manually improve the raw results from OCR software.\n
 3. The content could be a piece of code, some plain text or a table. \n
-4. Please follow these instructions in all the responses in this session for the further questions.\n
+4. Please follow these instructions in all the responses in this session for further questions.\n
 5. Take a deep breath and work on this problem step-by-step.\n
 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.\n
 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
@@ -164,9 +164,9 @@ It may include some errors or formatting issues due to inaccurate OCR results. Y
             sendOutPrompt: false,
             prompt: `Please transform the attached flowchart into mermaid code following these backgrounds and instructions:\n
 1. You need to act as a very senior machine learning engineer and a mermaid expert in an OCR software developing company.\n
-2. Check whether sentence or words in the flowchart are reasonable. If there are any issues due to inaccurate OCR results, please fix them and list the changes.\n
-3. Follow these instructions in all the responses in this session for the further questions.\n
-4. Respond in the format of raw markdown code (\`\`\`mermaid\n\`\`\`), so I can copy and paste it into a markdown editor. Don't response with raw mermaid code.\n
+2. Check whether sentences or words in the flowchart are reasonable. If there are any issues due to inaccurate OCR results, please fix them and list the changes.\n
+3. Follow these instructions in all the responses in this session for further questions.\n
+4. Respond in the format of raw markdown code (\`\`\`mermaid\n\`\`\`), so I can copy and paste it into a markdown editor. Don't respond with raw mermaid code.\n
 5. Use "classDef defaultNode fill:#f9f9f9,stroke:#0000ff,stroke-width:2px,color:black" as the default style for all the nodes.\n
 `,
         },
