@@ -92,14 +92,14 @@
         return button;
     };
 
-    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, mode = 'replace') {
+    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, mode = "replace") {
         const button = document.createElement("button");
         utils.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
         button.onclick = () => {
             const inputNewCont = prompts[promptKey].prompt;
             if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
-                if (mode === 'append') {
+                if (mode === "append") {
                     // Append new content to existing content
                     const currentContent = inputBoxElement.innerHTML;
                     inputBoxElement.innerHTML = currentContent + claudeLongStringProcessor(inputNewCont);
@@ -109,7 +109,7 @@
                 }
                 setSelection(inputBoxElement);
             }
-    
+
             if (prompts[promptKey].sendOutPrompt) {
                 setTimeout(() => {
                     sendEnterKey(inputBoxElement);
@@ -151,7 +151,7 @@
         return container;
     };
 
-    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, mode = 'replace') {
+    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, mode = "replace") {
         const buttonContainer = utils.createButtonContainer();
         for (const promptKey in prompts) {
             buttonContainer.append(utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, mode));
@@ -518,7 +518,7 @@
         }
     };
 
-    // 带节流函数的 observeDOM
+    // 带节流函数的 observeDOM, 防止过于频繁的调用
     utils.observeDOMWithThrottle = function (
         targetNode,
         callback,
@@ -539,6 +539,32 @@
 
         // Return the observer for potential cleanup
         return observer;
+    };
+
+    // 监听 URL 变化并执行回调函数, 防止因为 URL 变化导致功能失效
+    utils.monitorUrlChanges = function (callback, interval = 500) {
+        let lastUrl = window.location.href;
+
+        // 返回清理函数，方便在需要时停止监听
+        const intervalId = setInterval(() => {
+            const currentUrl = window.location.href;
+            if (lastUrl !== currentUrl) {
+                console.log("URL changed from", lastUrl, "to", currentUrl);
+
+                // 先保存旧URL，再更新lastUrl
+                const oldUrl = lastUrl;
+                lastUrl = currentUrl;
+
+                // 执行回调，传递正确的新URL和旧URL
+                callback(currentUrl, oldUrl);
+            }
+        }, interval);
+
+        // 返回清理函数和当前 URL
+        return {
+            stop: () => clearInterval(intervalId),
+            currentUrl: lastUrl,
+        };
     };
 
     // decide whether to run the script based on inclusion and exclusion patterns

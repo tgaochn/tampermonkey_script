@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
-// @version     0.6.7
+// @version     0.6.8
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,7 +11,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
-// Claude_Add_Buttons 0.6.7: 修改了从主页跳转到chat页面后按钮不能第一时间显示的问题
+// Claude_Add_Buttons 0.6.8: 修改了从主页跳转到chat页面后按钮不能第一时间显示的问题
 // Claude_Add_Buttons 0.6.6: 修改prompt
 // Claude_Add_Buttons 0.6.5: 部分重构代码, 用于适配 deepseek
 // Claude_Add_Buttons 0.6.4: 增加 prompt; 增加了追加内容的模式
@@ -348,38 +348,24 @@ Give me a detailed response following these backgrounds and instructions:\n
     async function initScript() {
         try {
             const utils = await waitForUtils();
-
+            
             // 添加初始化按钮调用
             await checkAndAddButtons(utils);
-
-            // 创建一个URL监听器，处理页面导航
-            setupUrlChangeListener(utils);
-
+            
+            // 使用 utils 提供的 URL 监听功能
+            utils.monitorUrlChanges((newUrl, oldUrl) => {
+                // URL变化时重置按钮状态
+                isButtonsAdded = false;
+                
+                // 重新检查并添加按钮
+                setTimeout(() => checkAndAddButtons(utils), 1000);
+            });
+            
             // 保留原有的DOM观察器作为备份方案
             utils.createPageObserver(addedContainerId, () => checkAndAddButtons(utils));
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
-    }
-
-    // 新增函数：检查URL变化并添加按钮
-    function setupUrlChangeListener(utils) {
-        // 保存当前URL
-        lastUrl = window.location.href;
-
-        // 定期检查URL是否变化
-        setInterval(() => {
-            if (lastUrl !== window.location.href) {
-                console.log("URL changed from", lastUrl, "to", window.location.href);
-                lastUrl = window.location.href;
-
-                // URL变化时重置按钮状态
-                isButtonsAdded = false;
-
-                // 重新检查并添加按钮
-                setTimeout(() => checkAndAddButtons(utils), 1000);
-            }
-        }, 500);
     }
 
     // 重构main函数为可重复调用的checkAndAddButtons
