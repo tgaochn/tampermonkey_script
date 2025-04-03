@@ -348,19 +348,19 @@ Give me a detailed response following these backgrounds and instructions:\n
     async function initScript() {
         try {
             const utils = await waitForUtils();
-            
+
             // 添加初始化按钮调用
             await checkAndAddButtons(utils);
-            
+
             // 使用 utils 提供的 URL 监听功能
             utils.monitorUrlChanges((newUrl, oldUrl) => {
                 // URL变化时重置按钮状态
                 isButtonsAdded = false;
-                
+
                 // 重新检查并添加按钮
                 setTimeout(() => checkAndAddButtons(utils), 1000);
             });
-            
+
             // 保留原有的DOM观察器作为备份方案
             utils.createPageObserver(addedContainerId, () => checkAndAddButtons(utils));
         } catch (error) {
@@ -368,7 +368,7 @@ Give me a detailed response following these backgrounds and instructions:\n
         }
     }
 
-    // 重构main函数为可重复调用的checkAndAddButtons
+    // main: 重构为可重复调用的 checkAndAddButtons
     async function checkAndAddButtons(utils) {
         try {
             if (isButtonsAdded || document.getElementById(addedContainerId)) {
