@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Claude_Add_Buttons
 // @namespace   https://claude.ai/
-// @version     0.6.6
+// @version     0.6.7
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -11,6 +11,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
 // ==/UserScript==
+// Claude_Add_Buttons 0.6.7: 修改了从主页跳转到chat页面后按钮不能第一时间显示的问题
 // Claude_Add_Buttons 0.6.6: 修改prompt
 // Claude_Add_Buttons 0.6.5: 部分重构代码, 用于适配 deepseek
 // Claude_Add_Buttons 0.6.4: 增加 prompt; 增加了追加内容的模式
@@ -37,6 +38,7 @@
 
     let isButtonsAdded = false;
     const addedContainerId = "container_id";
+    let lastUrl = ""; // 添加变量跟踪上一次URL
 
     // ! define all the prompt
     // 带下划线的会直接提交
@@ -171,19 +173,19 @@ It may include some errors or formatting issues due to inaccurate OCR results. Y
 `,
         },
 
-//         format_tex_formula: {
-//             btnNm: "format tex formula",
-//             sendOutPrompt: false,
-//             prompt: `Could you format the following tex formula and make it more readable?\n\n 
-// Please provide the response following these backgrounds and instructions:\n
-// 1. You need to act as a senior latex expert and a senior machine learning engineer.\n
-// 2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
-// 3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
-// 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
-// 5. Please follow these instructions in all the responses in this session for further questions.\n
-// 6. Take a deep breath and work on this problem step-by-step.\n
-// `,
-//         },
+        //         format_tex_formula: {
+        //             btnNm: "format tex formula",
+        //             sendOutPrompt: false,
+        //             prompt: `Could you format the following tex formula and make it more readable?\n\n
+        // Please provide the response following these backgrounds and instructions:\n
+        // 1. You need to act as a senior latex expert and a senior machine learning engineer.\n
+        // 2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.\n
+        // 3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.\n
+        // 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.\n
+        // 5. Please follow these instructions in all the responses in this session for further questions.\n
+        // 6. Take a deep breath and work on this problem step-by-step.\n
+        // `,
+        //         },
 
         //         online_debate: {
         //             btnNm: "网上吵架",
@@ -346,29 +348,75 @@ Give me a detailed response following these backgrounds and instructions:\n
     async function initScript() {
         try {
             const utils = await waitForUtils();
-            utils.createPageObserver(addedContainerId, () => main(utils));
+
+            // 添加初始化按钮调用
+            await checkAndAddButtons(utils);
+
+            // 创建一个URL监听器，处理页面导航
+            setupUrlChangeListener(utils);
+
+            // 保留原有的DOM观察器作为备份方案
+            utils.createPageObserver(addedContainerId, () => checkAndAddButtons(utils));
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
     }
 
-    async function main(utils) {
+    // 新增函数：检查URL变化并添加按钮
+    function setupUrlChangeListener(utils) {
+        // 保存当前URL
+        lastUrl = window.location.href;
+
+        // 定期检查URL是否变化
+        setInterval(() => {
+            if (lastUrl !== window.location.href) {
+                console.log("URL changed from", lastUrl, "to", window.location.href);
+                lastUrl = window.location.href;
+
+                // URL变化时重置按钮状态
+                isButtonsAdded = false;
+
+                // 重新检查并添加按钮
+                setTimeout(() => checkAndAddButtons(utils), 1000);
+            }
+        }, 500);
+    }
+
+    // 重构main函数为可重复调用的checkAndAddButtons
+    async function checkAndAddButtons(utils) {
         try {
-            if (isButtonsAdded || document.getElementById(addedContainerId)) return;
+            if (isButtonsAdded || document.getElementById(addedContainerId)) {
+                console.log("Buttons already added, skipping");
+                return;
+            }
 
             const inputBoxSelector = "div[enterkeyhint='enter']";
             const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']";
             const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']";
 
-            const btnContainer = await utils.waitForAliasedElement([btnContainerSelector1, btnContainerSelector2]);
+            // 等待按钮容器元素出现
+            const btnContainer = await utils.waitForAliasedElement(
+                [btnContainerSelector1, btnContainerSelector2],
+                20,
+                300
+            );
+            console.log("Button container found:", btnContainer);
 
-            // Double-check again after await
-            if (isButtonsAdded || document.getElementById(addedContainerId)) return;
+            // 再次检查，避免在等待过程中按钮被添加
+            if (isButtonsAdded || document.getElementById(addedContainerId)) {
+                console.log("Buttons added during wait, skipping");
+                return;
+            }
 
             btnContainer.style.display = "flex";
             btnContainer.style.flexDirection = "column";
 
             const inputBoxElement = document.querySelector(inputBoxSelector);
+            if (!inputBoxElement) {
+                console.warn("Input box element not found");
+                return;
+            }
+
             const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson1);
             const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson2);
             const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson3);
@@ -381,6 +429,7 @@ Give me a detailed response following these backgrounds and instructions:\n
             btnContainer.appendChild(btnSubContainer3);
             btnContainer.appendChild(btnSubContainer4);
 
+            console.log("Buttons added successfully");
             isButtonsAdded = true;
         } catch (error) {
             console.error("Failed to add buttons:", error);
