@@ -4,8 +4,8 @@
 // @version 0.3.5
 // @license MIT
 // @match https://store.steampowered.com/app/*
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
 // ==/UserScript==
 
 // changelog:
