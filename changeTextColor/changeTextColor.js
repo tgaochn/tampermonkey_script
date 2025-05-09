@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.1.3
+// @version             0.1.4
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.1.4: 增加 PO targets 的颜色匹配
 // 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配 
 // 0.1.2: bug fixed
 // 0.1.1: 增加 Butterfly proctor allocation 的颜色匹配
@@ -28,7 +29,7 @@
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
                 // !! title colors
-                // Group 1 - ranking targets
+                // ! Group 1 - ranking targets
                 {
                     regex: /^IDX P\(AS \| seen\)$/,
                     textColor: "rgb(0,0,128)",  // Dark blue
@@ -50,7 +51,7 @@
                     backColor: "rgb(255,192,255)", 
                 },
             
-                // Group 2 - bidding targets
+                // ! Group 2 - bidding targets
                 {
                     regex: /^IDX Spon P\(AC \| clicked\)$/,
                     textColor: "rgb(0,0,128)",  // Dark blue
@@ -71,7 +72,29 @@
                     textColor: "rgb(153,0,0)",  // Dark red
                     backColor: "rgb(144,238,144)",
                 },
-         
+            
+                // ! Group 3 - PO targets
+                {
+                    regex: /^IDX Org Attainability$/,
+                    textColor: "rgb(0,0,128)",  // Dark blue
+                    backColor: "rgb(255, 243, 205)",
+                },
+                // {
+                //     regex: /^IDX Spon P\(AS \| clicked\)$/,
+                //     textColor: "rgb(0,0,128)",  // Dark blue
+                //     backColor: "rgb(255, 243, 205)",
+                // },
+                {
+                    regex: /^Online Ranker Org Attainability$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
+                    backColor: "rgb(255, 243, 205)",
+                },
+                {
+                    regex: /^Online Ranker Qualified New (BP)$/,
+                    textColor: "rgb(153,0,0)",  // Dark red
+                    backColor: "rgb(255, 243, 205)",
+                },
+
                 // !! allocation color
                 // HP US
                 {
