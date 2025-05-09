@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.1.5
+// @version             0.2.0
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
+// @match               http*://proctor.sandbox.indeed.net/proctor/*
 // @match               http*://butterfly.sandbox.indeed.net/*
 // @match               http*://www.skidrowreloaded.com/*
 // @match               http*://www.amazon.com/spr/returns/*
@@ -14,6 +15,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.2.0: 优化代码; 增加替换文本的功能
 // 0.1.5: hotfix
 // 0.1.4: 增加 PO targets 的颜色匹配
 // 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配 
@@ -26,9 +28,66 @@
     "use strict";
 
     const urlPatterns = {
+        proctor: {
+            urlRegex: /^https?:\/\/proctor\.sandbox\.indeed\.net\/proctor\/toggles\/view\/.*/,
+            textPatterns: [
+                // !! test replacement
+                {
+                    regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
+                    replacement: "$1 (AsPerSeen)",
+                },
+                {
+                    regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
+                    replacement: "$1 (CTR)",
+                },
+                {
+                    regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst)\d*)$/,
+                    replacement: "$1 (AcPerClick)",
+                },
+                {
+                    regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst)\d*)$/,
+                    replacement: "$1 (AsPerClick)",
+                },
+                {
+                    regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst)\d*)$/,
+                    replacement: "$1 (PoPerApply, Attainability)",
+                },
+                {
+                    regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
+                    replacement: "$1 (PoPerHasOutcome, eQualified)",
+                },
+            ],
+        },
+
         Butterfly: {
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
+                // !! test replacement
+                {
+                    regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
+                    replacement: "$1 (AsPerSeen)",
+                },
+                {
+                    regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
+                    replacement: "$1 (CTR)",
+                },
+                {
+                    regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst)\d*)$/,
+                    replacement: "$1 (AcPerClick)",
+                },
+                {
+                    regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst)\d*)$/,
+                    replacement: "$1 (AsPerClick)",
+                },
+                {
+                    regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst)\d*)$/,
+                    replacement: "$1 (PoPerApply, Attainability)",
+                },
+                {
+                    regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
+                    replacement: "$1 (PoPerHasOutcome, eQualified)",
+                },
+
                 // !! title colors
                 // ! Group 1 - ranking targets
                 {
@@ -39,7 +98,7 @@
                 {
                     regex: /^IDX Spon P\(click \| seen\)$/,
                     textColor: "rgb(0,0,128)",  // Dark blue
-                    backColor: "rgb(255,192,255)", 
+                    backColor: "rgb(255,192,255)",
                 },
                 {
                     regex: /^Online Ranker Apply Model$/,
@@ -49,9 +108,9 @@
                 {
                     regex: /^Online Ranker CTR Model$/,
                     textColor: "rgb(153,0,0)",  // Dark red
-                    backColor: "rgb(255,192,255)", 
+                    backColor: "rgb(255,192,255)",
                 },
-            
+
                 // ! Group 2 - bidding targets
                 {
                     regex: /^IDX Spon P\(AC \| clicked\)$/,
@@ -73,7 +132,7 @@
                     textColor: "rgb(153,0,0)",  // Dark red
                     backColor: "rgb(144,238,144)",
                 },
-            
+
                 // ! Group 3 - PO targets
                 {
                     regex: /^IDX Org Attainability$/,
@@ -108,7 +167,7 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
-         
+
                 // HP ROW
                 {
                     regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS$/,
@@ -120,7 +179,7 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
-         
+
                 // HP JP
                 {
                     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
@@ -132,7 +191,7 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
-         
+
                 // SERP US
                 {
                     regex: /^SERP US w\/\s*IS$/,
@@ -144,7 +203,7 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
-         
+
                 // SERP ROW
                 {
                     regex: /^SERP (ROW)|(ROTW) w\/\s*IS$/,
@@ -156,7 +215,7 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,225,225)",
                 },
-         
+
                 // SERP JP
                 {
                     regex: /^SERP JP w\/\s*IS$/,
@@ -169,7 +228,7 @@
                     backColor: "rgb(255,225,225)",
                 },
             ],
-         },        
+        },
         skidrow: {
             urlRegex: /^https?:\/\/www\.skidrowreloaded\.com\/.*/,
             textPatterns: [
@@ -251,9 +310,9 @@
 
     // Helper function to check if node is already colored
     function isAlreadyColored(node) {
-        return node.parentNode && 
-               node.parentNode.tagName === 'SPAN' && 
-               (node.parentNode.style.backgroundColor || node.parentNode.style.color);
+        return node.parentNode &&
+            node.parentNode.tagName === 'SPAN' &&
+            (node.parentNode.style.backgroundColor || node.parentNode.style.color);
     }
 
     function changeTextColor(node, currentUrlPatterns) {
@@ -268,14 +327,35 @@
 
             for (const pattern of currentUrlPatterns.textPatterns) {
                 pattern.regex.lastIndex = 0;
-                
+
                 if (pattern.regex.test(content)) {
-                    const span = document.createElement("span");
-                    span.style.color = pattern.textColor;
-                    span.style.backgroundColor = pattern.backColor;
-                    span.textContent = content;
-                    span.setAttribute('data-colored', 'true');
-                    node.parentNode.replaceChild(span, node);
+                    // 是否需要替换或者着色
+                    const needsReplacement = !!pattern.replacement;
+                    const needsColoring = !!pattern.textColor || !!pattern.backColor;
+
+                    if (needsReplacement || needsColoring) {
+                        // 创建一个span元素进行替换或者着色
+                        const span = document.createElement("span");
+
+                        // 如果有颜色设置，应用颜色
+                        if (pattern.textColor) {
+                            span.style.color = pattern.textColor;
+                        }
+
+                        if (pattern.backColor) {
+                            span.style.backgroundColor = pattern.backColor;
+                        }
+
+                        // 设置内容，如果有替换文本则使用替换文本
+                        if (pattern.replacement) {
+                            // 使用正则表达式的replace方法处理捕获组引用
+                            span.textContent = content.replace(pattern.regex, pattern.replacement);
+                        } else {
+                            span.textContent = content;
+                        }
+                        span.setAttribute('data-colored', 'true');
+                        node.parentNode.replaceChild(span, node);
+                    }
                     break;
                 }
             }
