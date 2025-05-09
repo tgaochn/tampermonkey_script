@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.2.0
+// @version             0.2.1
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
+// @match               http*://teststats.sandbox.indeed.net/*
 // @match               http*://proctor.sandbox.indeed.net/proctor/*
 // @match               http*://butterfly.sandbox.indeed.net/*
 // @match               http*://www.skidrowreloaded.com/*
@@ -15,6 +16,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.2.1: 优化代码; 增加teststats
 // 0.2.0: 优化代码; 增加替换文本的功能
 // 0.1.5: hotfix
 // 0.1.4: 增加 PO targets 的颜色匹配
@@ -27,35 +29,49 @@
 (function () {
     "use strict";
 
+    // 提取共用的测试替换模式
+    const workTextReplacement = [
+        {
+            regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
+            replacement: "$1 (AsPerSeen)",
+        },
+        {
+            regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
+            replacement: "$1 (CTR)",
+        },
+        {
+            regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst)\d*)$/,
+            replacement: "$1 (AcPerClick)",
+        },
+        {
+            regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst)\d*)$/,
+            replacement: "$1 (AsPerClick)",
+        },
+        {
+            regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst)\d*)$/,
+            replacement: "$1 (PoPerApply, Attainability)",
+        },
+        {
+            regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
+            replacement: "$1 (PoPerHasOutcome, eQualified)",
+        },
+    ];
+
     const urlPatterns = {
+        testStats: {
+            // https://teststats.sandbox.indeed.net/analyze/idxsjbutterflyctrmodeltst?from=proctor_tst_view
+            urlRegex: /^https?:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
+            textPatterns: [
+                // !! test replacement
+                ...workTextReplacement,
+            ],
+        },
+
         proctor: {
             urlRegex: /^https?:\/\/proctor\.sandbox\.indeed\.net\/proctor\/toggles\/view\/.*/,
             textPatterns: [
                 // !! test replacement
-                {
-                    regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
-                    replacement: "$1 (AsPerSeen)",
-                },
-                {
-                    regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
-                    replacement: "$1 (CTR)",
-                },
-                {
-                    regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst)\d*)$/,
-                    replacement: "$1 (AcPerClick)",
-                },
-                {
-                    regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst)\d*)$/,
-                    replacement: "$1 (AsPerClick)",
-                },
-                {
-                    regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst)\d*)$/,
-                    replacement: "$1 (PoPerApply, Attainability)",
-                },
-                {
-                    regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
-                    replacement: "$1 (PoPerHasOutcome, eQualified)",
-                },
+                ...workTextReplacement,
             ],
         },
 
@@ -63,30 +79,7 @@
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
                 // !! test replacement
-                {
-                    regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
-                    replacement: "$1 (AsPerSeen)",
-                },
-                {
-                    regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
-                    replacement: "$1 (CTR)",
-                },
-                {
-                    regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst)\d*)$/,
-                    replacement: "$1 (AcPerClick)",
-                },
-                {
-                    regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst)\d*)$/,
-                    replacement: "$1 (AsPerClick)",
-                },
-                {
-                    regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst)\d*)$/,
-                    replacement: "$1 (PoPerApply, Attainability)",
-                },
-                {
-                    regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
-                    replacement: "$1 (PoPerHasOutcome, eQualified)",
-                },
+                ...workTextReplacement,
 
                 // !! title colors
                 // ! Group 1 - ranking targets
