@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.1.4
+// @version             0.1.5
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.1.5: hotfix
 // 0.1.4: 增加 PO targets 的颜色匹配
 // 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配 
 // 0.1.2: bug fixed
@@ -90,7 +91,7 @@
                     backColor: "rgb(255, 243, 205)",
                 },
                 {
-                    regex: /^Online Ranker Qualified New (BP)$/,
+                    regex: /^Online Ranker Qualified New \(BP\)$/,
                     textColor: "rgb(153,0,0)",  // Dark red
                     backColor: "rgb(255, 243, 205)",
                 },
