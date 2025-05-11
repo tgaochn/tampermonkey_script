@@ -1,9 +1,9 @@
 // utils.js
-// version: 0.1.1
+// version: 0.1.2
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load");
+    console.log("Utils script starting to load - v0.1.2");
     const utils = {};
     console.log("utils object created");
 
@@ -100,6 +100,8 @@
     };
 
     utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, inputProcessorType = "claude", mode = "replace") {
+        console.log(`[createButtonFromPromptKey] Called with: promptKey=${promptKey}, inputProcessorType=${inputProcessorType}, mode=${mode}`);
+
         const button = document.createElement("button");
         utils.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
@@ -107,33 +109,35 @@
             const inputNewCont = prompts[promptKey].prompt;
             if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
                 let processedInput = "";
-                let useTextContent = false; // Flag to determine assignment method
+                let useTextContent = false;
 
                 if (inputProcessorType === "claude") {
                     processedInput = claudeLongStringProcessor(inputNewCont);
                 } else if (inputProcessorType === "gemini") {
                     processedInput = geminiLongStringProcessor(inputNewCont);
-                    useTextContent = true; // Gemini input will use textContent
+                    useTextContent = true;
                 } else {
-                    // Default or error handling
-                    processedInput = inputNewCont; 
+                    processedInput = inputNewCont;
                 }
+                console.log(`[createButtonFromPromptKey] processorType: ${inputProcessorType}, useTextContent: ${useTextContent}, processedInput: "${processedInput.substring(0, 50)}..."`);
 
                 if (mode === "append") {
                     if (useTextContent) {
+                        console.log("[createButtonFromPromptKey] Append mode: using textContent for Gemini");
                         const currentContent = inputBoxElement.textContent || "";
                         inputBoxElement.textContent = currentContent + processedInput;
                     } else {
-                        // Append new content to existing content (Claude path)
+                        console.log("[createButtonFromPromptKey] Append mode: using innerHTML for Claude/default");
                         const currentContent = inputBoxElement.innerHTML;
-                        inputBoxElement.innerHTML = currentContent + processedInput; 
+                        inputBoxElement.innerHTML = currentContent + processedInput;
                     }
                 } else {
                     // Replace existing content
                     if (useTextContent) {
+                        console.log("[createButtonFromPromptKey] Replace mode: using textContent for Gemini");
                         inputBoxElement.textContent = processedInput;
                     } else {
-                         // Replace existing content (Claude path)
+                        console.log("[createButtonFromPromptKey] Replace mode: using innerHTML for Claude/default");
                         inputBoxElement.innerHTML = processedInput;
                     }
                 }
