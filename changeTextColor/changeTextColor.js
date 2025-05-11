@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.2.1
+// @version             0.2.2
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -16,11 +16,12 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.2.2: 增加 Butterfly_models 的颜色匹配
 // 0.2.1: 优化代码; 增加teststats
 // 0.2.0: 优化代码; 增加替换文本的功能
 // 0.1.5: hotfix
 // 0.1.4: 增加 PO targets 的颜色匹配
-// 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配 
+// 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配
 // 0.1.2: bug fixed
 // 0.1.1: 增加 Butterfly proctor allocation 的颜色匹配
 // 0.1.0: beta version, 优化脚本; 增加cpu/gpu天梯匹配
@@ -67,7 +68,8 @@
             ],
         },
 
-        proctor: {
+        proctor_general: {
+            // https://proctor.sandbox.indeed.net/proctor/toggles/view/isbutterflyapplymodeltst
             urlRegex: /^https?:\/\/proctor\.sandbox\.indeed\.net\/proctor\/toggles\/view\/.*/,
             textPatterns: [
                 // !! test replacement
@@ -75,7 +77,17 @@
             ],
         },
 
-        Butterfly: {
+        Butterfly_models: {
+            // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/
+            urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model\/.*/,
+            textPatterns: [
+                // !! test replacement
+                ...workTextReplacement,
+            ],
+        },
+
+        Butterfly_proctor: {
+            // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
                 // !! test replacement
