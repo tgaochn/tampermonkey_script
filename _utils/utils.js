@@ -1,9 +1,9 @@
 // utils.js
-// version: 0.1.2
+// version: 0.1.3
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.1.2");
+    console.log("Utils script starting to load - v0.1.3");
     const utils = {};
     console.log("utils object created");
 
@@ -104,7 +104,7 @@
 
         const button = document.createElement("button");
         utils.setBtnStyle(button);
-        button.innerHTML = prompts[promptKey].btnNm;
+        button.textContent = prompts[promptKey].btnNm;
         button.onclick = () => {
             const inputNewCont = prompts[promptKey].prompt;
             if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
