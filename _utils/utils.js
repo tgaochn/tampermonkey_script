@@ -1,5 +1,5 @@
 // utils.js
-// version: 0.1.0
+// version: 0.1.1
 (function (window) {
     "use strict";
 
