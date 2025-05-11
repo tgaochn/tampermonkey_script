@@ -5,6 +5,7 @@
 // @description Adds buttons for Claude
 // @author      gtfish
 // @match       https://claude.ai/*
+// @match       https://gemini.google.com/app*
 // @grant       none
 // @license     GPL
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -38,7 +39,31 @@
 
     let isButtonsAdded = false;
     const addedContainerId = "container_id";
-    let lastUrl = ""; // 添加变量跟踪上一次URL
+
+    const siteConfigs = {
+        claude: {
+            inputBoxSelector: "div[enterkeyhint='enter']",
+            btnContainerSelectors: ["div[aria-label='Write your prompt to Claude']"],
+            hostnames: ["claude.ai"],
+            inputProcessor: "claude" // Identifier for the processor in utils.js
+        },
+        gemini: {
+            inputBoxSelector: "div[enterkeyhint='send']", 
+            btnContainerSelectors: ["div[aria-label='在此处输入提示']"],
+            hostnames: ["gemini.google.com"],
+            inputProcessor: "gemini" // Identifier for the processor in utils.js
+        }
+    };
+
+    const getCurrentSiteConfig = () => {
+        const currentHostname = window.location.hostname;
+        for (const siteKey in siteConfigs) {
+            if (siteConfigs[siteKey].hostnames.some(h => currentHostname.includes(h))) {
+                return siteConfigs[siteKey];
+            }
+        }
+        return null; // Or a default config
+    };
 
     // ! define all the prompt
     // 带下划线的会直接提交
@@ -376,13 +401,15 @@ Give me a detailed response following these backgrounds and instructions:\n
                 return;
             }
 
-            const inputBoxSelector = "div[enterkeyhint='enter']";
-            const btnContainerSelector1 = "div[aria-label='Write your prompt to Claude']";
-            const btnContainerSelector2 = "div[aria-label='Write your prompt to Claude']";
+            const currentConfig = getCurrentSiteConfig();
+            if (!currentConfig) {
+                console.log("No site configuration found for current hostname:", window.location.hostname);
+                return;
+            }
 
             // 等待按钮容器元素出现
             const btnContainer = await utils.waitForAliasedElement(
-                [btnContainerSelector1, btnContainerSelector2],
+                currentConfig.btnContainerSelectors,
                 20,
                 300
             );
@@ -397,16 +424,16 @@ Give me a detailed response following these backgrounds and instructions:\n
             btnContainer.style.display = "flex";
             btnContainer.style.flexDirection = "column";
 
-            const inputBoxElement = document.querySelector(inputBoxSelector);
+            const inputBoxElement = document.querySelector(currentConfig.inputBoxSelector);
             if (!inputBoxElement) {
-                console.warn("Input box element not found");
+                console.warn("Input box element not found using selector:", currentConfig.inputBoxSelector);
                 return;
             }
 
-            const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson1);
-            const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson2);
-            const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson3);
-            const btnSubContainer4 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson4, "append");
+            const btnSubContainer1 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson1, currentConfig.inputProcessor);
+            const btnSubContainer2 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson2, currentConfig.inputProcessor);
+            const btnSubContainer3 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson3, currentConfig.inputProcessor);
+            const btnSubContainer4 = utils.createButtonContainerFromJson(inputBoxElement, myPromptJson4, currentConfig.inputProcessor, "append");
 
             btnSubContainer1.id = addedContainerId;
 
@@ -415,7 +442,7 @@ Give me a detailed response following these backgrounds and instructions:\n
             btnContainer.appendChild(btnSubContainer3);
             btnContainer.appendChild(btnSubContainer4);
 
-            console.log("Buttons added successfully");
+            console.log("Buttons added successfully for", currentConfig.hostnames[0]);
             isButtonsAdded = true;
         } catch (error) {
             console.error("Failed to add buttons:", error);

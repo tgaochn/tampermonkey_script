@@ -27,6 +27,12 @@
         return formattedLines.join("");
     }
 
+    // For Gemini, we'll assume for now it handles plain text with newlines.
+    // This might need adjustment based on actual behavior.
+    function geminiLongStringProcessor(longString) {
+        return longString;
+    }
+
     function sendEnterKey(element) {
         const enterKeyEvent = new KeyboardEvent("keydown", {
             bubbles: true,
@@ -92,20 +98,32 @@
         return button;
     };
 
-    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, mode = "replace") {
+    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, inputProcessorType = "claude", mode = "replace") {
         const button = document.createElement("button");
         utils.setBtnStyle(button);
         button.innerHTML = prompts[promptKey].btnNm;
         button.onclick = () => {
             const inputNewCont = prompts[promptKey].prompt;
             if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
+                let processedInput = "";
+                if (inputProcessorType === "claude") {
+                    processedInput = claudeLongStringProcessor(inputNewCont);
+                } else if (inputProcessorType === "gemini") {
+                    processedInput = geminiLongStringProcessor(inputNewCont);
+                } else {
+                    // Default or error handling
+                    processedInput = inputNewCont; 
+                }
+
                 if (mode === "append") {
                     // Append new content to existing content
                     const currentContent = inputBoxElement.innerHTML;
-                    inputBoxElement.innerHTML = currentContent + claudeLongStringProcessor(inputNewCont);
+                    // Ensure the appended content is also processed if needed, though current use case might not require it for append.
+                    // For simplicity, directly concatenating. If complex appends are needed, this might need review.
+                    inputBoxElement.innerHTML = currentContent + processedInput; 
                 } else {
                     // Replace existing content (default behavior)
-                    inputBoxElement.innerHTML = claudeLongStringProcessor(inputNewCont);
+                    inputBoxElement.innerHTML = processedInput;
                 }
                 setSelection(inputBoxElement);
             }
@@ -151,10 +169,10 @@
         return container;
     };
 
-    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, mode = "replace") {
+    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, inputProcessorType = "claude", mode = "replace") {
         const buttonContainer = utils.createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, mode));
+            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, inputProcessorType, mode));
         }
         return buttonContainer;
     };
