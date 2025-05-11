@@ -107,24 +107,35 @@
             const inputNewCont = prompts[promptKey].prompt;
             if (inputBoxElement && inputBoxElement instanceof HTMLElement) {
                 let processedInput = "";
+                let useTextContent = false; // Flag to determine assignment method
+
                 if (inputProcessorType === "claude") {
                     processedInput = claudeLongStringProcessor(inputNewCont);
                 } else if (inputProcessorType === "gemini") {
                     processedInput = geminiLongStringProcessor(inputNewCont);
+                    useTextContent = true; // Gemini input will use textContent
                 } else {
                     // Default or error handling
                     processedInput = inputNewCont; 
                 }
 
                 if (mode === "append") {
-                    // Append new content to existing content
-                    const currentContent = inputBoxElement.innerHTML;
-                    // Ensure the appended content is also processed if needed, though current use case might not require it for append.
-                    // For simplicity, directly concatenating. If complex appends are needed, this might need review.
-                    inputBoxElement.innerHTML = currentContent + processedInput; 
+                    if (useTextContent) {
+                        const currentContent = inputBoxElement.textContent || "";
+                        inputBoxElement.textContent = currentContent + processedInput;
+                    } else {
+                        // Append new content to existing content (Claude path)
+                        const currentContent = inputBoxElement.innerHTML;
+                        inputBoxElement.innerHTML = currentContent + processedInput; 
+                    }
                 } else {
-                    // Replace existing content (default behavior)
-                    inputBoxElement.innerHTML = processedInput;
+                    // Replace existing content
+                    if (useTextContent) {
+                        inputBoxElement.textContent = processedInput;
+                    } else {
+                         // Replace existing content (Claude path)
+                        inputBoxElement.innerHTML = processedInput;
+                    }
                 }
                 setSelection(inputBoxElement);
             }

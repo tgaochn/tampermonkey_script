@@ -48,7 +48,7 @@
             inputProcessor: "claude" // Identifier for the processor in utils.js
         },
         gemini: {
-            inputBoxSelector: "div[enterkeyhint='send']", 
+            inputBoxSelector: "rich-textarea[enterkeyhint='send']", 
             btnContainerSelectors: ["div[aria-label='在此处输入提示']"],
             hostnames: ["gemini.google.com"],
             inputProcessor: "gemini" // Identifier for the processor in utils.js
