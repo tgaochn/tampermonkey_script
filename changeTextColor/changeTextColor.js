@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_color_changer
-// @version             0.2.2
+// @version             0.2.3
 // @description         Change text color for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -16,6 +16,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
 
 // ==/UserScript==
+// 0.2.3: fix bug for text replacement
 // 0.2.2: 增加 Butterfly_models 的颜色匹配
 // 0.2.1: 优化代码; 增加teststats
 // 0.2.0: 优化代码; 增加替换文本的功能
@@ -33,11 +34,11 @@
     // 提取共用的测试替换模式
     const workTextReplacement = [
         {
-            regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyapplymodeltst)\d*)$/,
+            regex: /^((idxbutterflyapplymodeltst)|(isbutterflyapplymodeltst)\d*)$/,
             replacement: "$1 (AsPerSeen)",
         },
         {
-            regex: /^((idxbutterflyapplymodeltst)|(isbutterflyctrmodeltst)\d*)$/,
+            regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyctrmodeltst)\d*)$/,
             replacement: "$1 (CTR)",
         },
         {
