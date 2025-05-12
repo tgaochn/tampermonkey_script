@@ -1,9 +1,9 @@
 // utils.js
-// version: 0.1.3
+// version: 0.1.4
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.1.3");
+    console.log("Utils script starting to load - v0.1.4");
     const utils = {};
     console.log("utils object created");
 
@@ -178,10 +178,11 @@
     // ! create button containers
     utils.createButtonContainer = function () {
         const container = document.createElement("div");
-        container.style.display = "inline-block";
-        container.style.justifyContent = "center";
+        container.style.display = "flex";
+        container.style.flexWrap = "wrap";
+        container.style.justifyContent = "flex-start";
         container.style.marginTop = "10px";
-        container.style.marginLeft = "10px";
+        container.style.gap = "5px";
         return container;
     };
 

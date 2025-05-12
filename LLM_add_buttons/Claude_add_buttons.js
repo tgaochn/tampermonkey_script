@@ -48,7 +48,7 @@
             inputProcessor: "claude" // Identifier for the processor in utils.js
         },
         gemini: {
-            inputBoxSelector: "rich-textarea[enterkeyhint='send']", 
+            inputBoxSelector: "rich-textarea[enterkeyhint='send'] div.ql-editor",
             btnContainerSelectors: ["div.input-area[data-node-type='input-area']"],
             hostnames: ["gemini.google.com"],
             inputProcessor: "gemini" // Identifier for the processor in utils.js
@@ -423,6 +423,7 @@ Give me a detailed response following these backgrounds and instructions:\n
 
             btnContainer.style.display = "flex";
             btnContainer.style.flexDirection = "column";
+            btnContainer.style.alignItems = "flex-start";
 
             const inputBoxElement = document.querySelector(currentConfig.inputBoxSelector);
             if (!inputBoxElement) {
