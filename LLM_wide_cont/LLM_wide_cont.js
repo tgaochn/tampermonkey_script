@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        LLM_wide_cont
 // @namespace   https://claude.ai/
-// @version     0.1.0
+// @version     0.1.1
 // @description Make the contents in LLM wider
 // @author      gtfish
 // @match       https://claude.ai/*
-// @match       https://gemini.google.com/app*
+// @match       https://gemini.google.com/*
 // @grant        GM_addStyle
 // @grant        GM_log
 // @license     GPL
@@ -13,6 +13,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_wide_cont/LLM_wide_cont.js
 // ==/UserScript==
 // forked from `更宽的AI对话窗口`: https://greasyfork.org/zh-CN/scripts/499377-wider-ai-chat/code
+// 0.1.1: 更新 @match, 换账户也可以使用 gemini
 // 0.1.0: 增加claude初始页面input box宽度修改; 增加gemini的input box宽度修改
 // 0.0.1: 只保留claude/gemini
 

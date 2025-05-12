@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.0
+// @version     1.1.1
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
-// @match       https://gemini.google.com/app*
+// @match       https://gemini.google.com/*
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_registerMenuCommand
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.1: 更新 @match, 换账户也可以使用 gemini
 // LLM_add_buttons 1.1.0: Added feature to load/edit prompts from GM_storage via menu command.
 // LLM_add_buttons 1.0.0: script改名, 增加 Gemini 支持
 // Claude_Add_Buttons 0.6.8: 修改了从主页跳转到chat页面后按钮不能第一时间显示的问题
