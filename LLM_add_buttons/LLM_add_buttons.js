@@ -1,17 +1,18 @@
 // ==UserScript==
-// @name        Claude_Add_Buttons
+// @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     0.6.8
-// @description Adds buttons for Claude
+// @version     1.0.0
+// @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
 // @match       https://gemini.google.com/app*
 // @grant       none
 // @license     GPL
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/Claude_add_buttons.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.0.0: script改名, 增加 Gemini 支持
 // Claude_Add_Buttons 0.6.8: 修改了从主页跳转到chat页面后按钮不能第一时间显示的问题
 // Claude_Add_Buttons 0.6.6: 修改prompt
 // Claude_Add_Buttons 0.6.5: 部分重构代码, 用于适配 deepseek
