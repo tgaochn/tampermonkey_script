@@ -49,7 +49,7 @@
         },
         gemini: {
             inputBoxSelector: "rich-textarea[enterkeyhint='send']", 
-            btnContainerSelectors: ["div[aria-label='在此处输入提示']"],
+            btnContainerSelectors: ["div.input-area[data-node-type='input-area']"],
             hostnames: ["gemini.google.com"],
             inputProcessor: "gemini" // Identifier for the processor in utils.js
         }
