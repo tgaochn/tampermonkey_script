@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_wide_cont
 // @namespace   https://claude.ai/
-// @version     0.0.1
+// @version     0.1.0
 // @description Make the contents in LLM wider
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,10 +13,11 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_wide_cont/LLM_wide_cont.js
 // ==/UserScript==
 // forked from `更宽的AI对话窗口`: https://greasyfork.org/zh-CN/scripts/499377-wider-ai-chat/code
+// 0.1.0: 增加claude初始页面input box宽度修改; 增加gemini的input box宽度修改
 // 0.0.1: 只保留claude/gemini
 
 (function () {
-    var limit_anser_height = false;
+    var limit_answer_height = false;
 
     if (/gemini.google.com/.test(location.href)) {
         console.log("gemini");
@@ -27,9 +28,20 @@
       #app-root > main > side-navigation-v2 > bard-sidenav-container > bard-sidenav-content > div > div > div.content-container > chat-window > div.chat-container.ng-star-inserted > div.bottom-container.response-optimization.ng-star-inserted {
         max-width: calc(100% - 20px);
       }
-      #app-root > main > side-navigation-v2 > bard-sidenav-container > bard-sidenav-content > div > div > div.content-container > chat-window > div.chat-container.ng-star-inserted > div.bottom-container.response-optimization.ng-star-inserted > div.input-area-container.ng-star-inserted {
-        max-width: calc(100% - 20px);
-      }`);
+
+      /* --- Rules for input area container and text field --- */
+      div.input-area-container.ng-star-inserted {
+        display: flex !important;
+        flex-direction: column !important;
+        max-width: calc(100% - 40px) !important; /* Centered with some padding */
+        margin: 0 auto !important; /* Center the container */
+        width: 100%; /* Use available width up to max-width */
+      }
+      div.input-area-container.ng-star-inserted .text-input-field {
+        width: 100% !important;
+      }
+      /* --- End rules for input area --- */
+      `);
     } else if (/claude.ai/.test(location.href)) {
         console.log("claude"); // Explicitly for claude.ai
 
@@ -66,9 +78,14 @@
       }
       main article > div.text-base > div.mx-auto {
         max-width: 95%;
-      } `;
+      }
 
-        if (limit_anser_height) {
+      /* --- Rules for input area container for claude initial page --- */
+      body > div.flex.min-h-screen.w-full > div > main > div.top-5.z-10.mx-auto.w-full > div.mx-auto.max-w-2xl { max-width: 95% !important; }
+      /* --- End rules for input area --- */
+      `;
+
+        if (limit_answer_height) {
             GM_addStyle(`
       pre > div.rounded-md > div.overflow-y-auto {
         max-height: 50vh;
