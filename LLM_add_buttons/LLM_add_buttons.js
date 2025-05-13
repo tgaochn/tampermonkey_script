@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.1
+// @version     1.1.2
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.2: 更新storage, 使得storage的值可以在Tampermonkey的storage tab中显示
 // LLM_add_buttons 1.1.1: 更新 @match, 换账户也可以使用 gemini
 // LLM_add_buttons 1.1.0: Added feature to load/edit prompts from GM_storage via menu command.
 // LLM_add_buttons 1.0.0: script改名, 增加 Gemini 支持
@@ -349,6 +350,19 @@ examples for each feature.
         myPromptJson4_default,
     ];
 
+    // Function to initialize storage - will make storage values visible in Tampermonkey UI
+    function initializeStorage() {
+        // For each prompt group, initialize it with the stored value or default if not present
+        for (let i = 0; i < PROMPT_STORAGE_KEYS.length; i++) {
+            const key = PROMPT_STORAGE_KEYS[i];
+            const defaultValue = DEFAULT_PROMPTS_ARRAY[i];
+            const currentValue = GM_getValue(key, defaultValue);
+            
+            // Always set the value to ensure it appears in the Tampermonkey Storage tab
+            GM_setValue(key, currentValue);
+        }
+    }
+
     // Load Prompts from Storage or Use Defaults
     let myPromptJson1 = GM_getValue(PROMPT_STORAGE_KEYS[0], myPromptJson1_default);
     let myPromptJson2 = GM_getValue(PROMPT_STORAGE_KEYS[1], myPromptJson2_default);
@@ -527,6 +541,9 @@ To reset to default, you can save an empty JSON object like {}
 
     async function initScript() {
         try {
+            // Initialize storage to make values visible in Tampermonkey storage tab
+            initializeStorage();
+            
             const utils = await waitForUtils();
 
             GM_registerMenuCommand(
