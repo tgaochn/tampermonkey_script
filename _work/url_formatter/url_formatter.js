@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            url_formatter
 // @namespace       url_formatter
-// @version         0.1.0
+// @version         0.1.1
 // @description     format URL and redirect to a new URL
 // @author          gtfish
 // @include         *://*.console.aws.amazon.com/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // ==/UserScript==
+// 0.1.1: enhance testStatsCleanup to reorder URL parameters, keeping allocationId and dateRangeFrom in first 2 positions
 // 0.1.0: init the script, redirect to a new URL, add button to modify teststats URL
 
 (function () {
@@ -36,11 +37,37 @@
             // Match teststats analyze URLs
             urlRegex: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
             action: 'modify',
-            buttonText: 'Remove dateRangeTo',
+            buttonText: 'Remove dateRangeTo & Reorder',
             processor: function (url) {
-                // Remove dateRangeTo parameter using URLSearchParams
                 const urlObj = new URL(url);
-                urlObj.searchParams.delete('dateRangeTo');
+                
+                // Store all parameters
+                const allParams = new Map();
+                for (const [key, value] of urlObj.searchParams) {
+                    allParams.set(key, value);
+                }
+                
+                // Remove dateRangeTo parameter
+                allParams.delete('dateRangeTo');
+                
+                // Clear existing search params
+                urlObj.search = '';
+                
+                // Add parameters in desired order: allocationId and dateRangeFrom first
+                const priorityParams = ['allocationId', 'dateRangeFrom'];
+                
+                // Add priority parameters first
+                for (const param of priorityParams) {
+                    if (allParams.has(param)) {
+                        urlObj.searchParams.append(param, allParams.get(param));
+                        allParams.delete(param);
+                    }
+                }
+                
+                // Add remaining parameters in their original order
+                for (const [key, value] of allParams) {
+                    urlObj.searchParams.append(key, value);
+                }
                 
                 // Decode the result to preserve original parameter formatting
                 return decodeURIComponent(urlObj.toString());
