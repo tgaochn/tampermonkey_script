@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name                text_color_changer
-// @version             0.2.3
-// @description         Change text color for specific patterns using regex on specific URLs
+// @name                text_content_changer
+// @version             0.2.4
+// @description         Change text color/content for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
 // @match               http*://teststats.sandbox.indeed.net/*
@@ -12,10 +12,11 @@
 // @match               http*://www.mydrivers.com/zhuanti/tianti/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
-// @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
-// @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/changeTextColor/changeTextColor.js
+// @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
+// @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 
 // ==/UserScript==
+// 0.2.4: rename the script to text_content_changer
 // 0.2.3: fix bug for text replacement
 // 0.2.2: 增加 Butterfly_models 的颜色匹配
 // 0.2.1: 优化代码; 增加teststats
