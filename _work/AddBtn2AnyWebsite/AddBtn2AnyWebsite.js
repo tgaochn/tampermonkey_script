@@ -343,7 +343,7 @@
         const textColor = matchedConfig && matchedConfig.textColor ? matchedConfig.textColor : null;
 
         // Check if dynamic title is too long for display (but keep full title for copying)
-        const dynamicDisplayTitle = dynamicTitle && (dynamicTitle.length < CONFIG.MAX_DISPLAY_LENGTH) ? dynamicTitle : fixedTitle;
+        const dynamicDisplayTitle = dynamicTitle && (dynamicTitle.length < CONFIG.MAX_DISPLAY_LENGTH) ? dynamicTitle : "{title}";
 
         // Add title-based buttons
         if (matchedConfig && matchedConfig.showBothTitles) {
