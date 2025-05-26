@@ -1,9 +1,9 @@
 // utils.js
-// version: 0.1.4
+// version: 0.1.5
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.1.4");
+    console.log("Utils script starting to load - v0.1.5");
     const utils = {};
     console.log("utils object created");
 
@@ -153,8 +153,31 @@
         return button;
     };
 
-    utils.createTextNode = function (btnText) {
-        return document.createTextNode(btnText);
+    utils.createTextNode = function (btnText, options = {}) {
+        // Handle backward compatibility: if second parameter is a string, treat it as color
+        if (typeof options === 'string') {
+            options = { color: options };
+        }
+        
+        const { color, fontSize, fontWeight, fontStyle, textDecoration } = options;
+        
+        // If no styling options provided, return plain text node
+        if (!color && !fontSize && !fontWeight && !fontStyle && !textDecoration) {
+            return document.createTextNode(btnText);
+        }
+        
+        // Create a span element to apply styling
+        const span = document.createElement('span');
+        span.textContent = btnText;
+        
+        // Apply styling options
+        if (color) span.style.color = color;
+        if (fontSize) span.style.fontSize = fontSize;
+        if (fontWeight) span.style.fontWeight = fontWeight;
+        if (fontStyle) span.style.fontStyle = fontStyle;
+        if (textDecoration) span.style.textDecoration = textDecoration;
+        
+        return span;
     };
 
     utils.createButtonCopyText = function (btnText, copyText) {
