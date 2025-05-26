@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            url_formatter
 // @namespace       url_formatter
-// @version         0.1.1
+// @version         0.1.2
 // @description     format URL and redirect to a new URL
 // @author          gtfish
 // @include         *://*.console.aws.amazon.com/*
@@ -10,7 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // ==/UserScript==
-// 0.1.1: enhance testStatsCleanup to reorder URL parameters, keeping allocationId and dateRangeFrom in first 2 positions
+// 0.1.2: enhance testStatsCleanup to reorder URL parameters, keeping allocationId and dateRangeFrom in first 2 positions
 // 0.1.0: init the script, redirect to a new URL, add button to modify teststats URL
 
 (function () {
@@ -20,7 +20,7 @@
     const CONFIG = {
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "url_formatter_container",
-        BUTTON_POSITION: { top: "5px", left: "1000px" },
+        BUTTON_POSITION: { top: "0px", left: "800px" },
         REQUIRED_UTILS: ["createButtonFromCallback", "createButtonContainer", "addFixedPosContainerToPage", "observeDOM"]
     };
 
