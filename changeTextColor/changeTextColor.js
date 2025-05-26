@@ -31,7 +31,6 @@
 (function () {
     "use strict";
 
-    // 提取共用的测试替换模式
     const workTextReplacement = [
         {
             regex: /^((idxbutterflyapplymodeltst)|(isbutterflyapplymodeltst)\d*)$/,
@@ -64,7 +63,6 @@
             // https://teststats.sandbox.indeed.net/analyze/idxsjbutterflyctrmodeltst?from=proctor_tst_view
             urlRegex: /^https?:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
             textPatterns: [
-                // !! test replacement
                 ...workTextReplacement,
             ],
         },
@@ -73,7 +71,6 @@
             // https://proctor.sandbox.indeed.net/proctor/toggles/view/isbutterflyapplymodeltst
             urlRegex: /^https?:\/\/proctor\.sandbox\.indeed\.net\/proctor\/toggles\/view\/.*/,
             textPatterns: [
-                // !! test replacement
                 ...workTextReplacement,
             ],
         },
@@ -82,7 +79,6 @@
             // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model\/.*/,
             textPatterns: [
-                // !! test replacement
                 ...workTextReplacement,
             ],
         },
@@ -91,10 +87,8 @@
             // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
-                // !! test replacement
                 ...workTextReplacement,
 
-                // !! title colors
                 // ! Group 1 - ranking targets
                 {
                     regex: /^IDX P\(AS \| seen\)$/,
