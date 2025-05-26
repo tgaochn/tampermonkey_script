@@ -99,8 +99,16 @@
         return button;
     };
 
-    utils.createButtonFromPromptKey = function (inputBoxElement, prompts, promptKey, inputProcessorType = "claude", mode = "replace") {
-        console.log(`[createButtonFromPromptKey] Called with: promptKey=${promptKey}, inputProcessorType=${inputProcessorType}, mode=${mode}`);
+    utils.createButtonFromPromptKey = function (
+        inputBoxElement,
+        prompts,
+        promptKey,
+        inputProcessorType = "claude",
+        mode = "replace"
+    ) {
+        console.log(
+            `[createButtonFromPromptKey] Called with: promptKey=${promptKey}, inputProcessorType=${inputProcessorType}, mode=${mode}`
+        );
 
         const button = document.createElement("button");
         utils.setBtnStyle(button);
@@ -119,7 +127,12 @@
                 } else {
                     processedInput = inputNewCont;
                 }
-                console.log(`[createButtonFromPromptKey] processorType: ${inputProcessorType}, useTextContent: ${useTextContent}, processedInput: "${processedInput.substring(0, 50)}..."`);
+                console.log(
+                    `[createButtonFromPromptKey] processorType: ${inputProcessorType}, useTextContent: ${useTextContent}, processedInput: "${processedInput.substring(
+                        0,
+                        50
+                    )}..."`
+                );
 
                 if (mode === "append") {
                     if (useTextContent) {
@@ -154,29 +167,34 @@
     };
 
     utils.createTextNode = function (btnText, options = {}) {
+        // Handle null/undefined options
+        if (!options) {
+            options = {};
+        }
+
         // Handle backward compatibility: if second parameter is a string, treat it as color
-        if (typeof options === 'string') {
+        if (typeof options === "string") {
             options = { color: options };
         }
-        
+
         const { color, fontSize, fontWeight, fontStyle, textDecoration } = options;
-        
+
         // If no styling options provided, return plain text node
         if (!color && !fontSize && !fontWeight && !fontStyle && !textDecoration) {
             return document.createTextNode(btnText);
         }
-        
+
         // Create a span element to apply styling
-        const span = document.createElement('span');
+        const span = document.createElement("span");
         span.textContent = btnText;
-        
+
         // Apply styling options
         if (color) span.style.color = color;
         if (fontSize) span.style.fontSize = fontSize;
         if (fontWeight) span.style.fontWeight = fontWeight;
         if (fontStyle) span.style.fontStyle = fontStyle;
         if (textDecoration) span.style.textDecoration = textDecoration;
-        
+
         return span;
     };
 
@@ -209,10 +227,17 @@
         return container;
     };
 
-    utils.createButtonContainerFromJson = function (inputBoxElement, prompts, inputProcessorType = "claude", mode = "replace") {
+    utils.createButtonContainerFromJson = function (
+        inputBoxElement,
+        prompts,
+        inputProcessorType = "claude",
+        mode = "replace"
+    ) {
         const buttonContainer = utils.createButtonContainer();
         for (const promptKey in prompts) {
-            buttonContainer.append(utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, inputProcessorType, mode));
+            buttonContainer.append(
+                utils.createButtonFromPromptKey(inputBoxElement, prompts, promptKey, inputProcessorType, mode)
+            );
         }
         return buttonContainer;
     };
