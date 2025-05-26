@@ -1,19 +1,23 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.2.1
-// @description  任意网站加入相关链接
+// @version      0.3.0
+// @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
 // @match        https://butterfly.sandbox.indeed.net/*
+// @match        https://proctor.sandbox.indeed.net/*
 // @match        https://proctor-v2.sandbox.indeed.net/*
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
+// @match        https://indeed.atlassian.net/wiki/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
-// ==/UserScript==
+// ==/UserScript== 
+// 0.3.0: merged wiki_btn functionality - added wiki page support with page title extraction and relative positioning
+// 0.2.2: add dynamic title generation based on URL parsing
 // 0.2.1: extract CONFIG constants for better maintainability
 // 0.2.0: use @require to load external script
 // 0.1.1: bug fixed
@@ -40,30 +44,207 @@
         BUTTON_POSITION: { top: "-10px", left: "1200px" },
         REQUIRED_UTILS: ["observeDOM", "shouldRunScript", "createButtonContainer", "createButtonCopyText", 
                         "createTextNode", "createButtonCopyHypertext", "findBestMatch", "addFixedPosContainerToPage"],
-        DEFAULT_TITLE: "link"
+        DEFAULT_TITLE: "link",
+        MAX_DISPLAY_LENGTH: 25, // Maximum length for button display text
+        // MAX_DISPLAY_LENGTH: 10, // Maximum length for button display text
+        WIKI_SELECTORS: {
+            PAGE_TITLE: '[data-testid="title-text"] > span',
+            CREATE_BTN: '[data-testid="app-navigation-create"]',
+        }
     };
+
+    // Path segment mapping rules
+    const PATH_SEGMENT_MAPPINGS = [
+        {
+            regex: /^(onlineranking_preapply_shadow_tst)$/,
+            replacement: "PreApply",
+        },
+        {
+            regex: /^((idxbutterflyapplymodeltst)|(isbutterflyapplymodeltst))$/,
+            replacement: "AsPerSeen",
+        },
+        {
+            regex: /^((idxsjbutterflyctrmodeltst)|(isbutterflyctrmodeltst))$/,
+            replacement: "CTR",
+        },
+        {
+            regex: /^((idxsjbutterflyapplycompletemodeltst)|(issjbutterflyapplycompletemodeltst))$/,
+            replacement: "AcPerClick",
+        },
+        {
+            regex: /^((idxsjbutterflyapplyperclickedmodeltst)|(issjbutterflyapplyperclickedmodeltst))$/,
+            replacement: "AsPerClick",
+        },
+        {
+            regex: /^((idxorgbutterflyqualifiedmodeltst)|(isorgbutterflyqualifiedmodeltst))$/,
+            replacement: "Attainability",
+        },
+        {
+            regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst))$/,
+            replacement: "eQualified",
+        },
+    ];
 
     const inclusionPatterns = [
     ];
     
-    // https://indeed.atlassian.net/browse
+    // https://indeed.atlassian.net/browse 
     const exclusionPatterns = [
         /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
         /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
 
-    const url2title = [
-        // google for testing
-        // @include      https://www.google.com/*
-        // { pattern: /^https?:\/\/(www\.)?google\.com.*$/, title: 'Google' },
+    // Function to apply path segment mappings
+    function applyPathSegmentMapping(pathSegment) {
+        if (!pathSegment) return pathSegment;
+        
+        for (const mapping of PATH_SEGMENT_MAPPINGS) {
+            if (mapping.regex.test(pathSegment)) {
+                return mapping.replacement;
+            }
+        }
+        
+        return pathSegment; // Return original if no mapping found
+    }
 
-        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, title: 'Butterfly traffic' },
-        { pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, title: 'RuleSet' },
-        { pattern: /^https:\/\/proctor-v2\.sandbox\.indeed\.net.*$/, title: 'proctor' },
-        { pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, title: 'teststats' },
+    // Function to extract path segment from URL (last segment before query params)
+    function extractPathSegment(url) {
+        try {
+            const urlObj = new URL(url);
+            const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
+            const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+            return applyPathSegmentMapping(lastSegment);
+        } catch (error) {
+            console.error('Error parsing URL:', error);
+            return null;
+        }
+    }
+
+    // Function to generate dynamic title based on URL
+    function generateDynamicTitle(url, baseTitle, customParser = null) {
+        if (customParser && typeof customParser === 'function') {
+            const customResult = customParser(url);
+            return customResult ? `${customResult}` : baseTitle;
+        }
+        
+        const pathSegment = extractPathSegment(url);
+        return pathSegment ? `${pathSegment}` : baseTitle;
+    }
+
+
+
+    const url2title = [
+        // static title
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
-        { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
+        
+        // dynamic title with both fixed and dynamic options
+        { 
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, 
+            title: 'Butterfly traffic',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract model name from butterfly proctor URL
+                try {
+                    // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
+                    const hashPart = url.split('#')[1] || '';
+                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
+                    
+                    // Look for the segment after 'proctor' and 'jobsearch'
+                    const proctorIndex = pathSegments.indexOf('proctor');
+                    if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
+                        const modelSegment = pathSegments[proctorIndex + 2].split('?')[0]; // Remove query params
+                        return applyPathSegmentMapping(modelSegment);
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.error('Error in butterfly proctor custom parser:', error);
+                    return null;
+                }
+            }
+        },
+        { 
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, 
+            title: 'RuleSet',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract rule name from butterfly ruleSet URL
+                try {
+                    // For URLs like: #/ruleSet/MODEL_CONFIG/JSS_RELEVANT_JOBS/
+                    const hashPart = url.split('#')[1] || '';
+                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
+                    
+                    // Look for the segment after 'ruleSet' and 'MODEL_CONFIG'
+                    const ruleSetIndex = pathSegments.indexOf('ruleSet');
+                    if (ruleSetIndex >= 0 && ruleSetIndex + 2 < pathSegments.length) {
+                        const ruleSegment = pathSegments[ruleSetIndex + 2].split('?')[0]; // Remove query params
+                        return ruleSegment; // Don't apply mapping for rule names, return as-is
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.error('Error in butterfly ruleSet custom parser:', error);
+                    return null;
+                }
+            }
+        },
+        { 
+            pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, 
+            title: 'testStats',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract model name from teststats URL
+                try {
+                    const urlObj = new URL(url);
+                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
+                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    return applyPathSegmentMapping(lastSegment);
+                } catch (error) {
+                    console.error('Error in teststats custom parser:', error);
+                    return null;
+                }
+            }
+        },
+        { 
+            pattern: /^https:\/\/proctor(-v2)?\.sandbox\.indeed\.net.*$/, 
+            title: 'proctor',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            textColor: '#FFFFFF', // white color for proctor
+            customParser: (url) => {
+                // Extract model name from proctor URL
+                try {
+                    const urlObj = new URL(url);
+                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
+                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    return applyPathSegmentMapping(lastSegment);
+                } catch (error) {
+                    console.error('Error in proctor custom parser:', error);
+                    return null;
+                }
+            }
+        },
+        { 
+            pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, 
+            title: 'wiki',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            buttonPosition: { top: "20px", left: "750px" }, // Custom position to avoid blocking content
+            customParser: (url) => {
+                // Extract page title from wiki page DOM
+                try {
+                    const pageTitleElement = document.querySelector(CONFIG.WIKI_SELECTORS.PAGE_TITLE);
+                    return pageTitleElement ? pageTitleElement.firstChild.textContent.trim() : null;
+                } catch (error) {
+                    console.error('Error in wiki custom parser:', error);
+                    return null;
+                }
+            }
+        },
     ];
 
     // Wait for utils to load
@@ -125,39 +306,77 @@
     }
 
     async function main(utils) {
+        const curURL = window.location.href;
         const btnContainer = utils.createButtonContainer();
         const btnSubContainer1 = utils.createButtonContainer();
-        // const btnSubContainer2 = utils.createButtonContainer();
 
         btnContainer.id = CONFIG.CONTAINER_ID;
         btnContainer.appendChild(btnSubContainer1);
-        // btnContainer.appendChild(btnSubContainer2);
         btnContainer.style.display = 'flex';
         btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
-        // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
-        const curURL = window.location.href;
-        const pageTitle = utils.findBestMatch(curURL, url2title) || CONFIG.DEFAULT_TITLE;
+        // Get matched URL config and generate titles
+        let pageTitle = CONFIG.DEFAULT_TITLE;
+        let fixedTitle = CONFIG.DEFAULT_TITLE;
+        let dynamicTitle = CONFIG.DEFAULT_TITLE;
+        const matchedConfig = url2title.find(config => config.pattern.test(curURL));
+        
+        if (matchedConfig) {
+            fixedTitle = matchedConfig.title;
+            
+            if (matchedConfig.dynamicTitle) {
+                dynamicTitle = generateDynamicTitle(curURL, matchedConfig.title, matchedConfig.customParser);
+                pageTitle = dynamicTitle; // Default to dynamic title
+            } else {
+                pageTitle = fixedTitle;
+                dynamicTitle = fixedTitle; // Fallback to fixed title
+            }
+        }
 
-        // ! add buttons in the containers
-        btnSubContainer1.append(
+        // Create button elements
+        const buttonElements = [
             // 按钮: copy url
             utils.createButtonCopyText('url', curURL),
+        ];
 
-            // 按钮: copy 超链接
-            utils.createTextNode('\thref: '),
-            utils.createButtonCopyHypertext(`href: ${pageTitle}`, pageTitle, curURL),
+        // Get text color for this URL
+        const textColor = matchedConfig && matchedConfig.textColor ? matchedConfig.textColor : null;
 
-            // 按钮: copy md 形式的链接
-            utils.createTextNode('\tmd: '),
-            utils.createButtonCopyText(`md: [${pageTitle}](url)`, `[${pageTitle}](${curURL})`),
+        // Check if dynamic title is too long for display (but keep full title for copying)
+        const dynamicDisplayTitle = dynamicTitle && (dynamicTitle.length < CONFIG.MAX_DISPLAY_LENGTH) ? dynamicTitle : fixedTitle;
 
-            // 按钮: 打开 link
-            // utils.createTextNode('\tlink: '),
-            // utils.createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
-        );
+        // Add title-based buttons
+        if (matchedConfig && matchedConfig.showBothTitles) {
+            // Show both fixed and dynamic title buttons
+            buttonElements.push(
+                // Fixed title buttons
+                utils.createTextNode('\thref: ', textColor),
+                utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, curURL),
+                utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, curURL),
+                
+                // Dynamic title buttons
+                utils.createTextNode('\tmd: ', textColor),
+                utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${curURL})`),
+                utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${curURL})`)
+            );
+        } else {
+            // Show single set of buttons with the determined title
+            buttonElements.push(
+                utils.createTextNode('\thref: ', textColor),
+                utils.createButtonCopyHypertext(`${pageTitle}`, pageTitle, curURL),
+                utils.createTextNode('\tmd: ', textColor),
+                utils.createButtonCopyText(`[${pageTitle}](url)`, `[${pageTitle}](${curURL})`)
+            );
+        }
 
-        utils.addFixedPosContainerToPage(btnContainer, CONFIG.BUTTON_POSITION);
+        // ! add buttons in the containers
+        btnSubContainer1.append(...buttonElements);
+
+        // Use custom position if specified, otherwise use default position
+        const buttonPosition = (matchedConfig && matchedConfig.buttonPosition) 
+            ? matchedConfig.buttonPosition 
+            : CONFIG.BUTTON_POSITION;
+        utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
     }
 
     initScript();
