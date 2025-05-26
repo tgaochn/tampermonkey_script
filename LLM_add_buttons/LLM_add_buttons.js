@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.2
+// @version     1.1.3
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.3: extract CONFIG constants for better maintainability
 // LLM_add_buttons 1.1.2: 更新storage, 使得storage的值可以在Tampermonkey的storage tab中显示
 // LLM_add_buttons 1.1.1: 更新 @match, 换账户也可以使用 gemini
 // LLM_add_buttons 1.1.0: Added feature to load/edit prompts from GM_storage via menu command.
@@ -42,8 +43,26 @@
 (function () {
     "use strict";
 
+    // Configuration constants
+    const CONFIG = {
+        UTILS_TIMEOUT: 10000,
+        CONTAINER_ID: "container_id",
+        REQUIRED_UTILS: [
+            "createButtonContainerFromJson",
+            "observeDOM",
+            "createMultilineDialog",
+            "monitorUrlChanges",
+            "createPageObserver",
+            "waitForAliasedElement",
+            "setBtnStyle",
+        ],
+        WAIT_ATTEMPTS: 20,
+        WAIT_INTERVAL: 300,
+        URL_MONITOR_INTERVAL: 1000,
+    };
+
     let isButtonsAdded = false;
-    const addedContainerId = "container_id";
+    const addedContainerId = CONFIG.CONTAINER_ID;
 
     const siteConfigs = {
         claude: {
@@ -289,6 +308,7 @@ Give me a detailed response following these backgrounds and instructions:
 `,
         },
     };
+
     const myPromptJson4_default = {
         in_chn: {
             btnNm: "中文",
@@ -357,7 +377,7 @@ examples for each feature.
             const key = PROMPT_STORAGE_KEYS[i];
             const defaultValue = DEFAULT_PROMPTS_ARRAY[i];
             const currentValue = GM_getValue(key, defaultValue);
-            
+
             // Always set the value to ensure it appears in the Tampermonkey Storage tab
             GM_setValue(key, currentValue);
         }
@@ -370,18 +390,9 @@ examples for each feature.
     let myPromptJson4 = GM_getValue(PROMPT_STORAGE_KEYS[3], myPromptJson4_default);
 
     // Wait for utils to load
-    function waitForUtils(timeout = 10000) {
+    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
         console.log("Starting to wait for utils...");
-        // Added createMultilineDialog, monitorUrlChanges, createPageObserver, waitForAliasedElement
-        const requiredFunctions = [
-            "createButtonContainerFromJson",
-            "observeDOM",
-            "createMultilineDialog",
-            "monitorUrlChanges",
-            "createPageObserver",
-            "waitForAliasedElement",
-            "setBtnStyle",
-        ];
+        const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
@@ -390,7 +401,6 @@ examples for each feature.
                     window.utils &&
                     requiredFunctions.every((func) => {
                         const hasFunc = typeof window.utils[func] === "function";
-                        // console.log(`Checking function ${func}:`, hasFunc); // Verbose
                         return hasFunc;
                     })
                 ) {
@@ -403,7 +413,6 @@ examples for each feature.
                     console.error("Timeout waiting for utils. Missing functions:", missingFunctions);
                     reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    // console.log("Not all utils functions available yet, checking again in 100ms"); // Verbose
                     setTimeout(checkUtils, 100);
                 }
             }
@@ -415,8 +424,6 @@ examples for each feature.
     async function handleEditPromptGroup(groupIndex, utils) {
         const key = PROMPT_STORAGE_KEYS[groupIndex];
         const defaultDataForGroup = DEFAULT_PROMPTS_ARRAY[groupIndex];
-        // GM_getValue will return the default if the key doesn't exist or if the stored value is undefined.
-        // For an existing key with a value like null or an empty object, it will return that.
         const storedData = GM_getValue(key, defaultDataForGroup);
 
         const placeholder = `Enter valid JSON for prompt group ${groupIndex + 1}.
@@ -442,17 +449,12 @@ To reset to default, you can save an empty JSON object like {}
         try {
             const newJsonData = await utils.createMultilineDialog(
                 `Edit Prompts for Group ${groupIndex + 1} (Key: ${key})`,
-                storedData, // Pass the actual object to be stringified by the dialog
+                storedData,
                 placeholder,
-                "object" // utils.createMultilineDialog handles JSON.stringify/parse
+                "object"
             );
 
             if (newJsonData !== null) {
-                // User clicked Save
-                // If user saved an empty object intending to reset,
-                // we store it as such, and next GM_getValue will use default.
-                // Or, to be more explicit, if newJsonData is empty object, store default.
-                // For now, storing what user provided.
                 GM_setValue(key, newJsonData);
 
                 // Update the in-memory version for the current session
@@ -479,7 +481,6 @@ To reset to default, you can save an empty JSON object like {}
 
         const container = document.createElement("div");
         container.id = dialogId;
-        // Basic styling, can be enhanced
         Object.assign(container.style, {
             padding: "20px",
             backgroundColor: "white",
@@ -501,7 +502,7 @@ To reset to default, you can save an empty JSON object like {}
 
         for (let i = 0; i < 4; i++) {
             const btn = document.createElement("button");
-            utils.setBtnStyle(btn); // Use your existing button styling
+            utils.setBtnStyle(btn);
             btn.textContent = `Edit Prompts - Group ${i + 1}`;
             Object.assign(btn.style, {
                 display: "block",
@@ -516,7 +517,7 @@ To reset to default, you can save an empty JSON object like {}
         }
 
         const closeBtn = document.createElement("button");
-        utils.setBtnStyle(closeBtn); // Style it like other buttons
+        utils.setBtnStyle(closeBtn);
         Object.assign(closeBtn.style, {
             display: "block",
             margin: "20px auto 0",
@@ -543,7 +544,7 @@ To reset to default, you can save an empty JSON object like {}
         try {
             // Initialize storage to make values visible in Tampermonkey storage tab
             initializeStorage();
-            
+
             const utils = await waitForUtils();
 
             GM_registerMenuCommand(
@@ -557,7 +558,7 @@ To reset to default, you can save an empty JSON object like {}
             await checkAndAddButtons(utils);
             utils.monitorUrlChanges((newUrl, oldUrl) => {
                 isButtonsAdded = false;
-                setTimeout(() => checkAndAddButtons(utils), 1000);
+                setTimeout(() => checkAndAddButtons(utils), CONFIG.URL_MONITOR_INTERVAL);
             });
             utils.createPageObserver(addedContainerId, () => checkAndAddButtons(utils));
         } catch (error) {
@@ -568,7 +569,6 @@ To reset to default, you can save an empty JSON object like {}
     async function checkAndAddButtons(utils) {
         try {
             if (isButtonsAdded || document.getElementById(addedContainerId)) {
-                // console.log("Buttons already added, skipping"); // Verbose
                 return;
             }
 
@@ -580,13 +580,11 @@ To reset to default, you can save an empty JSON object like {}
 
             const btnContainer = await utils.waitForAliasedElement(
                 currentConfig.btnContainerSelectors,
-                20, // attempts
-                300 // interval
+                CONFIG.WAIT_ATTEMPTS,
+                CONFIG.WAIT_INTERVAL
             );
-            // console.log("Button container found:", btnContainer); // Verbose
 
             if (isButtonsAdded || document.getElementById(addedContainerId)) {
-                // console.log("Buttons added during wait, skipping"); // Verbose
                 return;
             }
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wiki_btn
 // @namespace    wiki_btn
-// @version      0.3.0
+// @version      0.3.1
 // @description  wiki加入相关按钮
 // @author       gtfish
 // @match        https://indeed.atlassian.net/wiki/*
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/wiki_btn/wiki_btn.js
 
 // ==/UserScript==
+// 0.3.1: extract CONFIG constants for better maintainability
 // 0.3.0: use @require to load external script
 // 0.1.3: update matched url
 // 0.1.2: 重构代码, btn位置不固定
@@ -18,47 +19,62 @@
 // 0.0.1: init, btn with fixed position and internal functions
 
 (async function () {
-    'use strict';
+    "use strict";
 
-    const inclusionPatterns = [
-    ];
+    // Configuration constants
+    const CONFIG = {
+        UTILS_TIMEOUT: 10000,
+        CONTAINER_ID: "container_id",
+        REQUIRED_UTILS: [
+            "observeDOM",
+            "shouldRunScript",
+            "createTextNode",
+            "createButtonCopyText",
+            "addContainerNextToElement2",
+            "createButtonContainer",
+            "createButtonFromCallback",
+            "copyHypertext",
+        ],
+        SELECTORS: {
+            PAGE_TITLE: '[data-testid="title-text"] > span',
+            CREATE_BTN: '[data-testid="app-navigation-create"]',
+        },
+    };
 
-    const exclusionPatterns = [
-    ];
+    const inclusionPatterns = [];
+
+    const exclusionPatterns = [];
 
     // Wait for utils to load
-    function waitForUtils(timeout = 10000) {
-        console.log('Starting to wait for utils...');
-        const requiredFunctions = [
-            'observeDOM',
-            'shouldRunScript',
-            'createTextNode',
-            'createButtonCopyText',
-            'addContainerNextToElement2',
-        ];
+    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
+        console.log("Starting to wait for utils...");
+        const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log('Checking utils:', window.utils);
-                console.log('Available functions:', window.utils ? Object.keys(window.utils) : 'none');
+                console.log("Checking utils:", window.utils);
+                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
 
-                if (window.utils && requiredFunctions.every(func => {
-                    const hasFunc = typeof window.utils[func] === 'function';
-                    console.log(`Checking function ${func}:`, hasFunc);
-                    return hasFunc;
-                })) {
-                    console.log('All required functions found');
+                if (
+                    window.utils &&
+                    requiredFunctions.every((func) => {
+                        const hasFunc = typeof window.utils[func] === "function";
+                        console.log(`Checking function ${func}:`, hasFunc);
+                        return hasFunc;
+                    })
+                ) {
+                    console.log("All required functions found");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
-                    const missingFunctions = requiredFunctions.filter(func =>
-                        !window.utils || typeof window.utils[func] !== 'function'
+                    const missingFunctions = requiredFunctions.filter(
+                        (func) => !window.utils || typeof window.utils[func] !== "function"
                     );
-                    console.log('Timeout reached. Missing functions:', missingFunctions);
-                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(', ')}`));
+                    console.log("Timeout reached. Missing functions:", missingFunctions);
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    console.log('Not all functions available yet, checking again in 100ms');
+                    console.log("Not all functions available yet, checking again in 100ms");
                     setTimeout(checkUtils, 100);
                 }
             }
@@ -76,7 +92,7 @@
             }
 
             const observeTarget = document.body;
-            const targetElementId = "container_id";
+            const targetElementId = CONFIG.CONTAINER_ID;
 
             // Check if the target element exists, if not, add the buttons
             utils.observeDOM(observeTarget, () => {
@@ -84,34 +100,31 @@
                     main(utils);
                 }
             });
-
         } catch (error) {
-            console.error('Failed to initialize:', error);
+            console.error("Failed to initialize:", error);
         }
     }
 
     async function main(utils) {
         // ! add button in the container and define click func
-        const pageTitleElementSelectorStr = '[data-testid="title-text"] > span';
-        const pageTitleElement = document.querySelector(pageTitleElementSelectorStr);
+        const pageTitleElement = document.querySelector(CONFIG.SELECTORS.PAGE_TITLE);
         const pageTitle = pageTitleElement.firstChild.textContent.trim();
-        const createBtnElementSelectorStr = '[data-testid="app-navigation-create"]';
-        const createBtnElement = document.querySelector(createBtnElementSelectorStr);
+        const createBtnElement = document.querySelector(CONFIG.SELECTORS.CREATE_BTN);
 
         const btnContainer = utils.createButtonContainer();
-        btnContainer.id = "container_id";
+        btnContainer.id = CONFIG.CONTAINER_ID;
         const curURL = window.location.href;
 
         btnContainer.append(
-            utils.createTextNode('text: '),
-            utils.createButtonCopyText('url', curURL),
+            utils.createTextNode("text: "),
+            utils.createButtonCopyText("url", curURL),
 
-            utils.createTextNode('\thref: '),
-            utils.createButtonFromCallback('href: "wiki"', () => utils.copyHypertext('wiki', curURL)),
+            utils.createTextNode("\thref: "),
+            utils.createButtonFromCallback('href: "wiki"', () => utils.copyHypertext("wiki", curURL)),
 
-            utils.createTextNode('\tmd: '),
+            utils.createTextNode("\tmd: "),
             utils.createButtonCopyText('md: ["wiki"](url)', `[wiki](${curURL})`),
-            utils.createButtonCopyText('md: [{pageTitle}](url)', `[${pageTitle}](${curURL})`),
+            utils.createButtonCopyText("md: [{pageTitle}](url)", `[${pageTitle}](${curURL})`)
         );
 
         // ! add container to the page

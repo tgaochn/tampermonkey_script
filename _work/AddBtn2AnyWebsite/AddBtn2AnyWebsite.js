@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.2.0
+// @version      0.2.1
 // @description  任意网站加入相关链接
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -14,6 +14,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.2.1: extract CONFIG constants for better maintainability
 // 0.2.0: use @require to load external script
 // 0.1.1: bug fixed
 // 0.1.0: 重构代码, 使用外部函数
@@ -32,8 +33,19 @@
 (async function () {
     'use strict';
 
+    // Configuration constants
+    const CONFIG = {
+        UTILS_TIMEOUT: 10000,
+        CONTAINER_ID: "container_id",
+        BUTTON_POSITION: { top: "-10px", left: "1200px" },
+        REQUIRED_UTILS: ["observeDOM", "shouldRunScript", "createButtonContainer", "createButtonCopyText", 
+                        "createTextNode", "createButtonCopyHypertext", "findBestMatch", "addFixedPosContainerToPage"],
+        DEFAULT_TITLE: "link"
+    };
+
     const inclusionPatterns = [
     ];
+    
     // https://indeed.atlassian.net/browse
     const exclusionPatterns = [
         /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
@@ -52,15 +64,12 @@
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
         { pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, title: 'wiki' },
-
     ];
 
     // Wait for utils to load
-    function waitForUtils(timeout = 10000) {
+    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
         console.log('Starting to wait for utils...');
-        const requiredFunctions = [
-            'observeDOM',
-        ];
+        const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
@@ -101,7 +110,7 @@
             }
 
             const observeTarget = document.body;
-            const targetElementId = "container_id";
+            const targetElementId = CONFIG.CONTAINER_ID;
 
             // Check if the target element exists, if not, add the buttons
             utils.observeDOM(observeTarget, () => {
@@ -120,7 +129,7 @@
         const btnSubContainer1 = utils.createButtonContainer();
         // const btnSubContainer2 = utils.createButtonContainer();
 
-        btnContainer.id = "container_id";
+        btnContainer.id = CONFIG.CONTAINER_ID;
         btnContainer.appendChild(btnSubContainer1);
         // btnContainer.appendChild(btnSubContainer2);
         btnContainer.style.display = 'flex';
@@ -128,7 +137,7 @@
         // containerElement.style.flexDirection = 'row'; // contrainer 左右排列
 
         const curURL = window.location.href;
-        const pageTitle = utils.findBestMatch(curURL, url2title);
+        const pageTitle = utils.findBestMatch(curURL, url2title) || CONFIG.DEFAULT_TITLE;
 
         // ! add buttons in the containers
         btnSubContainer1.append(
@@ -148,7 +157,7 @@
             // utils.createButtonOpenUrl('Gsheet2Md', 'https://tabletomarkdown.com/convert-spreadsheet-to-markdown'), // 打开 google sheet 转 md table 的网站
         );
 
-        utils.addFixedPosContainerToPage(btnContainer, { top: "-10px", left: "1200px" });
+        utils.addFixedPosContainerToPage(btnContainer, CONFIG.BUTTON_POSITION);
     }
 
     initScript();
