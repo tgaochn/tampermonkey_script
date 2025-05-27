@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.1.4
+// @version      0.1.5
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -12,6 +12,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.1.5: add more patterns
 // 0.1.4: extract CONFIG constants for better maintainability
 // 0.1.3: add more model patterns
 // 0.1.2: add more model patterns
@@ -44,23 +45,24 @@
             urlTemplate: "https://indeed.atlassian.net/browse/$1",
         },
 
-        // ! single/multiple target hp/serp models
-        // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
+        // ! hp/serp models
+        // pre-apply/post-apply MTM: preapply_hp_row_6e1f741/postapply_hp_us_4a8ab91
+        // MTM: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
         // bidding: ac-per-click_rj_hp_us_5a303d3 / apply_rj_hp_us_fbed164 / ac-per-click_sjmobweb_rotw_60306c6 / apply_sjmobweb_rotw_e60cca4
         // post-apply: qualifiedapply_mob_global_6156574 / qualified_mob_global_e9b72c9
         // glassdoor model: gd_sjmobweb_rotw_3c86644
         // default MTM: multi_rj_hp_us_15339e0
         // others: dislike_rj_hp_us_b734f31
         {
-            regex: /^((gd_)?((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
         },
 
-        // ! SERP models: sjmobweb_us_15339e0
-        {
-            regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
-        },
+        // // ! SERP models: sjmobweb_us_15339e0
+        // {
+        //     regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+        //     urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
+        // },
 
         // ! I2A models: elephant-multi-en-all_en-4e18057
         {
