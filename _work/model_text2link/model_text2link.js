@@ -1,17 +1,17 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.1.5
+// @version      0.1.6
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
 // @match        http*://idash.sandbox.indeed.net/*
 // @match        http://127.0.0.1:5500/*
-// @match        http*://indeed.atlassian.net/browse/*
 // @grant        none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.1.6: remove the match on jira ticket
 // 0.1.5: add more patterns
 // 0.1.4: extract CONFIG constants for better maintainability
 // 0.1.3: add more model patterns

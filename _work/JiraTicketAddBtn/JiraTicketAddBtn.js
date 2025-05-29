@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.5
+// @version      0.9.6
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.6: add more model patterns
 // 0.9.5: extract CONFIG constants for better maintainability
 // 0.9.4: add more model patterns
 // 0.9.3: add more model patterns
@@ -90,15 +91,15 @@
         // default MTM: multi_rj_hp_us_15339e0
         // others: dislike_rj_hp_us_b734f31
         {
-            regex: /^((gd_)?((applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply))_((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb))_((us)|(rotw)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
         },
 
-        // ! SERP models: sjmobweb_us_15339e0
-        {
-            regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
-        },
+        // // ! SERP models: sjmobweb_us_15339e0
+        // {
+        //     regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
+        //     urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
+        // },
 
         // ! I2A models: elephant-multi-en-all_en-4e18057
         {
