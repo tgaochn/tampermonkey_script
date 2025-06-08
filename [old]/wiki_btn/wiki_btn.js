@@ -10,6 +10,8 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/wiki_btn/wiki_btn.js
 
 // ==/UserScript==
+// deprecated, use AddBtn2AnyWebsite instead
+
 // 0.3.1: extract CONFIG constants for better maintainability
 // 0.3.0: use @require to load external script
 // 0.1.3: update matched url

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.3.1
+// @version      0.4.1
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -11,11 +11,14 @@
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
 // @match        https://indeed.atlassian.net/wiki/*
+// @match        https://app.monarchmoney.com/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript== 
+// 0.4.1: refactored to use customButtonMappings for wiki with helper function - better separation of concerns
+// 0.4.0: added custom button mapping system - allows defining completely custom buttons for specific URL patterns
 // 0.3.1: merged wiki_btn functionality - added wiki page support with page title extraction and relative positioning
 // 0.2.2: add dynamic title generation based on URL parsing
 // 0.2.1: extract CONFIG constants for better maintainability
@@ -52,6 +55,57 @@
             CREATE_BTN: '[data-testid="app-navigation-create"]',
         }
     };
+
+    // !! custom button config for specific URL patterns
+    // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
+    const customButtonMappings = [
+        {
+            pattern: /^https:\/\/app\.monarchmoney\.com\/.*$/,
+            buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
+            customButtons: (url, utils) => {
+                return [
+                    utils.createButtonOpenUrl('BOA', 'https://www.bankofamerica.com'),
+                    utils.createButtonOpenUrl('Chase', 'https://www.chase.com'),
+                    utils.createButtonOpenUrl('Fidelity', 'https://digital.fidelity.com/prgw/digital/login/full-page'),
+                    utils.createButtonOpenUrl('Merrill Lynch', 'https://www.ml.com'),
+                ];
+            }
+        },
+        {
+            pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/,
+            buttonPosition: { top: "20px", left: "750px" }, // Custom position to avoid blocking content
+            customButtons: (url, utils) => {
+                // Get the matched config for wiki to reuse default logic
+                const matchedConfig = url2title.find(config => config.pattern.test(url));
+                
+                // Create default buttons first
+                const defaultButtons = createDefaultButtons(url, utils, matchedConfig);
+                
+                // Add formatted title button for wiki pages
+                try {
+                    const pageTitleElement = document.querySelector(CONFIG.WIKI_SELECTORS.PAGE_TITLE);
+                    if (pageTitleElement && pageTitleElement.firstChild) {
+                        const rawPageTitle = pageTitleElement.firstChild.textContent.trim();
+                        const formattedTitle = rawPageTitle.replace(/\s+/g, '-');
+                        
+                        // Apply cut off logic for display title (but keep full title for copying)
+                        const displayTitle = formattedTitle.length > CONFIG.MAX_DISPLAY_LENGTH 
+                            ? `{${formattedTitle.substring(0, CONFIG.MAX_DISPLAY_LENGTH / 2)}...}` 
+                            : formattedTitle;
+                        
+                        defaultButtons.push(
+                            utils.createButtonCopyText(`[${displayTitle}](url)`, `[${formattedTitle}](${url})`)
+                        );
+                    }
+                } catch (error) {
+                    console.error('Error adding formatted wiki title button:', error);
+                }
+                
+                return defaultButtons;
+            }
+        },
+
+    ];
 
     // Path segment mapping rules
     const PATH_SEGMENT_MAPPINGS = [
@@ -94,6 +148,188 @@
         /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
 
+
+    // !! custom url to title mapping
+    const url2title = [
+        // static title
+        { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
+        { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
+        
+        // dynamic title with both fixed and dynamic options
+
+        // ! butterfly proctor
+        { 
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, 
+            title: 'Butterfly traffic',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract model name from butterfly proctor URL
+                try {
+                    // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
+                    const hashPart = url.split('#')[1] || '';
+                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
+                    
+                    // Look for the segment after 'proctor' and 'jobsearch'
+                    const proctorIndex = pathSegments.indexOf('proctor');
+                    if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
+                        const modelSegment = pathSegments[proctorIndex + 2].split('?')[0]; // Remove query params
+                        return applyPathSegmentMapping(modelSegment);
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.error('Error in butterfly proctor custom parser:', error);
+                    return null;
+                }
+            }
+        },
+
+        // ! ruleSet
+        { 
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, 
+            title: 'RuleSet',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract rule name from butterfly ruleSet URL
+                try {
+                    // For URLs like: #/ruleSet/MODEL_CONFIG/JSS_RELEVANT_JOBS/
+                    const hashPart = url.split('#')[1] || '';
+                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
+                    
+                    // Look for the segment after 'ruleSet' and 'MODEL_CONFIG'
+                    const ruleSetIndex = pathSegments.indexOf('ruleSet');
+                    if (ruleSetIndex >= 0 && ruleSetIndex + 2 < pathSegments.length) {
+                        const ruleSegment = pathSegments[ruleSetIndex + 2].split('?')[0]; // Remove query params
+                        return ruleSegment; // Don't apply mapping for rule names, return as-is
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.error('Error in butterfly ruleSet custom parser:', error);
+                    return null;
+                }
+            }
+        },
+
+        // ! testStats
+        { 
+            pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, 
+            title: 'testStats',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract model name from teststats URL
+                try {
+                    const urlObj = new URL(url);
+                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
+                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    return applyPathSegmentMapping(lastSegment);
+                } catch (error) {
+                    console.error('Error in teststats custom parser:', error);
+                    return null;
+                }
+            }
+        },
+
+        // ! proctor
+        { 
+            pattern: /^https:\/\/proctor(-v2)?\.sandbox\.indeed\.net.*$/, 
+            title: 'proctor',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            textColor: '#FFFFFF', // white color for proctor
+            customParser: (url) => {
+                // Extract model name from proctor URL
+                try {
+                    const urlObj = new URL(url);
+                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
+                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    return applyPathSegmentMapping(lastSegment);
+                } catch (error) {
+                    console.error('Error in proctor custom parser:', error);
+                    return null;
+                }
+            }
+        },
+
+        // ! wiki
+        { 
+            pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, 
+            title: 'wiki',
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            buttonPosition: { top: "20px", left: "750px" }, // Custom position to avoid blocking content
+            customParser: (url) => {
+                // Extract page title from wiki page DOM
+                try {
+                    const pageTitleElement = document.querySelector(CONFIG.WIKI_SELECTORS.PAGE_TITLE);
+                    return pageTitleElement ? pageTitleElement.firstChild.textContent.trim() : null;
+                } catch (error) {
+                    console.error('Error in wiki custom parser:', error);
+                    return null;
+                }
+            }
+        },
+    ];
+
+    // Helper function to create default button set for a given URL and config
+    function createDefaultButtons(url, utils, matchedConfig) {
+        const buttonElements = [
+            // 按钮: copy url
+            utils.createButtonCopyText('url', url),
+        ];
+
+        if (!matchedConfig) {
+            return buttonElements;
+        }
+
+        let pageTitle = CONFIG.DEFAULT_TITLE;
+        let fixedTitle = matchedConfig.title || CONFIG.DEFAULT_TITLE;
+        let dynamicTitle = CONFIG.DEFAULT_TITLE;
+
+        if (matchedConfig.dynamicTitle) {
+            dynamicTitle = generateDynamicTitle(url, matchedConfig.title, matchedConfig.customParser);
+            pageTitle = dynamicTitle; // Default to dynamic title
+        } else {
+            pageTitle = fixedTitle;
+            dynamicTitle = fixedTitle; // Fallback to fixed title
+        }
+
+        // Get text color for this URL
+        const textColor = matchedConfig.textColor || null;
+
+        // Check if dynamic title is too long for display (but keep full title for copying)
+        const dynamicDisplayTitle = dynamicTitle && (dynamicTitle.length < CONFIG.MAX_DISPLAY_LENGTH) ? dynamicTitle : "{title}";
+
+        // Add title-based buttons
+        if (matchedConfig.showBothTitles) {
+            // Show both fixed and dynamic title buttons
+            buttonElements.push(
+                // Fixed title buttons
+                utils.createTextNode('\thref: ', textColor),
+                utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
+                utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url),
+                
+                // Dynamic title buttons
+                utils.createTextNode('\tmd: ', textColor),
+                utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`),
+                utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`)
+            );
+        } else {
+            // Show single set of buttons with the determined title
+            buttonElements.push(
+                utils.createTextNode('\thref: ', textColor),
+                utils.createButtonCopyHypertext(`${pageTitle}`, pageTitle, url),
+                utils.createTextNode('\tmd: ', textColor),
+                utils.createButtonCopyText(`[${pageTitle}](url)`, `[${pageTitle}](${url})`)
+            );
+        }
+
+        return buttonElements;
+    }
+
     // Function to apply path segment mappings
     function applyPathSegmentMapping(pathSegment) {
         if (!pathSegment) return pathSegment;
@@ -130,122 +366,6 @@
         const pathSegment = extractPathSegment(url);
         return pathSegment ? `${pathSegment}` : baseTitle;
     }
-
-
-
-    const url2title = [
-        // static title
-        { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: 'code' },
-        { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: 'datadog' },
-        
-        // dynamic title with both fixed and dynamic options
-        { 
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/, 
-            title: 'Butterfly traffic',
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            customParser: (url) => {
-                // Extract model name from butterfly proctor URL
-                try {
-                    // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
-                    const hashPart = url.split('#')[1] || '';
-                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
-                    
-                    // Look for the segment after 'proctor' and 'jobsearch'
-                    const proctorIndex = pathSegments.indexOf('proctor');
-                    if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
-                        const modelSegment = pathSegments[proctorIndex + 2].split('?')[0]; // Remove query params
-                        return applyPathSegmentMapping(modelSegment);
-                    }
-                    
-                    return null;
-                } catch (error) {
-                    console.error('Error in butterfly proctor custom parser:', error);
-                    return null;
-                }
-            }
-        },
-        { 
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/, 
-            title: 'RuleSet',
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            customParser: (url) => {
-                // Extract rule name from butterfly ruleSet URL
-                try {
-                    // For URLs like: #/ruleSet/MODEL_CONFIG/JSS_RELEVANT_JOBS/
-                    const hashPart = url.split('#')[1] || '';
-                    const pathSegments = hashPart.split('/').filter(segment => segment.length > 0);
-                    
-                    // Look for the segment after 'ruleSet' and 'MODEL_CONFIG'
-                    const ruleSetIndex = pathSegments.indexOf('ruleSet');
-                    if (ruleSetIndex >= 0 && ruleSetIndex + 2 < pathSegments.length) {
-                        const ruleSegment = pathSegments[ruleSetIndex + 2].split('?')[0]; // Remove query params
-                        return ruleSegment; // Don't apply mapping for rule names, return as-is
-                    }
-                    
-                    return null;
-                } catch (error) {
-                    console.error('Error in butterfly ruleSet custom parser:', error);
-                    return null;
-                }
-            }
-        },
-        { 
-            pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/, 
-            title: 'testStats',
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            customParser: (url) => {
-                // Extract model name from teststats URL
-                try {
-                    const urlObj = new URL(url);
-                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
-                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    return applyPathSegmentMapping(lastSegment);
-                } catch (error) {
-                    console.error('Error in teststats custom parser:', error);
-                    return null;
-                }
-            }
-        },
-        { 
-            pattern: /^https:\/\/proctor(-v2)?\.sandbox\.indeed\.net.*$/, 
-            title: 'proctor',
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            textColor: '#FFFFFF', // white color for proctor
-            customParser: (url) => {
-                // Extract model name from proctor URL
-                try {
-                    const urlObj = new URL(url);
-                    const pathSegments = urlObj.pathname.split('/').filter(segment => segment.length > 0);
-                    const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    return applyPathSegmentMapping(lastSegment);
-                } catch (error) {
-                    console.error('Error in proctor custom parser:', error);
-                    return null;
-                }
-            }
-        },
-        { 
-            pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/, 
-            title: 'wiki',
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            buttonPosition: { top: "20px", left: "750px" }, // Custom position to avoid blocking content
-            customParser: (url) => {
-                // Extract page title from wiki page DOM
-                try {
-                    const pageTitleElement = document.querySelector(CONFIG.WIKI_SELECTORS.PAGE_TITLE);
-                    return pageTitleElement ? pageTitleElement.firstChild.textContent.trim() : null;
-                } catch (error) {
-                    console.error('Error in wiki custom parser:', error);
-                    return null;
-                }
-            }
-        },
-    ];
 
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
@@ -315,67 +435,52 @@
         btnContainer.style.display = 'flex';
         btnContainer.style.flexDirection = 'column'; // contrainer 上下排列
 
-        // Get matched URL config and generate titles
-        let pageTitle = CONFIG.DEFAULT_TITLE;
-        let fixedTitle = CONFIG.DEFAULT_TITLE;
-        let dynamicTitle = CONFIG.DEFAULT_TITLE;
-        const matchedConfig = url2title.find(config => config.pattern.test(curURL));
+        // Check for custom button mapping first
+        const customMapping = customButtonMappings.find(mapping => mapping.pattern.test(curURL));
         
-        if (matchedConfig) {
-            fixedTitle = matchedConfig.title;
-            
-            if (matchedConfig.dynamicTitle) {
-                dynamicTitle = generateDynamicTitle(curURL, matchedConfig.title, matchedConfig.customParser);
-                pageTitle = dynamicTitle; // Default to dynamic title
-            } else {
-                pageTitle = fixedTitle;
-                dynamicTitle = fixedTitle; // Fallback to fixed title
-            }
-        }
+        let buttonElements = [];
+        let buttonPosition = CONFIG.BUTTON_POSITION;
 
-        // Create button elements
-        const buttonElements = [
-            // 按钮: copy url
-            utils.createButtonCopyText('url', curURL),
-        ];
-
-        // Get text color for this URL
-        const textColor = matchedConfig && matchedConfig.textColor ? matchedConfig.textColor : null;
-
-        // Check if dynamic title is too long for display (but keep full title for copying)
-        const dynamicDisplayTitle = dynamicTitle && (dynamicTitle.length < CONFIG.MAX_DISPLAY_LENGTH) ? dynamicTitle : "{title}";
-
-        // Add title-based buttons
-        if (matchedConfig && matchedConfig.showBothTitles) {
-            // Show both fixed and dynamic title buttons
-            buttonElements.push(
-                // Fixed title buttons
-                utils.createTextNode('\thref: ', textColor),
-                utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, curURL),
-                utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, curURL),
-                
-                // Dynamic title buttons
-                utils.createTextNode('\tmd: ', textColor),
-                utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${curURL})`),
-                utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${curURL})`)
-            );
+        if (customMapping) {
+            // Use custom buttons for this URL pattern
+            console.log('Using custom button mapping for URL:', curURL);
+            buttonElements = customMapping.customButtons(curURL, utils);
+            buttonPosition = customMapping.buttonPosition || CONFIG.BUTTON_POSITION;
         } else {
-            // Show single set of buttons with the determined title
-            buttonElements.push(
-                utils.createTextNode('\thref: ', textColor),
-                utils.createButtonCopyHypertext(`${pageTitle}`, pageTitle, curURL),
-                utils.createTextNode('\tmd: ', textColor),
-                utils.createButtonCopyText(`[${pageTitle}](url)`, `[${pageTitle}](${curURL})`)
-            );
+            // Use default button logic
+            console.log('Using default button logic for URL:', curURL);
+            
+            // Get matched URL config and generate titles
+            let pageTitle = CONFIG.DEFAULT_TITLE;
+            let fixedTitle = CONFIG.DEFAULT_TITLE;
+            let dynamicTitle = CONFIG.DEFAULT_TITLE;
+            const matchedConfig = url2title.find(config => config.pattern.test(curURL));
+            
+            if (matchedConfig) {
+                fixedTitle = matchedConfig.title;
+                
+                if (matchedConfig.dynamicTitle) {
+                    dynamicTitle = generateDynamicTitle(curURL, matchedConfig.title, matchedConfig.customParser);
+                    pageTitle = dynamicTitle; // Default to dynamic title
+                } else {
+                    pageTitle = fixedTitle;
+                    dynamicTitle = fixedTitle; // Fallback to fixed title
+                }
+            }
+
+            // Create default button elements
+            buttonElements = createDefaultButtons(curURL, utils, matchedConfig);
+
+            // Use custom position if specified in matchedConfig, otherwise use default position
+            buttonPosition = (matchedConfig && matchedConfig.buttonPosition) 
+                ? matchedConfig.buttonPosition 
+                : CONFIG.BUTTON_POSITION;
         }
 
         // ! add buttons in the containers
         btnSubContainer1.append(...buttonElements);
 
-        // Use custom position if specified, otherwise use default position
-        const buttonPosition = (matchedConfig && matchedConfig.buttonPosition) 
-            ? matchedConfig.buttonPosition 
-            : CONFIG.BUTTON_POSITION;
+        // Apply the determined button position
         utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
     }
 
