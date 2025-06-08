@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.1
+// @version      0.4.2
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,7 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript== 
-// 0.4.1: refactored to use customButtonMappings for wiki with helper function - better separation of concerns
+// 0.4.2: refactored to use customButtonMappings for wiki with helper function - better separation of concerns
 // 0.4.0: added custom button mapping system - allows defining completely custom buttons for specific URL patterns
 // 0.3.1: merged wiki_btn functionality - added wiki page support with page title extraction and relative positioning
 // 0.2.2: add dynamic title generation based on URL parsing
