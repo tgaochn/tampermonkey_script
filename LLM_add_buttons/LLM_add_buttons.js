@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.3
+// @version     1.1.4
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.4: add prompt for slack content understanding
 // LLM_add_buttons 1.1.3: extract CONFIG constants for better maintainability
 // LLM_add_buttons 1.1.2: 更新storage, 使得storage的值可以在Tampermonkey的storage tab中显示
 // LLM_add_buttons 1.1.1: 更新 @match, 换账户也可以使用 gemini
@@ -132,26 +133,6 @@
             prompt: `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: 
 1. The text will be used in discussion on slack btw colleagues.
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-`,
-        },
-
-        reply_on_slack: {
-            btnNm: "slack 完整回复优化",
-            sendOutPrompt: false,
-            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?
-Requirements:
-1. Please analyze this from the perspective of a senior ML engineer and native English speaker
-2. Provide your response in Chinese
-3. Format suggestions as raw markdown code using triple backticks
-4. Consider:
-   - Clarity and professionalism of the response
-   - Technical accuracy
-   - Cultural appropriateness in a tech workplace
-   - Any areas where I may have misunderstood the discussion
-Context:
-
-My draft reply:
-
 `,
         },
 
@@ -307,6 +288,42 @@ Give me a detailed response following these backgrounds and instructions:
 6. Take a deep breath and work on this problem step-by-step.
 `,
         },
+
+        reply_on_slack: {
+            btnNm: "slack 完整回复优化",
+            sendOutPrompt: false,
+            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?
+Requirements:
+1. Please analyze this from the perspective of a senior ML engineer and native English speaker
+2. Provide your response in Chinese
+3. Format suggestions as raw markdown code using triple backticks
+4. Consider:
+   - Clarity and professionalism of the response
+   - Technical accuracy
+   - Cultural appropriateness in a tech workplace
+   - Any areas where I may have misunderstood the discussion
+Context:
+
+My draft reply:
+
+`,
+        },        
+
+        slack_content_understand: {
+            btnNm: "slack 完整内容理解",
+            sendOutPrompt: false,
+            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'm concerned about misunderstanding the meaning of the conversation. Could you read the conversation and answer my questions based on it in our future chats?
+Questions:
+What does it mean when XXX?
+
+Requirements:
+1. Please analyze this from the perspective of a senior ML engineer and native English speaker
+2. Provide your response in Chinese
+
+Full conversation:
+
+`,
+        },        
     };
 
     const myPromptJson4_default = {
