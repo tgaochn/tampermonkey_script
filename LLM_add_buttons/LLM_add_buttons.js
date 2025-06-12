@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.4
+// @version     1.1.5
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.5: update prompt
 // LLM_add_buttons 1.1.4: add prompt for slack content understanding
 // LLM_add_buttons 1.1.3: extract CONFIG constants for better maintainability
 // LLM_add_buttons 1.1.2: 更新storage, 使得storage的值可以在Tampermonkey的storage tab中显示
@@ -100,12 +101,36 @@
         chn_: {
             btnNm: "中文⏎",
             sendOutPrompt: true,
-            prompt: "repeat the response in Chinese. Only the explanation should be in Chinese, the code blocks with comments should be in English. If there is no existing explanation, please further explain the response in detail about what it implies. The explanation should be easy to understand.",
+            prompt: `
+Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.
+For example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.
+If the response includes a code block, the code and the comments should be in English.
+Please follow these instructions in all the responses in this session for any further questions.
+`,
         },
         md_: {
             btnNm: "markdown⏎",
             sendOutPrompt: true,
-            prompt: "Reformat the response in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.",
+            prompt: `
+Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor.
+Don't render the markdown code.
+Please follow these instructions in all the responses in this session for any further questions.
+`,
+        },
+        mle_: {
+            btnNm: "MLE⏎",
+            sendOutPrompt: true,
+            prompt: `
+Your response should follow these backgrounds and instructions:
+1. You need to act as a senior machine learning engineer. 
+2. The task is to make some explanations to the newbie interns. 
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.
+5. The response needs to be in Chinese.
+6. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor.
+7. Don't render the markdown code.
+8. Please follow these instructions in all the responses in this session for any further questions.
+`,
         },
         example_: {
             btnNm: "加例子解释⏎",
@@ -122,27 +147,41 @@
         rewrite_doc: {
             btnNm: "日常-改写-doc",
             sendOutPrompt: false,
-            prompt: `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: 
+            prompt: `
+Rewrite the following text in the same tone. The author of the text is not a native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth.
+Please follow these instructions in all the responses in this session for any further questions.
+
+Background:
 1. The text will be used in project documentation.
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
+3. Don't render the markdown code.
 `,
         },
         rewrite_slack: {
             btnNm: "日常-改写-slack",
             sendOutPrompt: false,
-            prompt: `Rewrite the following text in the same tone. The author of the text is not an native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth based on the following background: 
-1. The text will be used in discussion on slack btw colleagues.
+            prompt: `
+Rewrite the following text in the same tone. The author of the text is not a native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth.
+Please follow these instructions in all the responses in this session for any further questions.
+
+Background:
+1. The text will be used in a discussion on Slack between colleagues.
 2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
+3. Don't render the markdown code.
 `,
         },
 
         explain_translate: {
             btnNm: "日常-解释翻译",
             sendOutPrompt: false,
-            prompt: `I'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? More background or requirements of the text are shown below. They should be applied to all the follow-up responses.
+            prompt: `
+I'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? 
+Please follow these instructions in all the responses in this session for any further questions.
+
+Background:
 1. The response should be in Chinese, but the comments in the code block should be in English if applicable.
 2. The text is from a discussion on Slack between American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.
-3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys.
+3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys. 
 4. If it is a question, explain the background and the main points. Then provide a possible answer.
 5. If it is a request, explain the main points and the objective. Then provide a possible answer.
 6. If it is a suggestion, explain the main points, the objective, and the reasons.
@@ -151,13 +190,28 @@ The text is:`,
         summarize: {
             btnNm: "日常-总结",
             sendOutPrompt: false,
-            prompt: "Summarize the following text in both English and Chinese in a paragraph then reformat it in some bullets. The text can be in the format of subtitle, plaintext or others. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.",
+            prompt: `
+Summarize the following text in both English and Chinese in a paragraph, then reformat it into some bullets. 
+
+Background:
+1. The text can be in the format of a subtitle, plaintext or others.
+2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
+3. Don't render the markdown code.
+4. Please follow these instructions in all the responses in this session for any further questions.
+`,
         },
 
         chn2eng: {
             btnNm: "日常-中翻英",
             sendOutPrompt: false,
-            prompt: "translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: ",
+            prompt: `
+Translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: 
+
+Background:
+1. The text will be used in messages between colleagues and formal emails.
+2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
+3. Don't render the markdown code.
+`,
         },
 
         //         ocr: {
@@ -168,7 +222,7 @@ The text is:`,
         // 2. The task is to identify the content, same as what OCR software does.
         // 3. The content could be a piece of code, some plain text, or a table.
         // 4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.
-        // 5. Please follow these instructions in all the responses in this session for the further questions.
+        // 5. Please follow these instructions in all the responses in this session for any further questions.
         // 6. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
         // `,
         //         },
@@ -181,7 +235,7 @@ The text is:`,
         // 2. The task is to manually improve the raw results from OCR software.
         // 3. The content could be a piece of code, some plain text or a table.
         // 4. Please follow these instructions in all the responses in this session for further questions.
-        // 5. Take a deep breath and work on this problem step-by-step.
+        // 5. Take a deep breath and work on this problem step by step.
         // 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.
         // 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
         // It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.
@@ -210,7 +264,7 @@ The text is:`,
         // 3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
         // 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.
         // 5. Please follow these instructions in all the responses in this session for further questions.
-        // 6. Take a deep breath and work on this problem step-by-step.
+        // 6. Take a deep breath and work on this problem step by step.
         // `,
         //         },
 
@@ -231,77 +285,37 @@ The text is:`,
         what_mle: {
             btnNm: "MLE-what",
             sendOutPrompt: false,
-            prompt: `What is XXX?
-Give me a detailed response following these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer. 
-2. The task is to make some explanations to the newbie interns. 
-3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
-4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. The response needs to be in Chinese.
-6. Please follow these instructions in all the responses in this session for the further questions.
-7. Take a deep breath and work on this problem step-by-step.
-8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-`,
+            prompt: `What is XXX?` + myPromptJson1_default.mle_.prompt,
         },
 
         how_mle: {
             btnNm: "MLE-how",
             sendOutPrompt: false,
-            prompt: `How to XXX?
-Give me a detailed response following these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer. 
-2. The task is to make some explanations to the newbie interns. 
-3. The instruction and explanation should be easy to understand. Please explain the main steps and the purpose of each step.
-4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. The response needs to be in Chinese.
-6. Please follow these instructions in all the responses in this session for the further questions.
-7. Take a deep breath and work on this problem step-by-step.
-8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-`,
+            prompt: `How to XXX?` + myPromptJson1_default.mle_.prompt,
         },
 
         compare_mle: {
             btnNm: "MLE-比较",
             sendOutPrompt: false,
-            prompt: `What is the difference between \"XXX\" and \"YYY\"?
-Give me a detailed relationship explanation and comparison following these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer.
-2. The task is to make some explanations to the newbie interns.
-3. The explanation should be easy to understand. Please compare the main features and use cases. Also, explain why they fit in different cases.
-4. The response needs to be in Chinese.
-5. Please follow these instructions in all the responses in this session for the further questions.
-6. Take a deep breath and work on this problem step-by-step.
-7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-`,
+            prompt: `What is the difference between \"XXX\" and \"YYY\"?` + myPromptJson1_default.mle_.prompt,
         },
 
         improve_code_mle: {
             btnNm: "MLE-改code",
             sendOutPrompt: false,
-            prompt: `Fix or improve the code. 
-Give me a detailed response following these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer.
-2. The task is to debug the code in pair programming or to discuss the code for potential improvement in terms of readability and running efficiency in a code review meeting.
-3. You need to provide an explanation of the improvement or fix. The explanation should be easy to understand. Please provide multiple solutions and compare them if applicable.
-4. The explanation needs to be in Chinese, but the comments in the code block should be in English.
-5. Please follow these instructions in all the responses in this session for the further questions.
-6. Take a deep breath and work on this problem step-by-step.
-`,
+            prompt: `Fix or improve the code.` + myPromptJson1_default.mle_.prompt,
         },
 
         reply_on_slack: {
             btnNm: "slack 完整回复优化",
             sendOutPrompt: false,
-            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?
+            prompt: `
+I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?
 Requirements:
-1. Please analyze this from the perspective of a senior ML engineer and native English speaker
-2. Provide your response in Chinese
-3. Format suggestions as raw markdown code using triple backticks
-4. Consider:
-   - Clarity and professionalism of the response
-   - Technical accuracy
-   - Cultural appropriateness in a tech workplace
-   - Any areas where I may have misunderstood the discussion
+Please analyze this from the perspective of a senior ML engineer on Recsys and native English speaker
+${myPromptJson1_default.chn_.prompt}
+${myPromptJson1_default.md_.prompt}
+
 Context:
 
 My draft reply:
@@ -312,13 +326,15 @@ My draft reply:
         slack_content_understand: {
             btnNm: "slack 完整内容理解",
             sendOutPrompt: false,
-            prompt: `I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'm concerned about misunderstanding the meaning of the conversation. Could you read the conversation and answer my questions based on it in our future chats?
-Questions:
-What does it mean when XXX?
+            prompt: `
+I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'm concerned about misunderstanding the meaning of the conversation. Could you read the conversation and answer my questions based on it in our future chats?
 
 Requirements:
-1. Please analyze this from the perspective of a senior ML engineer and native English speaker
-2. Provide your response in Chinese
+${myPromptJson1_default.chn_.prompt}
+${myPromptJson1_default.md_.prompt}
+
+Questions:
+What does it mean when XXX?
 
 Full conversation:
 
@@ -330,45 +346,25 @@ Full conversation:
         in_chn: {
             btnNm: "中文",
             sendOutPrompt: false,
-            prompt: `
-The response should be in Chinese. To be exact, only the explanation should be in Chinese, the possible code blocks with comments/table should be in English. 
-
-`,
+            prompt: myPromptJson1_default.chn_.prompt,
         },
 
         in_md: {
             btnNm: "markdown",
             sendOutPrompt: false,
-            prompt: `
-The response should be in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.
-`,
+            prompt: myPromptJson1_default.md_.prompt,
         },
 
         in_chn_md: {
             btnNm: "md且中文",
             sendOutPrompt: false,
-            prompt: `
-The response should be in Chinese. To be exact, only the explanation should be in Chinese, the possible code blocks with comments/table should be in English. 
-
-The response should be in the format of raw markdown code (markdown code wrapped in triple backticks) so I can copy and paste into my markdown editor.
-`,
+            prompt: myPromptJson1_default.chn_.prompt + myPromptJson1_default.md_.prompt,
         },
 
-        as_mle: {
+        in_mle: {
             btnNm: "MLE身份",
             sendOutPrompt: false,
-            prompt: `
-Give me a detailed response following these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer. 
-2. The task is to make some explanations to the newbie interns. 
-3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give 
-examples for each feature.
-4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. The response needs to be in Chinese.
-6. Please follow these instructions in all the responses in this session for the further questions.
-7. Take a deep breath and work on this problem step-by-step.
-8. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-`,
+            prompt: myPromptJson1_default.mle_.prompt,
         },
     };
 
