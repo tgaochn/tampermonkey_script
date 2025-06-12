@@ -126,10 +126,9 @@ Your response should follow these backgrounds and instructions:
 2. The task is to make some explanations to the newbie interns. 
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. The response needs to be in Chinese.
-6. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor.
-7. Don't render the markdown code.
-8. Please follow these instructions in all the responses in this session for any further questions.
+5. Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English. If the response includes a code block, the code and the comments should be in English.
+6. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
+7. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
         example_: {
@@ -153,8 +152,8 @@ Please follow these instructions in all the responses in this session for any fu
 
 Background:
 1. The text will be used in project documentation.
-2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-3. Don't render the markdown code.
+2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
+3. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
         rewrite_slack: {
@@ -166,8 +165,8 @@ Please follow these instructions in all the responses in this session for any fu
 
 Background:
 1. The text will be used in a discussion on Slack between colleagues.
-2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-3. Don't render the markdown code.
+2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
+3. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
 
@@ -179,7 +178,7 @@ I'm not a native English speaker, and I cannot fully understand the following co
 Please follow these instructions in all the responses in this session for any further questions.
 
 Background:
-1. The response should be in Chinese, but the comments in the code block should be in English if applicable.
+1. Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English. If the response includes a code block, the code and the comments should be in English.
 2. The text is from a discussion on Slack between American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.
 3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys. 
 4. If it is a question, explain the background and the main points. Then provide a possible answer.
@@ -195,9 +194,8 @@ Summarize the following text in both English and Chinese in a paragraph, then re
 
 Background:
 1. The text can be in the format of a subtitle, plaintext or others.
-2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-3. Don't render the markdown code.
-4. Please follow these instructions in all the responses in this session for any further questions.
+2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
+3. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
 
@@ -209,8 +207,8 @@ Translate the following Chinese text into English in different tones, which will
 
 Background:
 1. The text will be used in messages between colleagues and formal emails.
-2. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-3. Don't render the markdown code.
+2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
+3. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
 
