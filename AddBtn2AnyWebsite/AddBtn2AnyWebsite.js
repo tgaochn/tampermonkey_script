@@ -14,8 +14,8 @@
 // @match        https://app.monarchmoney.com/*
 // @match        https://allocommunications.smarthub.coop/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
-// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
-// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
+// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
+// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript== 
 // 0.4.3: added US Bank button
