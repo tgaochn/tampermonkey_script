@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.4.2
+// @version      0.4.3
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.4.3: adjust the button position
 // 0.4.2: add workspace link
 // 0.4.1: extract CONFIG constants for better maintainability
 // 0.4.0: use utils from external script
@@ -30,7 +31,7 @@
     const CONFIG = {
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id",
-        BUTTON_POSITION: { top: "-10px", left: "650px" },
+        BUTTON_POSITION: { top: "-10px", left: "550px" },
         REQUIRED_UTILS: [
             "observeDOM",
             "createButtonContainer",
