@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.2
+// @version      0.4.3
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -12,11 +12,13 @@
 // @match        https://app.datadoghq.com/*
 // @match        https://indeed.atlassian.net/wiki/*
 // @match        https://app.monarchmoney.com/*
+// @match        https://allocommunications.smarthub.coop/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript== 
+// 0.4.3: added US Bank button
 // 0.4.2: refactored to use customButtonMappings for wiki with helper function - better separation of concerns
 // 0.4.0: added custom button mapping system - allows defining completely custom buttons for specific URL patterns
 // 0.3.1: merged wiki_btn functionality - added wiki page support with page title extraction and relative positioning
@@ -59,6 +61,15 @@
     // !! custom button config for specific URL patterns
     // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
     const customButtonMappings = [
+        {
+            pattern: /^https:\/\/allocommunications\.smarthub\.coop\/.*$/,
+            buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
+            customButtons: (url, utils) => {
+                return [
+                    utils.createButtonOpenUrl('US Bank', 'https://www.usbank.com/index.html'),
+                ];
+            }
+        },
         {
             pattern: /^https:\/\/app\.monarchmoney\.com\/.*$/,
             buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
