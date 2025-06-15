@@ -1,21 +1,23 @@
 // ==UserScript==
 // @name                text_content_changer
-// @version             0.2.4
+// @version             0.2.5
 // @description         Change text color/content for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
-// @match               http*://teststats.sandbox.indeed.net/*
-// @match               http*://proctor.sandbox.indeed.net/proctor/*
-// @match               http*://butterfly.sandbox.indeed.net/*
-// @match               http*://www.skidrowreloaded.com/*
-// @match               http*://www.amazon.com/spr/returns/*
-// @match               http*://www.mydrivers.com/zhuanti/tianti/*
+// @match               https://teststats.sandbox.indeed.net/*
+// @match               https://proctor.sandbox.indeed.net/proctor/*
+// @match               https://butterfly.sandbox.indeed.net/*
+// @match               https://www.skidrowreloaded.com/*
+// @match               https://www.amazon.com/spr/returns/*
+// @match               https://www.mydrivers.com/zhuanti/tianti/*
+// @match               https://onlinebanking.usbank.com/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 
 // ==/UserScript==
+// 0.2.5: add USBankCashPlus
 // 0.2.4: rename the script to text_content_changer
 // 0.2.3: fix bug for text replacement
 // 0.2.2: 增加 Butterfly_models 的颜色匹配
@@ -31,6 +33,14 @@
 
 (function () {
     "use strict";
+
+    const generalTextReplacement = [
+        {
+            regex: /(USBankCashPlus)/g,
+            replacement: "$1 (网费)",
+            backColor: "rgb(255,192,255)",
+        },
+    ];
 
     const workTextReplacement = [
         {
@@ -230,6 +240,7 @@
                 },
             ],
         },
+
         skidrow: {
             urlRegex: /^https?:\/\/www\.skidrowreloaded\.com\/.*/,
             textPatterns: [
@@ -260,6 +271,7 @@
                 }
             ],
         },
+
         amazon_return: {
             urlRegex: /^https?:\/\/www\.amazon\.com\/.*/,
             textPatterns: [
@@ -270,6 +282,7 @@
                 },
             ],
         },
+
         tianti: {
             urlRegex: /^https?:\/\/www\.mydrivers\.com\/.*/,
             textPatterns: [
@@ -305,6 +318,13 @@
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 }
+            ],
+        },
+
+        usbank: {
+            urlRegex: /^https?:\/\/onlinebanking\.usbank\.com\/.*/,
+            textPatterns: [
+                ...generalTextReplacement,
             ],
         },
     };
