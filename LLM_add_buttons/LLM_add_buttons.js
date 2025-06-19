@@ -112,7 +112,8 @@ Please follow these instructions in all the responses in this session for any fu
             btnNm: "markdown⏎",
             sendOutPrompt: true,
             prompt: `
-Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor.
+Your response should be in the format of raw markdown code so I can copy the content into my markdown editor.
+Don't use bold in md ("**text**").
 Don't render the markdown code.
 Please follow these instructions in all the responses in this session for any further questions.
 `,
@@ -126,9 +127,7 @@ Your response should follow these backgrounds and instructions:
 2. The task is to make some explanations to the newbie interns. 
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English. If the response includes a code block, the code and the comments should be in English.
-6. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
-7. Please follow these instructions in all the responses in this session for any further questions.
+5. Please follow these instructions in all the responses in this session for any further questions.
 `,
         },
         example_: {
@@ -152,8 +151,10 @@ Please follow these instructions in all the responses in this session for any fu
 
 Background:
 1. The text will be used in project documentation.
-2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
-3. Please follow these instructions in all the responses in this session for any further questions.
+
+Additional instructions:
+${myPromptJson1_default.chn_.prompt}
+${myPromptJson1_default.md_.prompt}
 `,
         },
         rewrite_slack: {
@@ -165,8 +166,10 @@ Please follow these instructions in all the responses in this session for any fu
 
 Background:
 1. The text will be used in a discussion on Slack between colleagues.
-2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
-3. Please follow these instructions in all the responses in this session for any further questions.
+
+Additional instructions:
+${myPromptJson1_default.chn_.prompt}
+${myPromptJson1_default.md_.prompt}
 `,
         },
 
@@ -192,23 +195,22 @@ The text is:`,
             prompt: `
 Summarize the following text in both English and Chinese in a paragraph, then reformat it into some bullets. 
 
-Background:
-1. The text can be in the format of a subtitle, plaintext or others.
-2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
-3. Please follow these instructions in all the responses in this session for any further questions.
-`,
+Additional instructions:
+` + myPromptJson1_default.md_.prompt,
         },
 
         chn2eng: {
             btnNm: "日常-中翻英",
             sendOutPrompt: false,
             prompt: `
-Translate the following Chinese text into English in different tones, which will be used in messages between colleagues and formal emails: 
+Translate the following Chinese text into English in different tones: 
 
 Background:
-1. The text will be used in messages between colleagues and formal emails.
-2. Your response should be in the format of raw markdown code (markdown code wrapped in triple backticks). I'd like to copy and paste it into my markdown editor. Don't render the markdown code.
-3. Please follow these instructions in all the responses in this session for any further questions.
+1. Respond in 2 versions: messages between colleagues and formal project documentation.
+
+Additional instructions:
+${myPromptJson1_default.chn_.prompt}
+${myPromptJson1_default.md_.prompt}
 `,
         },
 
