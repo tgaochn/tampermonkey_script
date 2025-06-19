@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.5
+// @version     1.1.6
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.6: update prompt
 // LLM_add_buttons 1.1.5: update prompt
 // LLM_add_buttons 1.1.4: add prompt for slack content understanding
 // LLM_add_buttons 1.1.3: extract CONFIG constants for better maintainability
