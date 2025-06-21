@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.7
+// @version     1.1.8
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.8: update prompt
 // LLM_add_buttons 1.1.7: update prompt
 // LLM_add_buttons 1.1.6: update prompt
 // LLM_add_buttons 1.1.5: update prompt
@@ -107,7 +108,7 @@ If the response includes a code block, the code and the comments should be in En
 
         md: `
 Your response should be in the format of raw markdown code so I can copy the content into my markdown editor.
-Don't use bold in md ("**text**").
+Don't use unnecessary bold in md ("**text**" or "*text*").
 Don't render the markdown code.
 `,
 
@@ -118,6 +119,10 @@ Your response should follow these backgrounds and instructions:
 3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
 4. You need to give some comparison with some similar or related tools/models/tech if applicable.
 `,
+
+        explain: `
+Please explain what is changed and why you made the changes.
+        `,
     };
 
     // ! Prompt that are directly sent out
@@ -187,6 +192,7 @@ Background:
 Additional instructions:
 ${basic_prompt.chn}
 ${basic_prompt.md}
+${basic_prompt.explain}
 ${basic_prompt.same_rules}
 `,
         },
@@ -203,6 +209,7 @@ Background:
 Additional instructions:
 ${basic_prompt.chn}
 ${basic_prompt.md}
+${basic_prompt.explain}
 ${basic_prompt.same_rules}
 `,
         },
@@ -240,6 +247,24 @@ ${basic_prompt.same_rules}
             sendOutPrompt: false,
             prompt: `
 Translate the following Chinese text into English in different tones: 
+`,
+        },
+
+        MD_formatter: {
+            btnNm: "日常-MD格式化",
+            sendOutPrompt: false,
+            prompt: `
+The following md code is converted from html by some softwares. It may include formatting issues or unnecessary content. Please fix them and make it as readable and cleat as possible.
+Here are the issues type I found, please fix more if applicable:
+1. [google](https://www.google.com "https://www.google.com") -> [google](https://www.google.com)
+
+Detailed instructions:
+${basic_prompt.explain}
+${basic_prompt.same_rules}
+
+Background:
+The md code is:
+
 `,
         },
 
