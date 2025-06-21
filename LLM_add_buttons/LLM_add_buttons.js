@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM_add_buttons
 // @namespace   https://claude.ai/
-// @version     1.1.6
+// @version     1.1.7
 // @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_add_buttons/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.1.7: update prompt
 // LLM_add_buttons 1.1.6: update prompt
 // LLM_add_buttons 1.1.5: update prompt
 // LLM_add_buttons 1.1.4: add prompt for slack content understanding
@@ -92,56 +93,86 @@
         return null;
     };
 
-    // ! Define Default Prompts (renamed with a '_default' suffix)
+    // ! Basic prompt components for other prompts
+    const basic_prompt = {
+        same_rules: `
+Please follow these instructions in all the responses in this session for any further questions.
+`,
+
+        chn: `
+Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.
+For example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.
+If the response includes a code block, the code and the comments should be in English.
+`,
+
+        md: `
+Your response should be in the format of raw markdown code so I can copy the content into my markdown editor.
+Don't use bold in md ("**text**").
+Don't render the markdown code.
+`,
+
+        mle: `
+Your response should follow these backgrounds and instructions:
+1. You need to act as a senior machine learning engineer. 
+2. The task is to make some explanations to the newbie interns. 
+3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
+4. You need to give some comparison with some similar or related tools/models/tech if applicable.
+`,
+    };
+
+    // ! Prompt that are directly sent out
     const myPromptJson1_default = {
         continue_: {
             btnNm: "Continue⏎",
             sendOutPrompt: true,
             prompt: 'Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with "The answer is finished."',
         },
+
         chn_: {
             btnNm: "中文⏎",
             sendOutPrompt: true,
             prompt: `
-Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.
-For example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.
-If the response includes a code block, the code and the comments should be in English.
-Please follow these instructions in all the responses in this session for any further questions.
+Repeat the response in Chinese.
 `,
         },
+
         md_: {
-            btnNm: "markdown⏎",
+            btnNm: "MD_format⏎",
             sendOutPrompt: true,
             prompt: `
-Your response should be in the format of raw markdown code so I can copy the content into my markdown editor.
-Don't use bold in md ("**text**").
-Don't render the markdown code.
-Please follow these instructions in all the responses in this session for any further questions.
+Repeat the response in the format of raw markdown code.
+
+Detailed instructions:
+${basic_prompt.md}
+${basic_prompt.same_rules}
 `,
         },
+
         mle_: {
             btnNm: "MLE⏎",
             sendOutPrompt: true,
             prompt: `
-Your response should follow these backgrounds and instructions:
-1. You need to act as a senior machine learning engineer. 
-2. The task is to make some explanations to the newbie interns. 
-3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.
-4. You need to give some comparison with some similar or related tools/models/tech if applicable.
-5. Please follow these instructions in all the responses in this session for any further questions.
+Repeat the response as a MLE in Recsys.
+
+Detailed instructions:
+${basic_prompt.mle}
+${basic_prompt.same_rules}
 `,
         },
+
         example_: {
             btnNm: "加例子解释⏎",
             sendOutPrompt: true,
             prompt: "Make the response more understandable and give me more examples to explain the response if applicable. The examples should be easy to understand and explain why the example supports the response if applicable.",
         },
-        // rewrite_: {
-        //     btnNm: "改写⏎",
-        //     sendOutPrompt: true,
-        //     prompt: "Rewrite the response and make the response more understandable.",
-        // },
+
+        rewrite_: {
+            btnNm: "改写response⏎",
+            sendOutPrompt: true,
+            prompt: "Rewrite the response and make the response more understandable.",
+        },
     };
+
     const myPromptJson2_default = {
         rewrite_doc: {
             btnNm: "日常-改写-doc",
@@ -154,8 +185,9 @@ Background:
 1. The text will be used in project documentation.
 
 Additional instructions:
-${myPromptJson1_default.chn_.prompt}
-${myPromptJson1_default.md_.prompt}
+${basic_prompt.chn}
+${basic_prompt.md}
+${basic_prompt.same_rules}
 `,
         },
         rewrite_slack: {
@@ -169,8 +201,9 @@ Background:
 1. The text will be used in a discussion on Slack between colleagues.
 
 Additional instructions:
-${myPromptJson1_default.chn_.prompt}
-${myPromptJson1_default.md_.prompt}
+${basic_prompt.chn}
+${basic_prompt.md}
+${basic_prompt.same_rules}
 `,
         },
 
@@ -197,7 +230,9 @@ The text is:`,
 Summarize the following text in both English and Chinese in a paragraph, then reformat it into some bullets. 
 
 Additional instructions:
-` + myPromptJson1_default.md_.prompt,
+${basic_prompt.md}
+${basic_prompt.same_rules}
+`,
         },
 
         chn2eng: {
@@ -205,13 +240,6 @@ Additional instructions:
             sendOutPrompt: false,
             prompt: `
 Translate the following Chinese text into English in different tones: 
-
-Background:
-1. Respond in 2 versions: messages between colleagues and formal project documentation.
-
-Additional instructions:
-${myPromptJson1_default.chn_.prompt}
-${myPromptJson1_default.md_.prompt}
 `,
         },
 
@@ -286,25 +314,25 @@ ${myPromptJson1_default.md_.prompt}
         what_mle: {
             btnNm: "MLE-what",
             sendOutPrompt: false,
-            prompt: `What is XXX?` + myPromptJson1_default.mle_.prompt,
+            prompt: `What is XXX?` + basic_prompt.mle + basic_prompt.same_rules,
         },
 
         how_mle: {
             btnNm: "MLE-how",
             sendOutPrompt: false,
-            prompt: `How to XXX?` + myPromptJson1_default.mle_.prompt,
+            prompt: `How to XXX?` + basic_prompt.mle + basic_prompt.same_rules,
         },
 
         compare_mle: {
             btnNm: "MLE-比较",
             sendOutPrompt: false,
-            prompt: `What is the difference between \"XXX\" and \"YYY\"?` + myPromptJson1_default.mle_.prompt,
+            prompt: `What is the difference between \"XXX\" and \"YYY\"?` + basic_prompt.mle + basic_prompt.same_rules,
         },
 
         improve_code_mle: {
             btnNm: "MLE-改code",
             sendOutPrompt: false,
-            prompt: `Fix or improve the code.` + myPromptJson1_default.mle_.prompt,
+            prompt: `Fix or improve the code.` + basic_prompt.mle + basic_prompt.same_rules,
         },
 
         reply_on_slack: {
@@ -314,15 +342,16 @@ ${myPromptJson1_default.md_.prompt}
 I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?
 Requirements:
 Please analyze this from the perspective of a senior ML engineer on Recsys and native English speaker
-${myPromptJson1_default.chn_.prompt}
-${myPromptJson1_default.md_.prompt}
+${basic_prompt.chn}
+${basic_prompt.md}
+${basic_prompt.same_rules}
 
 Context:
 
 My draft reply:
 
 `,
-        },        
+        },
 
         slack_content_understand: {
             btnNm: "slack 完整内容理解",
@@ -331,8 +360,9 @@ My draft reply:
 I'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'm concerned about misunderstanding the meaning of the conversation. Could you read the conversation and answer my questions based on it in our future chats?
 
 Requirements:
-${myPromptJson1_default.chn_.prompt}
-${myPromptJson1_default.md_.prompt}
+${basic_prompt.chn}
+${basic_prompt.md}
+${basic_prompt.same_rules}
 
 Questions:
 What does it mean when XXX?
@@ -340,32 +370,32 @@ What does it mean when XXX?
 Full conversation:
 
 `,
-        },        
+        },
     };
 
     const myPromptJson4_default = {
         in_chn: {
             btnNm: "中文",
             sendOutPrompt: false,
-            prompt: myPromptJson1_default.chn_.prompt,
+            prompt: basic_prompt.chn + basic_prompt.same_rules,
         },
 
         in_md: {
             btnNm: "markdown",
             sendOutPrompt: false,
-            prompt: myPromptJson1_default.md_.prompt,
+            prompt: basic_prompt.md + basic_prompt.same_rules,
         },
 
         in_chn_md: {
             btnNm: "md且中文",
             sendOutPrompt: false,
-            prompt: myPromptJson1_default.chn_.prompt + myPromptJson1_default.md_.prompt,
+            prompt: basic_prompt.chn + basic_prompt.md + basic_prompt.same_rules,
         },
 
         in_mle: {
             btnNm: "MLE身份",
             sendOutPrompt: false,
-            prompt: myPromptJson1_default.mle_.prompt,
+            prompt: basic_prompt.mle + basic_prompt.same_rules,
         },
     };
 
