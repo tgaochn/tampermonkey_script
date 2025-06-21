@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.6
+// @version      0.9.7
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -10,6 +10,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 0.9.7: add html2md link
 // 0.9.6: add more model patterns
 // 0.9.5: extract CONFIG constants for better maintainability
 // 0.9.4: add more model patterns
@@ -91,7 +92,7 @@
         // default MTM: multi_rj_hp_us_15339e0
         // others: dislike_rj_hp_us_b734f31
         {
-            regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
+            regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp)|(serp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
         },
 
@@ -235,13 +236,19 @@
             utils.createButtonCopyText("summary", `${summary}`),
 
             utils.createTextNode("\thref: "),
-            utils.createButtonCopyHypertext("href: ticket", ticketId, ticket_url),
-            utils.createButtonFromCallback("href: (ticket) summary", () =>
+            utils.createButtonCopyHypertext("ticket", ticketId, ticket_url),
+            utils.createButtonFromCallback("(ticket) summary", () =>
                 utils.copyHypertext(ticketId, ticket_url, "(", `) ${summary}`)
             ),
 
             utils.createTextNode("\tmd: "),
-            utils.createButtonCopyText("md: [ticket](ticket_url)", `[${ticketId}](${ticket_url})`)
+            utils.createButtonCopyText("[ticket](ticket_url)", `[${ticketId}](${ticket_url})`),
+
+            utils.createTextNode("\tlinks: "),
+            utils.createButtonOpenUrl(
+                "html2md",
+                "https://www.docstomarkdown.pro/convert-word-to-markdown/"
+            ),            
         );
 
         if (CONFIG.IS_FIXED_POS) {
