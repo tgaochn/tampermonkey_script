@@ -262,7 +262,6 @@ Detailed instructions:
 ${basic_prompt.explain}
 ${basic_prompt.same_rules}
 
-Background:
 The md code is:
 
 `,
