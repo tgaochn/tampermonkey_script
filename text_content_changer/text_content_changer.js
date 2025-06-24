@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer
-// @version             0.2.5
+// @version             0.3.0
 // @description         Change text color/content for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -17,6 +17,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 
 // ==/UserScript==
+// 0.3.0: add timezone conversion
 // 0.2.5: add USBankCashPlus
 // 0.2.4: rename the script to text_content_changer
 // 0.2.3: fix bug for text replacement
@@ -34,6 +35,7 @@
 (function () {
     "use strict";
 
+    // ! general text replacement
     const generalTextReplacement = [
         {
             regex: /(USBankCashPlus)/g,
@@ -42,7 +44,8 @@
         },
     ];
 
-    const workTextReplacement = [
+    // ! add proctor description
+    const proctorDesc = [
         {
             regex: /^((idxbutterflyapplymodeltst)|(isbutterflyapplymodeltst)\d*)$/,
             replacement: "$1 (AsPerSeen)",
@@ -69,12 +72,70 @@
         },
     ];
 
+    // ! convert timezone
+    const convertTimezone = [
+        {
+            regex: /(.*?)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \(UTC\+00:00\)(.*)/g,
+            replacement: function(match, prefix, dateTimeStr, suffix) {
+                try {
+                    // Parse the UTC datetime
+                    const utcDate = new Date(dateTimeStr + 'Z'); // Add 'Z' to indicate UTC
+                    
+                    // Convert to Central Time (Lincoln, NE)
+                    const centralTime = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Chicago',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).format(utcDate);
+                    
+                    // Get timezone abbreviation (CST/CDT)
+                    const timeZoneAbbr = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Chicago',
+                        timeZoneName: 'short'
+                    }).formatToParts(utcDate).find(part => part.type === 'timeZoneName').value;
+                    
+                    // Format the date to match original format
+                    const formattedDate = centralTime.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}:\d{2}:\d{2})/, '$3-$1-$2 $4');
+                    
+                    // Return structured object with multiple parts
+                    return {
+                        isMultiPart: true,
+                        parts: [
+                            {
+                                text: prefix + dateTimeStr + ' (UTC+00:00) ',
+                                // No styling for original text (keeps default)
+                            },
+                            {
+                                text: formattedDate + ' (' + timeZoneAbbr + ')',
+                                textColor: "rgb(0,0,0)",
+                                backColor: "rgb(255,255,0)",
+                            },
+                            {
+                                text: suffix,
+                                // No styling for suffix content (keeps default)
+                            }
+                        ]
+                    };
+                } catch (error) {
+                    console.error('Error converting timezone:', error);
+                    return match; // Return original if conversion fails
+                }
+            },
+        }
+    ];
+
+    // !! map url patterns to text change
     const urlPatterns = {
         testStats: {
             // https://teststats.sandbox.indeed.net/analyze/idxsjbutterflyctrmodeltst?from=proctor_tst_view
             urlRegex: /^https?:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
             textPatterns: [
-                ...workTextReplacement,
+                ...proctorDesc,
             ],
         },
 
@@ -82,7 +143,8 @@
             // https://proctor.sandbox.indeed.net/proctor/toggles/view/isbutterflyapplymodeltst
             urlRegex: /^https?:\/\/proctor\.sandbox\.indeed\.net\/proctor\/toggles\/view\/.*/,
             textPatterns: [
-                ...workTextReplacement,
+                ...proctorDesc,
+                ...convertTimezone,
             ],
         },
 
@@ -90,7 +152,7 @@
             // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model\/.*/,
             textPatterns: [
-                ...workTextReplacement,
+                ...proctorDesc,
             ],
         },
 
@@ -98,7 +160,7 @@
             // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
             textPatterns: [
-                ...workTextReplacement,
+                ...proctorDesc,
 
                 // ! Group 1 - ranking targets
                 {
@@ -349,33 +411,84 @@
             for (const pattern of currentUrlPatterns.textPatterns) {
                 pattern.regex.lastIndex = 0;
 
-                if (pattern.regex.test(content)) {
+                // Check if pattern matches
+                const match = pattern.regex.exec(content);
+                if (match) {
+                    // Reset regex lastIndex for global patterns
+                    pattern.regex.lastIndex = 0;
+                    
                     // 是否需要替换或者着色
                     const needsReplacement = !!pattern.replacement;
                     const needsColoring = !!pattern.textColor || !!pattern.backColor;
 
                     if (needsReplacement || needsColoring) {
-                        // 创建一个span元素进行替换或者着色
-                        const span = document.createElement("span");
-
-                        // 如果有颜色设置，应用颜色
-                        if (pattern.textColor) {
-                            span.style.color = pattern.textColor;
-                        }
-
-                        if (pattern.backColor) {
-                            span.style.backgroundColor = pattern.backColor;
-                        }
-
                         // 设置内容，如果有替换文本则使用替换文本
                         if (pattern.replacement) {
-                            // 使用正则表达式的replace方法处理捕获组引用
-                            span.textContent = content.replace(pattern.regex, pattern.replacement);
+                            // Call replacement function or use string replacement
+                            let replacedContent;
+                            if (typeof pattern.replacement === 'function') {
+                                replacedContent = pattern.replacement.apply(null, match);
+                            } else {
+                                replacedContent = content.replace(pattern.regex, pattern.replacement);
+                            }
+                            
+                            // Check if replacement function returned a structured multi-part object
+                            if (typeof replacedContent === 'object' && replacedContent.isMultiPart) {
+                                // Handle multi-part replacement with individual styling
+                                const container = document.createElement("span");
+                                container.setAttribute('data-colored', 'true');
+                                
+                                replacedContent.parts.forEach(part => {
+                                    if (part.textColor || part.backColor) {
+                                        // Create styled span for this part
+                                        const partSpan = document.createElement("span");
+                                        if (part.textColor) {
+                                            partSpan.style.color = part.textColor;
+                                        }
+                                        if (part.backColor) {
+                                            partSpan.style.backgroundColor = part.backColor;
+                                        }
+                                        partSpan.textContent = part.text;
+                                        container.appendChild(partSpan);
+                                    } else {
+                                        // Add unstyled text node
+                                        container.appendChild(document.createTextNode(part.text));
+                                    }
+                                });
+                                
+                                node.parentNode.replaceChild(container, node);
+                            } else {
+                                // Regular string replacement with pattern-level styling
+                                const span = document.createElement("span");
+                                span.textContent = replacedContent;
+                                
+                                // Apply pattern-level styling
+                                if (pattern.textColor) {
+                                    span.style.color = pattern.textColor;
+                                }
+                                if (pattern.backColor) {
+                                    span.style.backgroundColor = pattern.backColor;
+                                }
+                                
+                                span.setAttribute('data-colored', 'true');
+                                node.parentNode.replaceChild(span, node);
+                            }
                         } else {
+                            // No replacement, just apply pattern-level styling
+                            const span = document.createElement("span");
                             span.textContent = content;
+                            
+                            // Apply pattern-level styling
+                            if (pattern.textColor) {
+                                span.style.color = pattern.textColor;
+                            }
+                            if (pattern.backColor) {
+                                span.style.backgroundColor = pattern.backColor;
+                            }
+                            
+                            span.setAttribute('data-colored', 'true');
+                            node.parentNode.replaceChild(span, node);
                         }
-                        span.setAttribute('data-colored', 'true');
-                        node.parentNode.replaceChild(span, node);
                     }
                     break;
                 }
