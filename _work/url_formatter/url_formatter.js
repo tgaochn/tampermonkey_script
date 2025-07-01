@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            url_formatter
 // @namespace       url_formatter
-// @version         0.1.2
+// @version         0.1.3
 // @description     format URL and redirect to a new URL
 // @author          gtfish
 // @include         *://*.console.aws.amazon.com/*
@@ -10,6 +10,7 @@
 // @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/url_formatter/url_formatter.js
 // ==/UserScript==
+// 0.1.3: add testStatsForceRecal to force recalculation
 // 0.1.2: enhance testStatsCleanup to reorder URL parameters, keeping allocationId and dateRangeFrom in first 2 positions
 // 0.1.0: init the script, redirect to a new URL, add button to modify teststats URL
 
@@ -33,11 +34,11 @@
             targetUrl: 'https://us-east-2.console.aws.amazon.com/console/home?region=us-east-2#'
         },
 
-        testStatsCleanup: {
+        testStatsFormat: {
             // Match teststats analyze URLs
             urlRegex: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
             action: 'modify',
-            buttonText: 'Remove dateRangeTo & Reorder',
+            buttonText: 'Clean & Reorder',
             processor: function (url) {
                 const urlObj = new URL(url);
                 
@@ -47,8 +48,9 @@
                     allParams.set(key, value);
                 }
                 
-                // Remove dateRangeTo parameter
+                // Remove dateRangeTo/cacheTimeoutOverrideMs parameter
                 allParams.delete('dateRangeTo');
+                allParams.delete('cacheTimeoutOverrideMs');
                 
                 // Clear existing search params
                 urlObj.search = '';
@@ -72,6 +74,22 @@
                 // Decode the result to preserve original parameter formatting
                 return decodeURIComponent(urlObj.toString());
             }
+        }, 
+
+        testStatsForceRecal: {
+            // Match teststats analyze URLs
+            urlRegex: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
+            action: 'modify',
+            buttonText: 'Force Recalculation',
+            processor: function (url) {
+                const urlObj = new URL(url);
+                
+                // Add cacheTimeoutOverrideMs=0 parameter to force recalculation
+                urlObj.searchParams.set('cacheTimeoutOverrideMs', '0');
+                
+                // Decode the result to preserve original parameter formatting
+                return decodeURIComponent(urlObj.toString());
+            }
         }
     };
 
@@ -80,6 +98,7 @@
      */
     function processUrl() {
         const currentUrl = window.location.href;
+        const matchedRules = [];
 
         for (const [ruleName, rule] of Object.entries(urlRules)) {
             if (rule.urlRegex.test(currentUrl)) {
@@ -89,15 +108,17 @@
                     case 'redirect':
                         console.log(`URL formatter: Redirecting to: ${rule.targetUrl}`);
                         window.location.href = rule.targetUrl;
-                        return;
+                        return null; // Redirect immediately, no need to continue
 
                     case 'modify':
-                        // For modify actions, we'll add a button instead of immediate processing
-                        return rule;
+                        // Collect all modify rules for button creation
+                        matchedRules.push(rule);
+                        break;
                 }
             }
         }
-        return null;
+        
+        return matchedRules.length > 0 ? matchedRules : null;
     }
 
     /**
@@ -140,11 +161,11 @@
      * Initialize script
      */
     async function initScript() {
-        // First check for immediate redirects
-        const matchedRule = processUrl();
+        // First check for immediate redirects and collect modify rules
+        const matchedRules = processUrl();
 
-        // If we have a modify rule, set up the button interface
-        if (matchedRule && matchedRule.action === 'modify') {
+        // If we have modify rules, set up the button interface
+        if (matchedRules && matchedRules.length > 0) {
             const utils = await waitForUtils();
 
             const targetElementId = CONFIG.CONTAINER_ID;
@@ -153,22 +174,29 @@
             // Check if the target element exists, if not, add the buttons
             utils.observeDOM(observeTarget, () => {
                 if (!document.getElementById(targetElementId)) {
-                    addModifyButton(matchedRule, utils, targetElementId);
+                    addModifyButtons(matchedRules, utils, targetElementId);
                 }
             });
         }
     }
 
     /**
-     * Add modify button to page
+     * Add modify buttons to page
      */
-    function addModifyButton(rule, utils, containerId) {
+    function addModifyButtons(rules, utils, containerId) {
         const btnContainer = utils.createButtonContainer();
         btnContainer.id = containerId;
 
-        const modifyButton = createModifyButton(rule, utils);
-        if (modifyButton) {
-            btnContainer.appendChild(modifyButton);
+        // Create buttons for all matched rules
+        rules.forEach(rule => {
+            const modifyButton = createModifyButton(rule, utils);
+            if (modifyButton) {
+                btnContainer.appendChild(modifyButton);
+            }
+        });
+
+        // Only add container to page if it has buttons
+        if (btnContainer.children.length > 0) {
             utils.addFixedPosContainerToPage(btnContainer, CONFIG.BUTTON_POSITION);
         }
     }
