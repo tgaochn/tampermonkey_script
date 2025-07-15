@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.4
+// @version      0.4.5
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -18,6 +18,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.4.5: added Bilt(Wells Fargo) button
 // 0.4.4: added jump button
 // 0.4.3: added US Bank button
 // 0.4.2: refactored to use customButtonMappings for wiki with helper function - better separation of concerns
@@ -87,6 +88,7 @@
                 return [
                     utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),
                     utils.createButtonOpenUrl("Chase", "https://www.chase.com"),
+                    utils.createButtonOpenUrl("Bilt(Wells Fargo)", "https://www.wellsfargo.com"),
                     utils.createButtonOpenUrl("Fidelity", "https://digital.fidelity.com/prgw/digital/login/full-page"),
                     utils.createButtonOpenUrl("Merrill Lynch", "https://www.ml.com"),
                 ];
