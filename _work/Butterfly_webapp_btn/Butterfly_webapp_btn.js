@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.6.2
+// @version             0.6.3
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 0.6.3: added new url pattern for butterfly
 // 0.6.2: extract CONFIG constants for better maintainability
 // 0.6.1: add btn to fetch model version
 // 0.6.0: use @require to load external script
@@ -125,7 +126,7 @@
         const modelLinkSelector = 'div[class="model-view--header-model-name-row"]';
         const modelNameElem = document.querySelector(modelLinkSelector).childNodes[0];
         const modelId = modelNameElem.childNodes[0].innerText;
-        const modelUrl = "https://butterfly.sandbox.indeed.net/#/model/" + modelId;
+        const modelUrl = "https://butterfly.sandbox.indeed.net/model/" + modelId;
         const modelConfUrl = modelUrl + "/PUBLISHED/config";
 
         modelInfoButtonContainer.id = CONFIG.CONTAINER_ID;
@@ -178,15 +179,15 @@
             ),
             utils.createButtonOpenUrl(
                 "US Apply",
-                "https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflyapplymodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D"
+                "https://butterfly.sandbox.indeed.net/proctor/jobsearch/idxbutterflyapplymodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D"
             ),
             utils.createButtonOpenUrl(
                 "US CTR",
-                "https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxsjbutterflyctrmodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D"
+                "https://butterfly.sandbox.indeed.net/proctor/jobsearch/idxsjbutterflyctrmodeltst?q=%24%7B%28adFormat%3D%3D%27hp%27+%7C%7C+adFormat%3D%3D%27hpd%27%29+%26%26+clientContext+%3D%3D+%27relevantJobs%27+%26%26+clientApplication+%3D%3D+%27ElephantInferenceServer%27+%26%26+country+%3D%3D+%27US%27%7D"
             ),
             utils.createButtonOpenUrl(
                 "US dislike",
-                "https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/idxbutterflydislikemodeltst"
+                "https://butterfly.sandbox.indeed.net/proctor/jobsearch/idxbutterflydislikemodeltst"
             )
         );
 

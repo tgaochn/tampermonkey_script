@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer
-// @version             0.3.0
+// @version             0.3.1
 // @description         Change text color/content for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -17,6 +17,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 
 // ==/UserScript==
+// 0.3.1: added new url pattern for butterfly
 // 0.3.0: add timezone conversion
 // 0.2.5: add USBankCashPlus
 // 0.2.4: rename the script to text_content_changer
@@ -149,7 +150,7 @@
         },
 
         Butterfly_models: {
-            // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/ // old url
+            // https://butterfly.sandbox.indeed.net/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/ // old url
             // https://butterfly.sandbox.indeed.net/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/ // new url
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model\/.*/,
             textPatterns: [
@@ -158,7 +159,7 @@
         },
 
         Butterfly_proctor: {
-            // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst // old url
+            // https://butterfly.sandbox.indeed.net/proctor/jobsearch/isbutterflyapplymodeltst // old url
             // https://butterfly.sandbox.indeed.net/proctor/jobsearch/isbutterflyapplymodeltst // new url
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor\/jobsearch\/.*/,
             textPatterns: [

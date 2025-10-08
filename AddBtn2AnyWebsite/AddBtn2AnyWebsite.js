@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.5
+// @version      0.4.6
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -18,6 +18,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.4.6: added new url pattern for butterfly
 // 0.4.5: added Bilt(Wells Fargo) button
 // 0.4.4: added jump button
 // 0.4.3: added US Bank button
@@ -142,7 +143,7 @@
                 return [
                     utils.createButtonOpenUrl(
                         "Butterfly Proctor",
-                        `https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/${dynamicTitle}`
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
                     ),
                 ];
             },

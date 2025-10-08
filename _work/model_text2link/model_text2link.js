@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.1.7
+// @version      0.1.8
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
@@ -11,6 +11,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.1.8: added new url pattern for butterfly
 // 0.1.7: add serp models
 // 0.1.6: remove the match on jira ticket
 // 0.1.5: add more patterns
@@ -57,19 +58,19 @@
         // others: dislike_rj_hp_us_b734f31
         {
             regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp)|(serp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
+            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         },
 
         // // ! SERP models: sjmobweb_us_15339e0
         // {
         //     regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-        //     urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
+        //     urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         // },
 
         // ! I2A models: elephant-multi-en-all_en-4e18057
         {
             regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/#/model/$1/PUBLISHED/config",
+            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         },
     ];
 
