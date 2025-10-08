@@ -149,16 +149,18 @@
         },
 
         Butterfly_models: {
-            // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/
-            urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model\/.*/,
+            // https://butterfly.sandbox.indeed.net/#/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/ // old url
+            // https://butterfly.sandbox.indeed.net/model/preapply_rj_hp_us_9c2a248/PUBLISHED/overview/ // new url
+            urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model\/.*/,
             textPatterns: [
                 ...proctorDesc,
             ],
         },
 
         Butterfly_proctor: {
-            // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst
-            urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor\/jobsearch\/.*/,
+            // https://butterfly.sandbox.indeed.net/#/proctor/jobsearch/isbutterflyapplymodeltst // old url
+            // https://butterfly.sandbox.indeed.net/proctor/jobsearch/isbutterflyapplymodeltst // new url
+            urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor\/jobsearch\/.*/,
             textPatterns: [
                 ...proctorDesc,
 

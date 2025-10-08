@@ -53,7 +53,7 @@
         ],
     };
 
-    const inclusionPatterns = [/^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/];
+    const inclusionPatterns = [/^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model.*$/];
 
     const exclusionPatterns = [];
 

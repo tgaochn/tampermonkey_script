@@ -185,7 +185,7 @@
 
     // https://indeed.atlassian.net/browse
     const exclusionPatterns = [
-        /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/model.*$/,
+        /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model.*$/,
         /^https:\/\/indeed\.atlassian\.net\/browse.*$/,
     ];
 
@@ -199,7 +199,7 @@
 
         // ! butterfly proctor
         {
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/proctor.*$/,
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
             title: "Butterfly traffic",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
@@ -233,7 +233,7 @@
 
         // ! ruleSet
         {
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/#\/ruleSet.*$/,
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?ruleSet.*$/,
             title: "RuleSet",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
