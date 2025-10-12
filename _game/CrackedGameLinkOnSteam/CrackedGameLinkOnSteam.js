@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.4.0
+// @version 0.4.1
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.4.1: Add bilibili mapping functionality with external storage
 // 0.4.0: Add nexusmods mapping functionality with external storage
 // 0.3.5: 固定按钮顺序
 // 0.3.4: update searching keyword for 风灵月影 
@@ -54,6 +55,28 @@
         saveNexusModsMapping(mapping);
     }
 
+    // Bilibili mapping storage functions using GM_getValue/GM_setValue for cross-device sync
+    function getBilibiliMapping() {
+        const stored = GM_getValue('bilibili_mapping', '{}');
+        return JSON.parse(stored);
+    }
+
+    function saveBilibiliMapping(mapping) {
+        GM_setValue('bilibili_mapping', JSON.stringify(mapping));
+    }
+
+    function addBilibiliMapping(steamId, bilibiliGameName) {
+        const mapping = getBilibiliMapping();
+        mapping[steamId] = bilibiliGameName;
+        saveBilibiliMapping(mapping);
+    }
+
+    function removeBilibiliMapping(steamId) {
+        const mapping = getBilibiliMapping();
+        delete mapping[steamId];
+        saveBilibiliMapping(mapping);
+    }
+
     // Function to show mapping input dialog
     function showMappingDialog() {
         const nexusGameName = prompt('请输入NexusMods上的游戏名称用于直接访问 \n例如: hollowknightsilksong');
@@ -65,9 +88,20 @@
         }
     }
 
-    // Function to show mapping verification dialog with clickable URL
-    function showMappingVerificationDialog(nexusGameName) {
-        const fullUrl = `https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`;
+    // Function to show bilibili mapping input dialog
+    function showBilibiliMappingDialog() {
+        const bilibiliGameName = prompt('请输入B站搜索用的中文游戏名称 \n例如: 空洞骑士丝之歌');
+        if (bilibiliGameName && bilibiliGameName.trim()) {
+            addBilibiliMapping(appid, bilibiliGameName.trim());
+            alert('B站映射已添加！现在可以点击B站按钮使用中文名称搜索。');
+            // Update button state immediately
+            updateAddBilibiliMappingButton();
+        }
+    }
+
+    // Generic function to show mapping verification dialog with clickable URL
+    function showMappingVerificationDialog(config) {
+        const { title, nameLabel, nameValue, urlLabel, url, clearButtonId, closeButtonId, onClear } = config;
         
         // Create custom dialog
         const dialog = document.createElement('div');
@@ -88,22 +122,22 @@
         `;
         
         dialog.innerHTML = `
-            <h3 style="margin-top: 0; color: #333;">NexusMods 映射信息</h3>
-            <p style="color: #000;"><strong>游戏名称:</strong> ${nexusGameName}</p>
-            <p style="color: #000;"><strong>完整URL:</strong></p>
-            <a href="${fullUrl}" target="_blank" style="
+            <h3 style="margin-top: 0; color: #333;">${title}</h3>
+            <p style="color: #000;"><strong>${nameLabel}:</strong> ${nameValue}</p>
+            <p style="color: #000;"><strong>${urlLabel}:</strong></p>
+            <a href="${url}" target="_blank" style="
                 color: #0066cc;
                 text-decoration: underline;
                 word-break: break-all;
                 display: inline-block;
                 max-width: 100%;
                 margin: 10px 0;
-            ">${fullUrl}</a>
+            ">${url}</a>
             <p style="font-size: 12px; color: #666; margin: 15px 0;">
                 点击上方链接验证映射是否正确
             </p>
             <div style="margin-top: 20px;">
-                <button id="clearMapping" style="
+                <button id="${clearButtonId}" style="
                     background: #dc3545;
                     color: white;
                     border: none;
@@ -112,7 +146,7 @@
                     cursor: pointer;
                     margin-right: 10px;
                 ">清除映射</button>
-                <button id="closeDialog" style="
+                <button id="${closeButtonId}" style="
                     background: #6c757d;
                     color: white;
                     border: none;
@@ -125,18 +159,54 @@
         
         // Add event listeners using event delegation
         dialog.addEventListener('click', function(e) {
-            if (e.target.id === 'clearMapping') {
-                removeNexusModsMapping(appid);
+            if (e.target.id === clearButtonId) {
+                onClear();
                 document.body.removeChild(dialog);
-                // Update button state instead of reloading page
-                updateAddMappingButton();
-            } else if (e.target.id === 'closeDialog') {
+            } else if (e.target.id === closeButtonId) {
                 document.body.removeChild(dialog);
             }
         });
         
         // Add to page
         document.body.appendChild(dialog);
+    }
+
+    // Function to show nexusmods mapping verification dialog
+    function showNexusModsMappingVerificationDialog(nexusGameName) {
+        const fullUrl = `https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`;
+        
+        showMappingVerificationDialog({
+            title: 'NexusMods 映射信息',
+            nameLabel: '游戏名称',
+            nameValue: nexusGameName,
+            urlLabel: '完整URL',
+            url: fullUrl,
+            clearButtonId: 'clearMapping',
+            closeButtonId: 'closeDialog',
+            onClear: () => {
+                removeNexusModsMapping(appid);
+                updateAddMappingButton();
+            }
+        });
+    }
+
+    // Function to show bilibili mapping verification dialog
+    function showBilibiliMappingVerificationDialog(bilibiliGameName) {
+        const searchUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(bilibiliGameName)}`;
+        
+        showMappingVerificationDialog({
+            title: 'B站搜索映射信息',
+            nameLabel: '搜索名称',
+            nameValue: bilibiliGameName,
+            urlLabel: '搜索URL',
+            url: searchUrl,
+            clearButtonId: 'clearBilibiliMapping',
+            closeButtonId: 'closeBilibiliDialog',
+            onClear: () => {
+                removeBilibiliMapping(appid);
+                updateAddBilibiliMappingButton();
+            }
+        });
     }
 
     // Function to update add mapping button state dynamically
@@ -152,7 +222,7 @@
             addMappingButton.style.backgroundColor = "#666666";
             addMappingButton.style.cursor = "default";
             addMappingButton.onclick = function () {
-                showMappingVerificationDialog(nexusGameName);
+                showNexusModsMappingVerificationDialog(nexusGameName);
             };
         } else {
             // No mapping - show as active
@@ -160,6 +230,31 @@
             addMappingButton.style.backgroundColor = "#902600";
             addMappingButton.onclick = function () {
                 showMappingDialog();
+            };
+        }
+    }
+
+    // Function to update add bilibili mapping button state dynamically
+    function updateAddBilibiliMappingButton() {
+        if (!addBilibiliMappingButton) return;
+        
+        const mapping = getBilibiliMapping();
+        const bilibiliGameName = mapping[appid];
+        
+        if (bilibiliGameName) {
+            // Mapping exists - show as disabled/gray with clear option
+            addBilibiliMappingButton.innerHTML = '<span>✓ B站</span>';
+            addBilibiliMappingButton.style.backgroundColor = "#666666";
+            addBilibiliMappingButton.style.cursor = "default";
+            addBilibiliMappingButton.onclick = function () {
+                showBilibiliMappingVerificationDialog(bilibiliGameName);
+            };
+        } else {
+            // No mapping - show as active
+            addBilibiliMappingButton.innerHTML = '<span>+ B站</span>';
+            addBilibiliMappingButton.style.backgroundColor = "#6f4e37";
+            addBilibiliMappingButton.onclick = function () {
+                showBilibiliMappingDialog();
             };
         }
     }
@@ -179,6 +274,7 @@
     
     // Global reference to add mapping button for dynamic updates
     var addMappingButton = null;
+    var addBilibiliMappingButton = null;
     
     // This will fetch the English name and create most buttons
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
@@ -211,8 +307,7 @@
                 // Create nexusmods button with mapping logic
                 var buttonNexusmods = createNexusModsButton(modifiedGameName);
                 
-                var bilibili = createButton("B站", "#6f4e37", 
-                    "https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                var bilibili = createBilibiliButton(modifiedGameName);
                 
                 var FLiNG = createButton("风灵月影", "#6f4e37", 
                     "https://flingtrainer.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
@@ -220,6 +315,10 @@
                 // Create add mapping button with dynamic state
                 var buttonAddMapping = createAddMappingButton();
                 addMappingButton = buttonAddMapping; // Store reference for dynamic updates
+
+                // Create add bilibili mapping button with dynamic state
+                var buttonAddBilibiliMapping = createAddBilibiliMappingButton();
+                addBilibiliMappingButton = buttonAddBilibiliMapping; // Store reference for dynamic updates
                 
                 // Store buttons in the desired order
                 allButtons = [
@@ -232,6 +331,7 @@
                     buttonAddMapping,    // 6.5. Add NexusMods Mapping
                     
                     bilibili,            // 7. Bilibili
+                    buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
                     FLiNG                // 8. FLiNG
                 ];
                 
@@ -292,6 +392,28 @@
         return button;
     }
 
+    // Helper function to create bilibili button with mapping logic
+    function createBilibiliButton(modifiedGameName) {
+        var button = document.createElement("a");
+        button.className = "btnv6_blue_hoverfade btn_medium";
+        button.style.marginLeft = "2px";
+        button.innerHTML = '<span>B站</span>';
+        button.style.backgroundColor = "#6f4e37";
+        button.onclick = function () {
+            const mapping = getBilibiliMapping();
+            const bilibiliGameName = mapping[appid];
+            
+            if (bilibiliGameName) {
+                // Use mapped Chinese name for search
+                window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(bilibiliGameName));
+            } else {
+                // Fallback to English name search
+                window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+            }
+        };
+        return button;
+    }
+
     // Helper function to create add mapping button with dynamic state
     function createAddMappingButton() {
         var button = document.createElement("a");
@@ -308,7 +430,7 @@
             button.style.backgroundColor = "#666666";
             button.style.cursor = "default";
             button.onclick = function () {
-                showMappingVerificationDialog(nexusGameName);
+                showNexusModsMappingVerificationDialog(nexusGameName);
             };
         } else {
             // No mapping - show as active
@@ -316,6 +438,36 @@
             button.style.backgroundColor = "#902600";
             button.onclick = function () {
                 showMappingDialog();
+            };
+        }
+        
+        return button;
+    }
+
+    // Helper function to create add bilibili mapping button with dynamic state
+    function createAddBilibiliMappingButton() {
+        var button = document.createElement("a");
+        button.className = "btnv6_blue_hoverfade btn_medium";
+        button.style.marginLeft = "2px";
+        
+        // Check if mapping already exists
+        const mapping = getBilibiliMapping();
+        const bilibiliGameName = mapping[appid];
+        
+        if (bilibiliGameName) {
+            // Mapping exists - show as disabled/gray with clear option
+            button.innerHTML = '<span>✓ B站中文名</span>';
+            button.style.backgroundColor = "#666666";
+            button.style.cursor = "default";
+            button.onclick = function () {
+                showBilibiliMappingVerificationDialog(bilibiliGameName);
+            };
+        } else {
+            // No mapping - show as active
+            button.innerHTML = '<span>+ B站中文名</span>';
+            button.style.backgroundColor = "#6f4e37";
+            button.onclick = function () {
+                showBilibiliMappingDialog();
             };
         }
         
