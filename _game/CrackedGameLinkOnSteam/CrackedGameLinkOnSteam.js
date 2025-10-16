@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.4.1
+// @version 0.4.2
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.4.2: Replace blocking alert() with non-blocking toast notification (auto-dismiss after 3 seconds)
 // 0.4.1: Add bilibili mapping functionality with external storage
 // 0.4.0: Add nexusmods mapping functionality with external storage
 // 0.3.5: 固定按钮顺序
@@ -77,12 +78,71 @@
         saveBilibiliMapping(mapping);
     }
 
+    // Function to show toast notification (non-blocking, auto-dismiss after 3 seconds)
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            max-width: 350px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        toast.textContent = message;
+        
+        // Add slide-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(toast);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+
     // Function to show mapping input dialog
     function showMappingDialog() {
         const nexusGameName = prompt('请输入NexusMods上的游戏名称用于直接访问 \n例如: hollowknightsilksong');
         if (nexusGameName && nexusGameName.trim()) {
             addNexusModsMapping(appid, nexusGameName.trim());
-            alert('映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。');
+            showToast('映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。');
             // Update button state immediately
             updateAddMappingButton();
         }
@@ -93,7 +153,7 @@
         const bilibiliGameName = prompt('请输入B站搜索用的中文游戏名称 \n例如: 空洞骑士丝之歌');
         if (bilibiliGameName && bilibiliGameName.trim()) {
             addBilibiliMapping(appid, bilibiliGameName.trim());
-            alert('B站映射已添加！现在可以点击B站按钮使用中文名称搜索。');
+            showToast('B站映射已添加！现在可以点击B站按钮使用中文名称搜索。');
             // Update button state immediately
             updateAddBilibiliMappingButton();
         }
