@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.6
+// @version      0.4.7
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -12,12 +12,14 @@
 // @match        https://app.datadoghq.com/*
 // @match        https://indeed.atlassian.net/wiki/*
 // @match        https://app.monarchmoney.com/*
+// @match        https://app.monarch.com/*
 // @match        https://allocommunications.smarthub.coop/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.4.7: added new url pattern for monarchmoney
 // 0.4.6: added new url pattern for butterfly
 // 0.4.5: added Bilt(Wells Fargo) button
 // 0.4.4: added jump button
