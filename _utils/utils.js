@@ -674,6 +674,147 @@
     };
 
     /* !! -------------------------------------------------------------------------- */
+    /*                   !! Exposed functions - text content changer                 */
+    /* !! -------------------------------------------------------------------------- */
+    
+    // Helper function to check if node is already colored
+    function isAlreadyColored(node) {
+        return node.parentNode &&
+            node.parentNode.tagName === 'SPAN' &&
+            (node.parentNode.style.backgroundColor || node.parentNode.style.color);
+    }
+
+    // Main function to change text color/content based on patterns
+    function changeTextColor(node, currentUrlPatterns) {
+        if (!currentUrlPatterns) return;
+
+        // Skip already processed nodes
+        if (node.hasAttribute && node.hasAttribute('data-colored')) return;
+
+        if (node.nodeType === 3 && !isAlreadyColored(node)) { // Text node and not already colored
+            let content = node.textContent.trim();
+            if (!content) return; // Skip empty text nodes
+
+            for (const pattern of currentUrlPatterns.textPatterns) {
+                pattern.regex.lastIndex = 0;
+
+                // Check if pattern matches
+                const match = pattern.regex.exec(content);
+                if (match) {
+                    // Reset regex lastIndex for global patterns
+                    pattern.regex.lastIndex = 0;
+                    
+                    // Check if need replacement or coloring
+                    const needsReplacement = !!pattern.replacement;
+                    const needsColoring = !!pattern.textColor || !!pattern.backColor;
+
+                    if (needsReplacement || needsColoring) {
+                        // Set content, use replacement text if available
+                        if (pattern.replacement) {
+                            // Call replacement function or use string replacement
+                            let replacedContent;
+                            if (typeof pattern.replacement === 'function') {
+                                replacedContent = pattern.replacement.apply(null, match);
+                            } else {
+                                replacedContent = content.replace(pattern.regex, pattern.replacement);
+                            }
+                            
+                            // Check if replacement function returned a structured multi-part object
+                            if (typeof replacedContent === 'object' && replacedContent.isMultiPart) {
+                                // Handle multi-part replacement with individual styling
+                                const container = document.createElement("span");
+                                container.setAttribute('data-colored', 'true');
+                                
+                                replacedContent.parts.forEach(part => {
+                                    if (part.textColor || part.backColor) {
+                                        // Create styled span for this part
+                                        const partSpan = document.createElement("span");
+                                        if (part.textColor) {
+                                            partSpan.style.color = part.textColor;
+                                        }
+                                        if (part.backColor) {
+                                            partSpan.style.backgroundColor = part.backColor;
+                                        }
+                                        partSpan.textContent = part.text;
+                                        container.appendChild(partSpan);
+                                    } else {
+                                        // Add unstyled text node
+                                        container.appendChild(document.createTextNode(part.text));
+                                    }
+                                });
+                                
+                                node.parentNode.replaceChild(container, node);
+                            } else {
+                                // Regular string replacement with pattern-level styling
+                                const span = document.createElement("span");
+                                span.textContent = replacedContent;
+                                
+                                // Apply pattern-level styling
+                                if (pattern.textColor) {
+                                    span.style.color = pattern.textColor;
+                                }
+                                if (pattern.backColor) {
+                                    span.style.backgroundColor = pattern.backColor;
+                                }
+                                
+                                span.setAttribute('data-colored', 'true');
+                                node.parentNode.replaceChild(span, node);
+                            }
+                        } else {
+                            // No replacement, just apply pattern-level styling
+                            const span = document.createElement("span");
+                            span.textContent = content;
+                            
+                            // Apply pattern-level styling
+                            if (pattern.textColor) {
+                                span.style.color = pattern.textColor;
+                            }
+                            if (pattern.backColor) {
+                                span.style.backgroundColor = pattern.backColor;
+                            }
+                            
+                            span.setAttribute('data-colored', 'true');
+                            node.parentNode.replaceChild(span, node);
+                        }
+                    }
+                    break;
+                }
+            }
+        } else if (node.nodeType === 1) { // Element node
+            // Skip certain elements
+            const skipTags = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'OBJECT'];
+            if (skipTags.includes(node.tagName)) return;
+
+            // Process child nodes
+            Array.from(node.childNodes).forEach(child => {
+                changeTextColor(child, currentUrlPatterns);
+            });
+        }
+    }
+
+    // Initialize text content changer with URL patterns
+    utils.initTextContentChanger = async function(urlPatterns) {
+        try {
+            const observeTarget = document.body;
+            const currentUrl = window.location.href;
+
+            const currentUrlPatterns = Object.values(urlPatterns).find((urlPattern) =>
+                urlPattern.urlRegex.test(currentUrl)
+            );
+
+            if (!currentUrlPatterns) return;
+
+            const debouncedColorChange = utils.debounce(() => {
+                changeTextColor(observeTarget, currentUrlPatterns);
+            }, 300);
+
+            utils.observeDOM(document.body, debouncedColorChange);
+        } catch (error) {
+            console.error("Failed to initialize text content changer:", error);
+        }
+    };
+
+    /* !! -------------------------------------------------------------------------- */
     /*                            !! Expose all the functions and log                */
     /* !! -------------------------------------------------------------------------- */
 

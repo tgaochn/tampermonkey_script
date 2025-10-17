@@ -9,8 +9,8 @@
 // @grant        GM_addStyle
 // @grant        GM_log
 // @license     GPL
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_wide_cont/LLM_wide_cont.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/LLM_wide_cont/LLM_wide_cont.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/LLM_wide_cont/LLM_wide_cont.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/LLM_wide_cont/LLM_wide_cont.js
 // ==/UserScript==
 // forked from `更宽的AI对话窗口`: https://greasyfork.org/zh-CN/scripts/499377-wider-ai-chat/code
 // 0.1.1: 更新 @match, 换账户也可以使用 gemini
