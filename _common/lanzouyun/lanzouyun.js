@@ -3,8 +3,8 @@
 // @version      0.0.1
 // @description  forked from 蓝奏云连接转换 (KongKe)
 // @include       *
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/master/lanzouyun/lanzouyun.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/master/lanzouyun/lanzouyun.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/lanzouyun/lanzouyun.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/lanzouyun/lanzouyun.js
 // @grant        none
 // ==/UserScript==
 

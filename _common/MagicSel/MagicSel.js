@@ -18,8 +18,8 @@
 // @grant    GM_addStyle
 // @grant    GM_setClipboard
 // @grant    GM_registerMenuCommand
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/master/MagicSel/MagicSel.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/master/MagicSel/MagicSel.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/MagicSel/MagicSel.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/MagicSel/MagicSel.js
 // ==/UserScript==
 // forked from "https://greasyfork.org/zh-CN/scripts/391583-%E6%99%BA%E8%83%BD%E9%80%89%E6%8B%A9"
 // original author: ChandlerVer5/Yi Deng, http://daviddengcn.com/
