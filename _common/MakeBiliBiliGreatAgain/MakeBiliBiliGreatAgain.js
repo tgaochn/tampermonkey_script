@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Make BiliBili Great Again
 // @namespace    https://www.kookxiang.com/
-// @version      1.5.5
+// @version      0.1.0
 // @description  useful tweaks for bilibili.com
 // @author       kookxiang
 // @match        https://*.bilibili.com/*
@@ -9,10 +9,12 @@
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_notification
-// @downloadURL https://update.greasyfork.org/scripts/415714/Make%20BiliBili%20Great%20Again.user.js
-// @updateURL https://update.greasyfork.org/scripts/415714/Make%20BiliBili%20Great%20Again.meta.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/MakeBiliBiliGreatAgain/MakeBiliBiliGreatAgain.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/MakeBiliBiliGreatAgain/MakeBiliBiliGreatAgain.js
 // ==/UserScript==
-// personal forked version: changed the "去 P2P CDN" part accorrding to:
+// 0.1.0: move to _common folder
+
+// personal forked version: changed the "去 P2P CDN" part according to:
 // https://greasyfork.org/zh-CN/scripts/415714-make-bilibili-great-again/discussions/249082
 
 // 去掉叔叔去世时的全站黑白效果

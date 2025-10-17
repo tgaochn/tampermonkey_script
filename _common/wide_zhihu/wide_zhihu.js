@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name         wide_zhihu
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  Sets custom widths and hides specified elements on Zhihu
 // @author       gtfish
 // @match        http*://*.zhihu.com/*
 // @grant        none
 // @license MIT
 // @run-at       document-start
-// @downloadURL https://update.greasyfork.org/scripts/529684/%E7%9F%A5%E4%B9%8E%E4%BC%98%E5%8C%96.user.js
-// @updateURL https://update.greasyfork.org/scripts/529684/%E7%9F%A5%E4%B9%8E%E4%BC%98%E5%8C%96.meta.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/wide_zhihu/wide_zhihu.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/wide_zhihu/wide_zhihu.js
 // ==/UserScript==
+// 0.1.1: move to _common folder
 
 // forked version from "https://greasyfork.org/zh-CN/scripts/529684-%E7%9F%A5%E4%B9%8E%E4%BC%98%E5%8C%96" by yz0812
 
