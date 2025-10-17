@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer
-// @version             0.3.1
+// @version             0.3.2
 // @description         Change text color/content for specific patterns using regex on specific URLs
 // @author              gtfish
 // @license             MIT
@@ -17,6 +17,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/text_content_changer/text_content_changer.js
 
 // ==/UserScript==
+// 0.3.2: remove JP models mach
 // 0.3.1: added new url pattern for butterfly
 // 0.3.0: add timezone conversion
 // 0.2.5: add USBankCashPlus
@@ -256,17 +257,18 @@
                     backColor: "rgb(255,225,225)",
                 },
 
-                // HP JP
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,208,161)",
-                },
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
+                // // HP JP
+                // we don't own JP models
+                // {
+                //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
+                //     textColor: "rgb(0,0,0)",
+                //     backColor: "rgb(255,208,161)",
+                // },
+                // {
+                //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
+                //     textColor: "rgb(0,0,0)",
+                //     backColor: "rgb(255,225,225)",
+                // },
 
                 // SERP US
                 {
@@ -292,17 +294,18 @@
                     backColor: "rgb(255,225,225)",
                 },
 
-                // SERP JP
-                {
-                    regex: /^SERP JP w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,162,173)",
-                },
-                {
-                    regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
+                // // SERP JP
+                // we don't own JP models
+                // {
+                //     regex: /^SERP JP w\/\s*IS$/,
+                //     textColor: "rgb(0,0,0)",
+                //     backColor: "rgb(255,162,173)",
+                // },
+                // {
+                //     regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
+                //     textColor: "rgb(0,0,0)",
+                //     backColor: "rgb(255,225,225)",
+                // },
             ],
         },
 
