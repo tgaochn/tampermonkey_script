@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             0.1.1
+// @version             1.0.1
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -13,8 +13,24 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
-// 0.1.1: 优化代码, 增加注释
-// 0.1.0: init, split from text_content_changer.js
+// 1.0.1: 优化代码, 增加注释
+// 1.0.0: init, split from text_content_changer.js
+// 0.3.2: remove JP models mach
+// 0.3.1: added new url pattern for butterfly
+// 0.3.0: add timezone conversion
+// 0.2.5: add USBankCashPlus
+// 0.2.4: rename the script to text_content_changer
+// 0.2.3: fix bug for text replacement
+// 0.2.2: 增加 Butterfly_models 的颜色匹配
+// 0.2.1: 优化代码; 增加teststats
+// 0.2.0: 优化代码; 增加替换文本的功能
+// 0.1.5: hotfix
+// 0.1.4: 增加 PO targets 的颜色匹配
+// 0.1.3: 增加更多 Butterfly proctor allocation 的颜色匹配
+// 0.1.2: bug fixed
+// 0.1.1: 增加 Butterfly proctor allocation 的颜色匹配
+// 0.1.0: beta version, 优化脚本; 增加cpu/gpu天梯匹配
+// 0.0.1: init, 匹配url/text_pattern则文本修改成对应颜色. skidrow/amazon_return
 
 (function () {
     "use strict";

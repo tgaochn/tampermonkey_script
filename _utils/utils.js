@@ -815,6 +815,223 @@
     };
 
     /* !! -------------------------------------------------------------------------- */
+    /*                   !! Exposed functions - AddBtn2AnyWebsite                    */
+    /* !! -------------------------------------------------------------------------- */
+    
+    // Function to apply path segment mappings
+    function applyPathSegmentMapping(pathSegment, pathSegmentMappings) {
+        if (!pathSegment || !pathSegmentMappings) return pathSegment;
+
+        for (const mapping of pathSegmentMappings) {
+            if (mapping.regex.test(pathSegment)) {
+                return mapping.replacement;
+            }
+        }
+
+        return pathSegment; // Return original if no mapping found
+    }
+
+    // Function to extract path segment from URL (last segment before query params)
+    function extractPathSegment(url, pathSegmentMappings) {
+        try {
+            const urlObj = new URL(url);
+            const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+            const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+            return applyPathSegmentMapping(lastSegment, pathSegmentMappings);
+        } catch (error) {
+            console.error("Error parsing URL:", error);
+            return null;
+        }
+    }
+
+    // Function to generate dynamic title based on URL
+    function generateDynamicTitle(url, baseTitle, customParser, pathSegmentMappings) {
+        if (customParser && typeof customParser === "function") {
+            const customResult = customParser(url);
+            if (customResult) {
+                // Handle both string and object returns from custom parsers
+                if (typeof customResult === "object" && customResult.displayTitle) {
+                    return customResult.displayTitle;
+                } else if (typeof customResult === "string") {
+                    return customResult;
+                } else {
+                    return `${customResult}`;
+                }
+            }
+            return baseTitle;
+        }
+
+        const pathSegment = extractPathSegment(url, pathSegmentMappings);
+        return pathSegment ? `${pathSegment}` : baseTitle;
+    }
+
+    // Helper function to create default button set for a given URL and config
+    function createDefaultButtons(url, config, matchedConfig, pathSegmentMappings, jumpButtonMappings) {
+        const buttonElements = [
+            // Button: copy url
+            utils.createButtonCopyText("url", url),
+        ];
+
+        if (!matchedConfig) {
+            return buttonElements;
+        }
+
+        let pageTitle = config.DEFAULT_TITLE;
+        let fixedTitle = matchedConfig.title || config.DEFAULT_TITLE;
+        let dynamicTitle = config.DEFAULT_TITLE;
+        let rawSegment = null; // Store the original segment for jump buttons
+
+        if (matchedConfig.dynamicTitle) {
+            // Get the full result from custom parser or default logic
+            let fullResult = null;
+            if (matchedConfig.customParser && typeof matchedConfig.customParser === "function") {
+                fullResult = matchedConfig.customParser(url);
+            }
+
+            if (fullResult && typeof fullResult === "object" && fullResult.displayTitle) {
+                // New format: { displayTitle, rawSegment }
+                dynamicTitle = fullResult.displayTitle;
+                rawSegment = fullResult.rawSegment;
+            } else {
+                // Fall back to generateDynamicTitle for string results or default logic
+                dynamicTitle = generateDynamicTitle(url, matchedConfig.title, matchedConfig.customParser, pathSegmentMappings);
+            }
+            pageTitle = dynamicTitle; // Default to dynamic title
+        } else {
+            pageTitle = fixedTitle;
+            dynamicTitle = fixedTitle; // Fallback to fixed title
+        }
+
+        // Get text color for this URL
+        const textColor = matchedConfig.textColor || null;
+
+        // Check if dynamic title is too long for display (but keep full title for copying)
+        const dynamicDisplayTitle =
+            dynamicTitle && dynamicTitle.length <= config.MAX_DISPLAY_LENGTH ? dynamicTitle : "{title}";
+
+        // ! Add title-based buttons
+        if (matchedConfig.showBothTitles) {
+            // Show both fixed and dynamic title buttons
+            buttonElements.push(
+                // Fixed title buttons
+                utils.createTextNode("\thref: ", textColor),
+                utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
+                utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url),
+
+                // Dynamic title buttons
+                utils.createTextNode("\tmd: ", textColor),
+                utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`),
+                utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`)
+            );
+        } else {
+            // Show single set of buttons with the determined title
+            buttonElements.push(
+                utils.createTextNode("\thref: ", textColor),
+                utils.createButtonCopyHypertext(`${pageTitle}`, pageTitle, url),
+                utils.createTextNode("\tmd: ", textColor),
+                utils.createButtonCopyText(`[${pageTitle}](url)`, `[${pageTitle}](${url})`)
+            );
+        }
+
+        // ! add jump button
+        const jumpButtons = [utils.createTextNode("\tjump: ", textColor)];
+
+        // Check for jump button mapping and add corresponding buttons
+        if (jumpButtonMappings) {
+            const jumpMapping = jumpButtonMappings.find((mapping) => mapping.pattern.test(url));
+            if (jumpMapping) {
+                // Use rawSegment if available, otherwise fall back to dynamicTitle
+                const segmentForJump = rawSegment || dynamicTitle;
+                const additionalJumpButtons = jumpMapping.jumpButtons(url, utils, textColor, segmentForJump);
+                jumpButtons.push(...additionalJumpButtons);
+            }
+        }
+
+        // Add jump buttons to the main button elements if any jump buttons exist
+        if (jumpButtons.length > 1) {
+            // More than just the text node
+            buttonElements.push(...jumpButtons);
+        }
+
+        return buttonElements;
+    }
+
+    // Main function for AddBtn2AnyWebsite
+    async function addBtn2AnyWebsiteMain(config, customButtonMappings, url2title, pathSegmentMappings, jumpButtonMappings) {
+        const curURL = window.location.href;
+        const btnContainer = utils.createButtonContainer();
+        const btnSubContainer1 = utils.createButtonContainer();
+
+        btnContainer.id = config.CONTAINER_ID;
+        btnContainer.appendChild(btnSubContainer1);
+        btnContainer.style.display = "flex";
+        btnContainer.style.flexDirection = "column"; // container arranged vertically
+
+        // Check for custom button mapping first
+        const customMapping = customButtonMappings ? customButtonMappings.find((mapping) => mapping.pattern.test(curURL)) : null;
+
+        let buttonElements = [];
+        let buttonPosition = config.BUTTON_POSITION;
+
+        if (customMapping) {
+            // Use custom buttons for this URL pattern
+            console.log("Using custom button mapping for URL:", curURL);
+            buttonElements = customMapping.customButtons(curURL, utils);
+            buttonPosition = customMapping.buttonPosition || config.BUTTON_POSITION;
+        } else {
+            // Use default button logic
+            console.log("Using default button logic for URL:", curURL);
+
+            // Get matched URL config and generate titles
+            const matchedConfig = url2title.find((config) => config.pattern.test(curURL));
+
+            // Create default button elements
+            buttonElements = createDefaultButtons(curURL, config, matchedConfig, pathSegmentMappings, jumpButtonMappings);
+
+            // Use custom position if specified in matchedConfig, otherwise use default position
+            buttonPosition =
+                matchedConfig && matchedConfig.buttonPosition ? matchedConfig.buttonPosition : config.BUTTON_POSITION;
+        }
+
+        // ! add buttons in the containers
+        btnSubContainer1.append(...buttonElements);
+
+        // Apply the determined button position
+        utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
+    }
+
+    // Initialize AddBtn2AnyWebsite with configuration
+    utils.initAddBtn2AnyWebsite = async function(config) {
+        try {
+            const {
+                CONFIG,
+                customButtonMappings,
+                url2title,
+                pathSegmentMappings,
+                jumpButtonMappings,
+                inclusionPatterns,
+                exclusionPatterns,
+            } = config;
+
+            if (!utils.shouldRunScript(inclusionPatterns || [], exclusionPatterns || [], window.location.href)) {
+                return;
+            }
+
+            const observeTarget = document.body;
+            const targetElementId = CONFIG.CONTAINER_ID;
+
+            // Check if the target element exists, if not, add the buttons
+            utils.observeDOM(observeTarget, () => {
+                if (!document.getElementById(targetElementId)) {
+                    addBtn2AnyWebsiteMain(CONFIG, customButtonMappings, url2title, pathSegmentMappings, jumpButtonMappings);
+                }
+            });
+        } catch (error) {
+            console.error("Failed to initialize AddBtn2AnyWebsite:", error);
+        }
+    };
+
+    /* !! -------------------------------------------------------------------------- */
     /*                            !! Expose all the functions and log                */
     /* !! -------------------------------------------------------------------------- */
 
