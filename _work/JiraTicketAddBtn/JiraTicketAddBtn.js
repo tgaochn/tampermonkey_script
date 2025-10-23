@@ -2,14 +2,18 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      0.9.8
+// @version      1.0.1
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
+// @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/text2url_patterns.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 1.0.1: refactor with generic waitForResource function to reduce code duplication
+// 1.0.0: add waitForPatterns function to ensure text2url_patterns is loaded before use
+// 0.9.9: refactor to use shared text2url_patterns from external config
 // 0.9.8: added new url pattern for butterfly
 // 0.9.7: add html2md link
 // 0.9.6: add more model patterns
@@ -77,40 +81,8 @@
     let lastProcessedTicketId = null;
     let isProcessing = false;
 
-    // Define text2url_patterns and their corresponding URL templates
-    const text2url_patterns = [
-        // RJQ tickets
-        {
-            regex: /^RJQ-[0-9]{1,6}$/gi,
-            urlTemplate: "https://indeed.atlassian.net/browse/$1",
-        },
-
-        // ! single/multiple target hp/serp models
-        // pre-apply: applyperseen_rj_hp_jp_52684ee / ctr_rj_sjhp_jp_a3683b0 / applyperseen_mobweb_rotw_a3683b0 / applyperseen_and_ctr_rj_hp_jp_15339e0
-        // bidding: ac-per-click_rj_hp_us_5a303d3 / apply_rj_hp_us_fbed164 / ac-per-click_sjmobweb_rotw_60306c6 / apply_sjmobweb_rotw_e60cca4
-        // post-apply: qualifiedapply_mob_global_6156574 / qualified_mob_global_e9b72c9
-        // glassdoor model: gd_sjmobweb_rotw_3c86644
-        // default MTM: multi_rj_hp_us_15339e0
-        // others: dislike_rj_hp_us_b734f31
-        {
-            regex: /^((gd_)?((sjmobweb)|(applyperseen)|(ctr)|(applyperseen_and_ctr)|(dislike)|(apply)|(ac-per-click)|(qualifiedapply)|(qualified)|(multi)|(preapply)|(postapply))_(((rj_sjhp)|(rj_hp)|(mobweb)|(mob)|(sjmobweb)|(hp)|(serp))_)?((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
-        },
-
-        // // ! SERP models: sjmobweb_us_15339e0
-        // {
-        //     regex: /^(sjmobweb_((us)|(rotw)|(jp))_[a-zA-Z0-9]{7})$/g,
-        //     urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
-        // },
-
-        // ! I2A models: elephant-multi-en-all_en-4e18057
-        {
-            regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
-            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
-        },
-    ];
-
     const utils = await waitForUtils();
+    const text2url_patterns = await waitForPatterns();
 
     // Wait for the DOM to be fully loaded
     if (document.readyState === "loading") {
@@ -174,42 +146,79 @@
         observer.observe(targetNode, config);
     }
 
-    // Wait for utils to load
-    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
-        const requiredFunctions = CONFIG.REQUIRED_UTILS;
+    // Generic function to wait for a resource to load
+    function waitForResource(resourceName, checkFunction, timeout = CONFIG.UTILS_TIMEOUT) {
+        console.log(`Starting to wait for ${resourceName}...`);
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
-            function checkUtils() {
-                console.log("Checking utils:", window.utils);
-                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
+            function check() {
+                const result = checkFunction();
 
-                if (
-                    window.utils &&
-                    requiredFunctions.every((func) => {
-                        const hasFunc = typeof window.utils[func] === "function";
-                        console.log(`Checking function ${func}:`, hasFunc);
-                        return hasFunc;
-                    })
-                ) {
-                    console.log("All required functions found");
-                    resolve(window.utils);
+                if (result.isReady) {
+                    console.log(`${resourceName} loaded successfully`);
+                    resolve(result.value);
                 } else if (Date.now() - startTime >= timeout) {
-                    const missingFunctions = requiredFunctions.filter(
-                        (func) => !window.utils || typeof window.utils[func] !== "function"
-                    );
-                    console.log("Timeout reached. Missing functions:", missingFunctions);
-                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
+                    const errorMsg = result.errorMessage || `Timeout waiting for ${resourceName}`;
+                    console.log(errorMsg);
+                    reject(new Error(errorMsg));
                 } else {
-                    console.log("Not all functions available yet, checking again in 100ms");
-                    setTimeout(checkUtils, 100);
+                    console.log(`${resourceName} not ready yet, checking again in 100ms`);
+                    setTimeout(check, 100);
                 }
             }
 
-            checkUtils();
+            check();
         });
+    }
+
+    // Wait for utils to load
+    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
+        return waitForResource(
+            "utils",
+            () => {
+                const requiredFunctions = CONFIG.REQUIRED_UTILS;
+
+                if (
+                    window.utils &&
+                    requiredFunctions.every((func) => typeof window.utils[func] === "function")
+                ) {
+                    return { isReady: true, value: window.utils };
+                }
+
+                const missingFunctions = requiredFunctions.filter(
+                    (func) => !window.utils || typeof window.utils[func] !== "function"
+                );
+
+                return {
+                    isReady: false,
+                    errorMessage: `Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`,
+                };
+            },
+            timeout
+        );
+    }
+
+    // Wait for text2url patterns to load
+    function waitForPatterns(timeout = CONFIG.UTILS_TIMEOUT) {
+        return waitForResource(
+            "text2urlPatterns",
+            () => {
+                if (window.text2urlPatterns && Array.isArray(window.text2urlPatterns)) {
+                    return {
+                        isReady: true,
+                        value: window.text2urlPatterns,
+                    };
+                }
+
+                return {
+                    isReady: false,
+                    errorMessage: "Timeout waiting for text2urlPatterns",
+                };
+            },
+            timeout
+        );
     }
 
     async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable, text2url_patterns, utils) {
