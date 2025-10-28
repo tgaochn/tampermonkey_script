@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.3
+// @version      1.0.4
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,7 +16,8 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
-// 1.0.3: refactored to use regex to extract test name from URL
+// 1.0.4: fixed butterfly proctor parser to support non-hash URLs
+// 1.0.3: refactored jump buttons to use rawSegment from customParser; fixed butterfly proctor parser to support non-hash URLs
 // 1.0.2: bug fixed
 // 1.0.1: added jump button for butterfly proctor/testStats
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
@@ -122,55 +123,32 @@
         },
     ];
 
-    // Helper function to extract test name from URL for jump buttons
-    function extractTestNameFromUrl(url) {
-        try {
-            // Use regex to extract test name from URL
-            // Matches URLs like:
-            // - https://teststats.sandbox.indeed.net/analyze/testName
-            // - https://butterfly.sandbox.indeed.net/proctor/jobsearch/testName
-            // - https://proctor.sandbox.indeed.net/proctor/toggles/view/testName
-            // With optional query parameters
-            const regex = /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net\/((analyze)|(proctor\/jobsearch)|(proctor\/toggles\/view))\/([^?]+)((\?.*$)|$)/;
-            const match = url.match(regex);
-            
-            if (match && match[9]) {
-                return match[9]; // Group 9 is the test name
-            }
-            
-            return null;
-        } catch (error) {
-            console.error("Error extracting test name from URL:", error);
-            return null;
-        }
-    }
-
     // !! Jump button mappings for specific URL patterns
     // When a URL matches a pattern here, these jump buttons will be added to the default buttons
     const jumpButtonMappings = [
         // ! indeed websites: jump to related indeed pages
         {
             pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net.*$/,
-            jumpButtons: (url, utils, textColor, dynamicTitle) => {
-                // Extract test name directly from URL
-                const testName = extractTestNameFromUrl(url);
+            jumpButtons: (url, utils, textColor, testNameParam) => {
+                // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
+                // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
                 
-                if (!testName) {
-                    return [];
+                if (!testNameParam) {
+                    return []; // Return empty array if no test name available
                 }
                 
                 return [
                     utils.createButtonOpenUrl(
                         "Butterfly Proctor",
-                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${testName}`
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${testNameParam}`
                     ),
                     utils.createButtonOpenUrl(
                         "proctor",
-                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${testName}`
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${testNameParam}`
                     ),
                     utils.createButtonOpenUrl(
                         "testStats",
-                        `https://teststats.sandbox.indeed.net/analyze/${testName}`
+                        `https://teststats.sandbox.indeed.net/analyze/${testNameParam}`
                     ),
                 ];
             },
@@ -261,9 +239,18 @@
             customParser: (url) => {
                 // Extract model name from butterfly proctor URL
                 try {
-                    // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
-                    const hashPart = url.split("#")[1] || "";
-                    const pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
+                    // Support both hash-based URLs (#/proctor/...) and regular path URLs (/proctor/...)
+                    let pathSegments;
+                    
+                    if (url.includes("#")) {
+                        // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
+                        const hashPart = url.split("#")[1] || "";
+                        pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
+                    } else {
+                        // For URLs like: /proctor/jobsearch/idxbutterflyapplymodeltst
+                        const urlObj = new URL(url);
+                        pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+                    }
 
                     // Look for the segment after 'proctor'
                     const proctorIndex = pathSegments.indexOf("proctor");
