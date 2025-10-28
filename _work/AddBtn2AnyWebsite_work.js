@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.0
+// @version      1.0.1
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.1: added jump button for butterfly proctor/testStats
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
 // 0.4.7: added new url pattern for monarchmoney
 // 0.4.6: added new url pattern for butterfly
@@ -124,12 +125,24 @@
     const jumpButtonMappings = [
         // ! indeed websites: jump to related indeed pages
         {
-            pattern: /^https:\/\/((proctor)|(teststats))\.sandbox\.indeed\.net.*$/,
+            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net.*$/,
             jumpButtons: (url, utils, textColor, dynamicTitle) => {
                 return [
                     utils.createButtonOpenUrl(
-                        "Butterfly Proctor",
+                        "\"Butterfly Proctor\"",
                         `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "${dynamicTitle} (Butterfly)",
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "${dynamicTitle} (proctor)",
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "testStats",
+                        `https://teststats.sandbox.indeed.net/analyze/${dynamicTitle}`
                     ),
                 ];
             },
@@ -178,13 +191,40 @@
 
     // !! custom url to title mapping
     const url2title = [
-        // static title
+        // ! static title
         { pattern: /^https:\/\/code\.corp\.indeed\.com.*$/, title: "code" },
         { pattern: /^https:\/\/app\.datadoghq\.com.*$/, title: "datadog" },
 
-        // dynamic title with both fixed and dynamic options
+        // ! dynamic title with both fixed and dynamic options
+        // ruleSet
+        {
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?ruleSet.*$/,
+            title: "RuleSet",
+            dynamicTitle: true, // Enable dynamic title generation for this pattern
+            showBothTitles: true, // Show both fixed and dynamic title buttons
+            customParser: (url) => {
+                // Extract rule name from butterfly ruleSet URL
+                try {
+                    // For URLs like: #/ruleSet/MODEL_CONFIG/JSS_RELEVANT_JOBS/
+                    const hashPart = url.split("#")[1] || "";
+                    const pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
 
-        // ! butterfly proctor
+                    // Look for the segment after 'ruleSet' and 'MODEL_CONFIG'
+                    const ruleSetIndex = pathSegments.indexOf("ruleSet");
+                    if (ruleSetIndex >= 0 && ruleSetIndex + 2 < pathSegments.length) {
+                        const ruleSegment = pathSegments[ruleSetIndex + 2].split("?")[0]; // Remove query params
+                        return ruleSegment; // Don't apply mapping for rule names, return as-is
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error("Error in butterfly ruleSet custom parser:", error);
+                    return null;
+                }
+            },
+        },
+
+        // butterfly proctor
         {
             pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
             title: "Butterfly traffic",
@@ -218,35 +258,7 @@
             },
         },
 
-        // ! ruleSet
-        {
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?ruleSet.*$/,
-            title: "RuleSet",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            customParser: (url) => {
-                // Extract rule name from butterfly ruleSet URL
-                try {
-                    // For URLs like: #/ruleSet/MODEL_CONFIG/JSS_RELEVANT_JOBS/
-                    const hashPart = url.split("#")[1] || "";
-                    const pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
-
-                    // Look for the segment after 'ruleSet' and 'MODEL_CONFIG'
-                    const ruleSetIndex = pathSegments.indexOf("ruleSet");
-                    if (ruleSetIndex >= 0 && ruleSetIndex + 2 < pathSegments.length) {
-                        const ruleSegment = pathSegments[ruleSetIndex + 2].split("?")[0]; // Remove query params
-                        return ruleSegment; // Don't apply mapping for rule names, return as-is
-                    }
-
-                    return null;
-                } catch (error) {
-                    console.error("Error in butterfly ruleSet custom parser:", error);
-                    return null;
-                }
-            },
-        },
-
-        // ! testStats
+        // testStats
         {
             pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/,
             title: "testStats",
@@ -273,7 +285,7 @@
             },
         },
 
-        // ! proctor
+        // proctor
         {
             pattern: /^https:\/\/proctor(-v2)?\.sandbox\.indeed\.net.*$/,
             title: "proctor",
@@ -301,7 +313,7 @@
             },
         },
 
-        // ! wiki
+        // wiki
         {
             pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/,
             title: "wiki",
