@@ -879,7 +879,7 @@
         let pageTitle = config.DEFAULT_TITLE;
         let fixedTitle = matchedConfig.title || config.DEFAULT_TITLE;
         let dynamicTitle = config.DEFAULT_TITLE;
-        let rawSegment = null; // Store the original segment for jump buttons
+        let testName = null; // Store the original segment for jump buttons
 
         if (matchedConfig.dynamicTitle) {
             // Get the full result from custom parser or default logic
@@ -891,7 +891,7 @@
             if (fullResult && typeof fullResult === "object" && fullResult.displayTitle) {
                 // New format: { displayTitle, rawSegment }
                 dynamicTitle = fullResult.displayTitle;
-                rawSegment = fullResult.rawSegment;
+                testName = fullResult.rawSegment;
             } else {
                 // Fall back to generateDynamicTitle for string results or default logic
                 dynamicTitle = generateDynamicTitle(url, matchedConfig.title, matchedConfig.customParser, pathSegmentMappings);
@@ -905,34 +905,33 @@
         // Get text color for this URL
         const textColor = matchedConfig.textColor || null;
 
-        // Check if dynamic title is too long for display (but keep full title for copying)
+        // Check if titles are too long for display (but keep full title for copying)
         const dynamicDisplayTitle =
             dynamicTitle && dynamicTitle.length <= config.MAX_DISPLAY_LENGTH ? dynamicTitle : "{title}";
+        const rawDisplayTitle = testName && testName.length <= config.MAX_DISPLAY_LENGTH
+            ? testName
+            : testName ? `{${testName.substring(0, config.MAX_DISPLAY_LENGTH / 2)}...}` : null;
 
         // ! Add title-based buttons
         if (matchedConfig.showBothTitles) {
-            // Check if fixed and dynamic titles are the same to avoid duplicates
-            if (fixedTitle === dynamicTitle) {
-                // If titles are the same, show only one set of buttons
-                buttonElements.push(
-                    utils.createTextNode("\thref: ", textColor),
-                    utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
-                    utils.createTextNode("\tmd: ", textColor),
-                    utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`)
-                );
-            } else {
-                // Show both fixed and dynamic title buttons when they differ
-                buttonElements.push(
-                    // Fixed title buttons
-                    utils.createTextNode("\thref: ", textColor),
-                    utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
-                    utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url),
-
-                    // Dynamic title buttons
-                    utils.createTextNode("\tmd: ", textColor),
-                    utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`),
-                    utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`)
-                );
+            // Add href section
+            buttonElements.push(utils.createTextNode("\thref: ", textColor));
+            buttonElements.push(utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url));
+            if (testName) {
+                buttonElements.push(utils.createButtonCopyHypertext(`${rawDisplayTitle}`, testName, url));
+            }
+            if (dynamicTitle !== fixedTitle) {
+                buttonElements.push(utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url));
+            }
+            
+            // Add md section
+            buttonElements.push(utils.createTextNode("\tmd: ", textColor));
+            buttonElements.push(utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`));
+            if (testName) {
+                buttonElements.push(utils.createButtonCopyText(`[${rawDisplayTitle}](url)`, `[${testName}](${url})`));
+            }
+            if (dynamicTitle !== fixedTitle) {
+                buttonElements.push(utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`));
             }
         } else {
             // Show single set of buttons with the determined title
@@ -951,8 +950,8 @@
         if (jumpButtonMappings) {
             const jumpMapping = jumpButtonMappings.find((mapping) => mapping.pattern.test(url));
             if (jumpMapping) {
-                // Use rawSegment if available, otherwise fall back to dynamicTitle
-                const segmentForJump = rawSegment || dynamicTitle;
+                // Use testName if available, otherwise fall back to dynamicTitle
+                const segmentForJump = testName || dynamicTitle;
                 const additionalJumpButtons = jumpMapping.jumpButtons(url, utils, textColor, segmentForJump);
                 jumpButtons.push(...additionalJumpButtons);
             }

@@ -255,13 +255,13 @@
                     // Look for the segment after 'proctor'
                     const proctorIndex = pathSegments.indexOf("proctor");
                     if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
-                        const rawModelSegment = pathSegments[proctorIndex + 2].split("?")[0]; // Remove query params
-                        const mappedSegment = applyPathSegmentMapping(rawModelSegment);
+                        const testName = pathSegments[proctorIndex + 2].split("?")[0]; // Remove query params
+                        const mappedSegment = applyPathSegmentMapping(testName);
 
                         // Return both raw and mapped segments
                         return {
                             displayTitle: mappedSegment,
-                            rawSegment: rawModelSegment,
+                            rawSegment: testName,
                         };
                     }
 
@@ -284,12 +284,12 @@
                 try {
                     const urlObj = new URL(url);
                     const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
-                    const rawSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    if (rawSegment) {
-                        const mappedSegment = applyPathSegmentMapping(rawSegment);
+                    const testName = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    if (testName) {
+                        const mappedSegment = applyPathSegmentMapping(testName);
                         return {
                             displayTitle: mappedSegment,
-                            rawSegment: rawSegment,
+                            rawSegment: testName,
                         };
                     }
                     return null;
@@ -312,12 +312,12 @@
                 try {
                     const urlObj = new URL(url);
                     const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
-                    const rawSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    if (rawSegment) {
-                        const mappedSegment = applyPathSegmentMapping(rawSegment);
+                    const testName = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+                    if (testName) {
+                        const mappedSegment = applyPathSegmentMapping(testName);
                         return {
                             displayTitle: mappedSegment,
-                            rawSegment: rawSegment,
+                            rawSegment: testName,
                         };
                     }
                     return null;
