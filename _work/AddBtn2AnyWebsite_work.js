@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.6
+// @version      1.0.7
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.7: adjusted max display length for button display text
 // 1.0.6: adjusted button positions for butterfly proctor/testStats/proctor
 // 1.0.5: fixed butterfly proctor parser to support non-hash URLs
 // 1.0.4: fixed butterfly proctor parser to support non-hash URLs
@@ -67,7 +68,7 @@
             "initAddBtn2AnyWebsite",
         ],
         DEFAULT_TITLE: "link",
-        MAX_DISPLAY_LENGTH: 25, // Maximum length for button display text
+        MAX_DISPLAY_LENGTH: 15, // Maximum length for button display text
         WIKI_SELECTORS: {
             PAGE_TITLE: '[data-testid="title-text"] > span',
             CREATE_BTN: '[data-testid="app-navigation-create"]',
