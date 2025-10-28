@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.2
+// @version      1.0.3
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.3: refactored to use regex to extract test name from URL
 // 1.0.2: bug fixed
 // 1.0.1: added jump button for butterfly proctor/testStats
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
@@ -121,6 +122,29 @@
         },
     ];
 
+    // Helper function to extract test name from URL for jump buttons
+    function extractTestNameFromUrl(url) {
+        try {
+            // Use regex to extract test name from URL
+            // Matches URLs like:
+            // - https://teststats.sandbox.indeed.net/analyze/testName
+            // - https://butterfly.sandbox.indeed.net/proctor/jobsearch/testName
+            // - https://proctor.sandbox.indeed.net/proctor/toggles/view/testName
+            // With optional query parameters
+            const regex = /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net\/((analyze)|(proctor\/jobsearch)|(proctor\/toggles\/view))\/([^?]+)((\?.*$)|$)/;
+            const match = url.match(regex);
+            
+            if (match && match[9]) {
+                return match[9]; // Group 9 is the test name
+            }
+            
+            return null;
+        } catch (error) {
+            console.error("Error extracting test name from URL:", error);
+            return null;
+        }
+    }
+
     // !! Jump button mappings for specific URL patterns
     // When a URL matches a pattern here, these jump buttons will be added to the default buttons
     const jumpButtonMappings = [
@@ -128,22 +152,25 @@
         {
             pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net.*$/,
             jumpButtons: (url, utils, textColor, dynamicTitle) => {
+                // Extract test name directly from URL
+                const testName = extractTestNameFromUrl(url);
+                
+                if (!testName) {
+                    return [];
+                }
+                
                 return [
                     utils.createButtonOpenUrl(
-                        "\"Butterfly Proctor\"",
-                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
+                        "Butterfly Proctor",
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${testName}`
                     ),
                     utils.createButtonOpenUrl(
-                        `${dynamicTitle} (Butterfly)`,
-                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
-                    ),
-                    utils.createButtonOpenUrl(
-                        `${dynamicTitle} (proctor)`,
-                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${dynamicTitle}`
+                        "proctor",
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${testName}`
                     ),
                     utils.createButtonOpenUrl(
                         "testStats",
-                        `https://teststats.sandbox.indeed.net/analyze/${dynamicTitle}`
+                        `https://teststats.sandbox.indeed.net/analyze/${testName}`
                     ),
                 ];
             },
