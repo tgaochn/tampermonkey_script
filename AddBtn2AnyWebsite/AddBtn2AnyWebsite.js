@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite
 // @namespace    AddBtn2AnyWebsite
-// @version      0.4.7
+// @version      0.4.8
 // @description  任意网站加入相关链接 (merged with wiki_btn functionality)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -19,6 +19,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/AddBtn2AnyWebsite/AddBtn2AnyWebsite.js
 
 // ==/UserScript==
+// 0.4.8: added jump button for butterfly proctor/testStats
 // 0.4.7: added new url pattern for monarchmoney
 // 0.4.6: added new url pattern for butterfly
 // 0.4.5: added Bilt(Wells Fargo) button
@@ -138,6 +139,31 @@
     // !! Jump button mappings for specific URL patterns
     // When a URL matches a pattern here, these jump buttons will be added to the default buttons
     const jumpButtonMappings = [
+        // ! indeed proctor: 跳转到 butterfly proctor/testStats
+        {
+            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net.*$/,
+            jumpButtons: (url, utils, textColor, dynamicTitle) => {
+                return [
+                    utils.createButtonOpenUrl(
+                        "\"Butterfly Proctor\"",
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "${dynamicTitle} (Butterfly)",
+                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "${dynamicTitle} (proctor)",
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${dynamicTitle}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "testStats",
+                        `https://teststats.sandbox.indeed.net/analyze/${dynamicTitle}`
+                    ),
+                ];
+            },
+        },
+
         // ! indeed websites: 跳转到相关indeed页面
         {
             pattern: /^https:\/\/((proctor)|(teststats))\.sandbox\.indeed\.net.*$/,
