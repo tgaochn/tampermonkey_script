@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.4
+// @version      1.0.5
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.5: fixed butterfly proctor parser to support non-hash URLs
 // 1.0.4: fixed butterfly proctor parser to support non-hash URLs
 // 1.0.3: refactored jump buttons to use rawSegment from customParser; fixed butterfly proctor parser to support non-hash URLs
 // 1.0.2: bug fixed
