@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.5
+// @version      1.0.6
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.6: adjusted button positions for butterfly proctor/testStats/proctor
 // 1.0.5: fixed butterfly proctor parser to support non-hash URLs
 // 1.0.4: fixed butterfly proctor parser to support non-hash URLs
 // 1.0.3: refactored jump buttons to use rawSegment from customParser; fixed butterfly proctor parser to support non-hash URLs
@@ -237,6 +238,7 @@
             title: "Butterfly traffic",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
+            buttonPosition: {top: "-10px", left: "1050px"}, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from butterfly proctor URL
                 try {
@@ -307,7 +309,8 @@
             title: "proctor",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
-            textColor: "#FFFFFF", // white color for proctor
+            textColor: "#000000", // black color for proctor
+            buttonPosition: {top: "-10px", left: "700px"}, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from proctor URL
                 try {
