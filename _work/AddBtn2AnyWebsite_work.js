@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.1
+// @version      1.0.2
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.2: bug fixed
 // 1.0.1: added jump button for butterfly proctor/testStats
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
 // 0.4.7: added new url pattern for monarchmoney
@@ -133,11 +134,11 @@
                         `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
                     ),
                     utils.createButtonOpenUrl(
-                        "${dynamicTitle} (Butterfly)",
+                        `${dynamicTitle} (Butterfly)`,
                         `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${dynamicTitle}`
                     ),
                     utils.createButtonOpenUrl(
-                        "${dynamicTitle} (proctor)",
+                        `${dynamicTitle} (proctor)`,
                         `https://proctor.sandbox.indeed.net/proctor/toggles/view/${dynamicTitle}`
                     ),
                     utils.createButtonOpenUrl(

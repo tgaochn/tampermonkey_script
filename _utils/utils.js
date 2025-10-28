@@ -911,18 +911,29 @@
 
         // ! Add title-based buttons
         if (matchedConfig.showBothTitles) {
-            // Show both fixed and dynamic title buttons
-            buttonElements.push(
-                // Fixed title buttons
-                utils.createTextNode("\thref: ", textColor),
-                utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
-                utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url),
+            // Check if fixed and dynamic titles are the same to avoid duplicates
+            if (fixedTitle === dynamicTitle) {
+                // If titles are the same, show only one set of buttons
+                buttonElements.push(
+                    utils.createTextNode("\thref: ", textColor),
+                    utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
+                    utils.createTextNode("\tmd: ", textColor),
+                    utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`)
+                );
+            } else {
+                // Show both fixed and dynamic title buttons when they differ
+                buttonElements.push(
+                    // Fixed title buttons
+                    utils.createTextNode("\thref: ", textColor),
+                    utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url),
+                    utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url),
 
-                // Dynamic title buttons
-                utils.createTextNode("\tmd: ", textColor),
-                utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`),
-                utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`)
-            );
+                    // Dynamic title buttons
+                    utils.createTextNode("\tmd: ", textColor),
+                    utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`),
+                    utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`)
+                );
+            }
         } else {
             // Show single set of buttons with the determined title
             buttonElements.push(
