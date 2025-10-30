@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Slickdeals Relative Time
-// @version      0.1.4
+// @version      0.1.5
 // @description  在 Slickdeals 网站的日期后面添加相对时间显示 (如 "3 days ago")
 // @author       gtfish
 // @match        https://slickdeals.net/*
@@ -11,6 +11,7 @@
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
 // ==/UserScript==
+// 0.1.5: increase font size for relative time
 // 0.1.4: wait for hydration to complete before processing, use aggressive re-processing strategy
 // 0.1.3: add detailed logging to debug disappearing issue, detect element removal
 // 0.1.2: fix disappearing issue - use data-attribute for persistent marking, optimize MutationObserver
