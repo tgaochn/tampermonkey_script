@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Slickdeals Relative Time
-// @version      0.1.0
+// @version      0.1.4
 // @description  在 Slickdeals 网站的日期后面添加相对时间显示 (如 "3 days ago")
 // @author       gtfish
 // @match        https://slickdeals.net/*
@@ -11,6 +11,10 @@
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
 // ==/UserScript==
+// 0.1.4: wait for hydration to complete before processing, use aggressive re-processing strategy
+// 0.1.3: add detailed logging to debug disappearing issue, detect element removal
+// 0.1.2: fix disappearing issue - use data-attribute for persistent marking, optimize MutationObserver
+// 0.1.1: fix infinite loop bug, add highlight style for relative time
 // 0.1.0: initial version, add relative time display after dates
 
 (function () {
@@ -22,8 +26,13 @@
     // This pattern matches: MonthName Day, Year Hour:Minute AM/PM
     const DATE_REGEX = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+(AM|PM)\b/gi;
 
-    // Store processed text nodes to avoid duplicate processing
-    const processedNodes = new WeakSet();
+    // Marker attribute to identify already processed content
+    const PROCESSED_ATTR = "data-slickdeals-time-processed";
+    const PROCESSED_MARKER_CLASS = "slickdeals-relative-time-added";
+
+    // Track if hydration has likely completed
+    let hydrationComplete = false;
+    let initialProcessingDone = false;
 
     // Month name to number mapping
     const MONTH_MAP = {
@@ -103,14 +112,37 @@
     }
 
     /**
+     * Check if element already has a relative time span as sibling
+     */
+    function hasRelativeTimeSpan(element) {
+        if (!element || !element.parentNode) return false;
+        
+        // Check if next sibling is our relative time span
+        const nextSibling = element.nextSibling;
+        if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
+            if (nextSibling.classList && nextSibling.classList.contains(PROCESSED_MARKER_CLASS)) {
+                return true;
+            }
+        }
+        
+        // Check all siblings for our span
+        const siblings = element.parentNode.childNodes;
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling.nodeType === Node.ELEMENT_NODE && 
+                sibling.classList && 
+                sibling.classList.contains(PROCESSED_MARKER_CLASS)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Process text node and add relative time after dates
      */
     function processTextNode(textNode) {
-        // Skip if already processed
-        if (processedNodes.has(textNode)) {
-            return;
-        }
-
         const text = textNode.textContent;
         const matches = [...text.matchAll(DATE_REGEX)];
 
@@ -119,8 +151,20 @@
             return;
         }
 
-        // Mark as processed
-        processedNodes.add(textNode);
+        // Check if already has relative time span
+        if (hasRelativeTimeSpan(textNode)) {
+            return;
+        }
+
+        // Find the closest element parent
+        let parentElement = textNode.parentNode;
+        while (parentElement && parentElement.nodeType !== Node.ELEMENT_NODE) {
+            parentElement = parentElement.parentNode;
+        }
+
+        if (!parentElement) {
+            return;
+        }
 
         // Build new content with relative time annotations
         let lastIndex = 0;
@@ -143,12 +187,21 @@
                 const date = parseDate(month, day, year, hour, minute, ampm);
                 const relativeTime = getRelativeTime(date);
 
-                // Create styled span for relative time
+                // Create styled span for relative time with highlight
                 const relativeSpan = document.createElement("span");
                 relativeSpan.textContent = ` (${relativeTime})`;
-                relativeSpan.style.color = "#666";
-                relativeSpan.style.fontSize = "0.9em";
-                relativeSpan.style.fontStyle = "italic";
+                relativeSpan.className = PROCESSED_MARKER_CLASS;
+                relativeSpan.setAttribute(PROCESSED_ATTR, "true");
+                relativeSpan.style.cssText = `
+                    background-color: #fff3cd !important;
+                    color: #856404 !important;
+                    padding: 2px 6px !important;
+                    border-radius: 3px !important;
+                    font-size: 1.1em !important;
+                    font-weight: 600 !important;
+                    margin-left: 4px !important;
+                    display: inline-block !important;
+                `;
 
                 fragment.appendChild(relativeSpan);
             } catch (e) {
@@ -163,6 +216,9 @@
             fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
         }
 
+        // Mark parent element as processed
+        parentElement.setAttribute(PROCESSED_ATTR, "true");
+
         // Replace the original text node with the new fragment
         textNode.parentNode.replaceChild(fragment, textNode);
     }
@@ -171,16 +227,21 @@
      * Walk through DOM tree and process all text nodes
      */
     function processNode(node) {
-        // Skip script, style, and already processed elements
-        if (
-            node.nodeType === Node.ELEMENT_NODE &&
-            (node.tagName === "SCRIPT" || node.tagName === "STYLE" || node.tagName === "NOSCRIPT")
-        ) {
-            return;
+        // Skip script, style elements
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            // Skip certain tags
+            if (node.tagName === "SCRIPT" || node.tagName === "STYLE" || node.tagName === "NOSCRIPT") {
+                return;
+            }
+            
+            // Skip our added elements
+            if (node.classList && node.classList.contains(PROCESSED_MARKER_CLASS)) {
+                return;
+            }
         }
 
         if (node.nodeType === Node.TEXT_NODE) {
-            // Process text nodes
+            // Process text nodes that contain dates
             if (DATE_REGEX.test(node.textContent)) {
                 DATE_REGEX.lastIndex = 0; // Reset regex
                 processTextNode(node);
@@ -197,41 +258,62 @@
      * Process entire page
      */
     function processPage() {
-        console.log("[Slickdeals Relative Time] Processing page...");
         processNode(document.body);
     }
 
     /**
-     * Throttle function to limit how often a function is called
+     * Initialize the script after a delay to allow hydration to complete
      */
-    function throttle(func, delay) {
-        let timer = null;
-        return function () {
-            if (timer) {
-                return;
+    function initialize() {
+        console.log("[Slickdeals Relative Time] Initializing...");
+        
+        // Initial processing
+        processPage();
+        initialProcessingDone = true;
+        
+        // Set up mutation observer
+        const observer = new MutationObserver((mutations) => {
+            // Batch process mutations to avoid excessive processing
+            const nodesToProcess = new Set();
+            
+            mutations.forEach((mutation) => {
+                // Process added nodes
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+                        nodesToProcess.add(node);
+                    }
+                });
+            });
+            
+            // Process all collected nodes
+            if (nodesToProcess.size > 0) {
+                requestAnimationFrame(() => {
+                    nodesToProcess.forEach((node) => {
+                        if (document.contains(node)) {
+                            processNode(node);
+                        }
+                    });
+                });
             }
-            timer = setTimeout(() => {
-                func.apply(this, arguments);
-                timer = null;
-            }, delay);
-        };
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
+
+        console.log("[Slickdeals Relative Time] Initialized and observing DOM changes");
     }
 
-    // Initial processing
-    processPage();
-
-    // Watch for DOM changes and process new content
-    const observer = new MutationObserver(
-        throttle(() => {
-            processPage();
-        }, 500)
-    );
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-
-    console.log("[Slickdeals Relative Time] Observer started, watching for DOM changes");
+    // Wait for potential hydration to complete before processing
+    // SSR frameworks like React typically complete hydration within 1-2 seconds
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initialize, 2000);
+        });
+    } else {
+        // Document already loaded, wait a bit for hydration
+        setTimeout(initialize, 2000);
+    }
 })();
 
