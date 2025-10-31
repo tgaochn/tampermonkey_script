@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work
-// @version             1.0.1
+// @version             1.0.2
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -8,12 +8,14 @@
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
 // @match               https://onlinebanking.usbank.com/*
+// @match               https://health.aetna.com/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.0.2: 增加 aetna 的颜色匹配
 // 1.0.1: 优化代码, 增加注释
 // 1.0.0: init, split from text_content_changer.js
 // 0.3.2: remove JP models mach
@@ -48,6 +50,25 @@
 
     // !! 匹配url后修改文本颜色/内容
     const urlPatterns = {
+        // aetna 高亮显示没有报销的记录
+        aetna: {
+            urlRegex: /^https?:\/\/health\.aetna\.com\/.*/,
+            textPatterns: [
+                // Pending
+                {
+                    regex: /^Pending$/g,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(192,255,255)",
+                },
+                // Denied
+                {
+                    regex: /^Denied$/g,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
+                },
+            ],
+        },
+
         // skidrow 高亮显示最好用的几个网盘
         skidrow: {
             urlRegex: /^https?:\/\/www\.skidrowreloaded\.com\/.*/,
