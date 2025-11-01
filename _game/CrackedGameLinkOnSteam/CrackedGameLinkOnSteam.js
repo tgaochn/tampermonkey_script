@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.4.2
+// @version 0.4.3
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.4.3: Add middle-click (mouse wheel button) support for all buttons
 // 0.4.2: Replace blocking alert() with non-blocking toast notification (auto-dismiss after 3 seconds)
 // 0.4.1: Add bilibili mapping functionality with external storage
 // 0.4.0: Add nexusmods mapping functionality with external storage
@@ -276,21 +277,42 @@
         const mapping = getNexusModsMapping();
         const nexusGameName = mapping[appid];
         
+        // Remove old event listeners by cloning the button
+        const newButton = addMappingButton.cloneNode(true);
+        addMappingButton.parentNode.replaceChild(newButton, addMappingButton);
+        addMappingButton = newButton;
+        
         if (nexusGameName) {
             // Mapping exists - show as disabled/gray with clear option
             addMappingButton.innerHTML = '<span>✓ nexusmods</span>';
             addMappingButton.style.backgroundColor = "#666666";
             addMappingButton.style.cursor = "default";
-            addMappingButton.onclick = function () {
+            const showDialog = function () {
                 showNexusModsMappingVerificationDialog(nexusGameName);
             };
+            addMappingButton.onclick = showDialog;
+            // Add middle-click support
+            addMappingButton.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         } else {
             // No mapping - show as active
             addMappingButton.innerHTML = '<span>+ nexusmods</span>';
             addMappingButton.style.backgroundColor = "#902600";
-            addMappingButton.onclick = function () {
+            const showDialog = function () {
                 showMappingDialog();
             };
+            addMappingButton.onclick = showDialog;
+            // Add middle-click support
+            addMappingButton.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         }
     }
 
@@ -301,21 +323,42 @@
         const mapping = getBilibiliMapping();
         const bilibiliGameName = mapping[appid];
         
+        // Remove old event listeners by cloning the button
+        const newButton = addBilibiliMappingButton.cloneNode(true);
+        addBilibiliMappingButton.parentNode.replaceChild(newButton, addBilibiliMappingButton);
+        addBilibiliMappingButton = newButton;
+        
         if (bilibiliGameName) {
             // Mapping exists - show as disabled/gray with clear option
             addBilibiliMappingButton.innerHTML = '<span>✓ B站</span>';
             addBilibiliMappingButton.style.backgroundColor = "#666666";
             addBilibiliMappingButton.style.cursor = "default";
-            addBilibiliMappingButton.onclick = function () {
+            const showDialog = function () {
                 showBilibiliMappingVerificationDialog(bilibiliGameName);
             };
+            addBilibiliMappingButton.onclick = showDialog;
+            // Add middle-click support
+            addBilibiliMappingButton.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         } else {
             // No mapping - show as active
             addBilibiliMappingButton.innerHTML = '<span>+ B站</span>';
             addBilibiliMappingButton.style.backgroundColor = "#6f4e37";
-            addBilibiliMappingButton.onclick = function () {
+            const showDialog = function () {
                 showBilibiliMappingDialog();
             };
+            addBilibiliMappingButton.onclick = showDialog;
+            // Add middle-click support
+            addBilibiliMappingButton.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         }
     }
 
@@ -328,6 +371,13 @@
     buttonWorkshop.onclick = function () {
         window.open("https://steamcommunity.com/workshop/browse/?appid=" + appid);
     };
+    // Add middle-click support
+    buttonWorkshop.addEventListener('mousedown', function(e) {
+        if (e.button === 1) { // Middle mouse button
+            e.preventDefault();
+            window.open("https://steamcommunity.com/workshop/browse/?appid=" + appid);
+        }
+    });
     
     // Array to store all buttons in desired order
     var allButtons = [];
@@ -437,7 +487,8 @@
         button.style.marginLeft = "2px";
         button.innerHTML = '<span>mods - nexusmods</span>';
         button.style.backgroundColor = "#902600";
-        button.onclick = function () {
+        
+        const openNexusModsLink = function () {
             const mapping = getNexusModsMapping();
             const nexusGameName = mapping[appid];
             
@@ -449,6 +500,15 @@
                 window.open("https://www.google.com/search?q=nexusmods+mods+download+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
             }
         };
+        
+        button.onclick = openNexusModsLink;
+        // Add middle-click support
+        button.addEventListener('mousedown', function(e) {
+            if (e.button === 1) { // Middle mouse button
+                e.preventDefault();
+                openNexusModsLink();
+            }
+        });
         return button;
     }
 
@@ -459,7 +519,8 @@
         button.style.marginLeft = "2px";
         button.innerHTML = '<span>B站</span>';
         button.style.backgroundColor = "#6f4e37";
-        button.onclick = function () {
+        
+        const openBilibiliLink = function () {
             const mapping = getBilibiliMapping();
             const bilibiliGameName = mapping[appid];
             
@@ -471,6 +532,15 @@
                 window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
             }
         };
+        
+        button.onclick = openBilibiliLink;
+        // Add middle-click support
+        button.addEventListener('mousedown', function(e) {
+            if (e.button === 1) { // Middle mouse button
+                e.preventDefault();
+                openBilibiliLink();
+            }
+        });
         return button;
     }
 
@@ -489,16 +559,32 @@
             button.innerHTML = '<span>✓ nexusmods</span>';
             button.style.backgroundColor = "#666666";
             button.style.cursor = "default";
-            button.onclick = function () {
+            const showDialog = function () {
                 showNexusModsMappingVerificationDialog(nexusGameName);
             };
+            button.onclick = showDialog;
+            // Add middle-click support
+            button.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         } else {
             // No mapping - show as active
             button.innerHTML = '<span>+ nexusmods</span>';
             button.style.backgroundColor = "#902600";
-            button.onclick = function () {
+            const showDialog = function () {
                 showMappingDialog();
             };
+            button.onclick = showDialog;
+            // Add middle-click support
+            button.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         }
         
         return button;
@@ -519,16 +605,32 @@
             button.innerHTML = '<span>✓ B站中文名</span>';
             button.style.backgroundColor = "#666666";
             button.style.cursor = "default";
-            button.onclick = function () {
+            const showDialog = function () {
                 showBilibiliMappingVerificationDialog(bilibiliGameName);
             };
+            button.onclick = showDialog;
+            // Add middle-click support
+            button.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         } else {
             // No mapping - show as active
             button.innerHTML = '<span>+ B站中文名</span>';
             button.style.backgroundColor = "#6f4e37";
-            button.onclick = function () {
+            const showDialog = function () {
                 showBilibiliMappingDialog();
             };
+            button.onclick = showDialog;
+            // Add middle-click support
+            button.addEventListener('mousedown', function(e) {
+                if (e.button === 1) { // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
         }
         
         return button;
@@ -544,6 +646,13 @@
         button.onclick = function () {
             window.open(url);
         };
+        // Add middle-click support
+        button.addEventListener('mousedown', function(e) {
+            if (e.button === 1) { // Middle mouse button
+                e.preventDefault();
+                window.open(url);
+            }
+        });
         return button;
     }
     
