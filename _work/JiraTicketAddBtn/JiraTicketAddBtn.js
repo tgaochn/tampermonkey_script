@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      1.0.1
+// @version      1.0.3
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -11,6 +11,8 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 1.0.3: add debouncing for MutationObserver; adaptive periodic check frequency; improved logging with emoji
+// 1.0.2: add periodic check to recreate button container if it disappears; add detailed debug logging
 // 1.0.1: refactor with generic waitForResource function to reduce code duplication
 // 1.0.0: add waitForPatterns function to ensure text2url_patterns is loaded before use
 // 0.9.9: refactor to use shared text2url_patterns from external config
@@ -45,6 +47,11 @@
         CONTAINER_ID: "container_id",
         BUTTON_POSITION: { top: "50px", left: "650px" },
         IS_FIXED_POS: false,
+        DEBUG_MODE: true, // Set to false to reduce console logging
+        DEBOUNCE_DELAY: 300, // Delay for MutationObserver debouncing (ms)
+        INITIAL_CHECK_INTERVAL: 1000, // Initial periodic check interval (ms)
+        STABLE_CHECK_INTERVAL: 5000, // Check interval after container is stable (ms)
+        STABLE_CHECK_THRESHOLD: 5, // Number of stable checks before reducing frequency
         REQUIRED_UTILS: [
             "createButtonContainerFromJson",
             "observeDOM",
@@ -77,9 +84,20 @@
             },
         ],
     };
+    
+    // Helper function for conditional logging
+    function debugLog(emoji, message, ...args) {
+        if (CONFIG.DEBUG_MODE) {
+            console.log(`${emoji} ${message}`, ...args);
+        }
+    }
 
     let lastProcessedTicketId = null;
+    let lastProcessedSummary = null;
     let isProcessing = false;
+    let debounceTimer = null;
+    let checkInterval = CONFIG.INITIAL_CHECK_INTERVAL;
+    let stableChecks = 0; // Count how many times container was stable
 
     const utils = await waitForUtils();
     const text2url_patterns = await waitForPatterns();
@@ -92,10 +110,35 @@
     }
 
     // run main
-    setTimeout(processChanges, 1000);
+    setTimeout(() => processChanges(false), 1000);
+    
+    // Adaptive periodic check with dynamic frequency
+    function periodicCheck() {
+        if (lastProcessedTicketId) {
+            const container = document.getElementById(CONFIG.CONTAINER_ID);
+            if (!container) {
+                debugLog("🔧", "Periodic check: Button container missing, recreating...");
+                stableChecks = 0; // Reset stability counter
+                checkInterval = CONFIG.INITIAL_CHECK_INTERVAL; // Reset to frequent checks
+                processChanges(true); // Force recreation
+            } else {
+                stableChecks++;
+                // After N stable checks, reduce frequency
+                if (stableChecks >= CONFIG.STABLE_CHECK_THRESHOLD && checkInterval < CONFIG.STABLE_CHECK_INTERVAL) {
+                    checkInterval = CONFIG.STABLE_CHECK_INTERVAL;
+                    debugLog("✅", `Container stable, reducing check frequency to ${checkInterval}ms`);
+                }
+            }
+        }
+        
+        setTimeout(periodicCheck, checkInterval);
+    }
+    
+    // Start periodic checks
+    setTimeout(periodicCheck, checkInterval);
 
-    function processChanges() {
-        if (isProcessing) return;
+    function processChanges(forceRecreate = false) {
+        if (isProcessing && !forceRecreate) return;
         isProcessing = true;
 
         try {
@@ -104,17 +147,30 @@
 
             if (ticketIdElement) {
                 const currentTicketId = ticketIdElement.textContent.trim();
-                if (currentTicketId && currentTicketId !== lastProcessedTicketId) {
-                    lastProcessedTicketId = currentTicketId;
-                    console.log("Ticket ID changed to:", currentTicketId);
+                
+                // Normal flow: only process if ticket ID changed
+                // Force recreation: always process if we have a ticket ID
+                if (currentTicketId && (forceRecreate || currentTicketId !== lastProcessedTicketId)) {
+                    
+                    if (!forceRecreate) {
+                        lastProcessedTicketId = currentTicketId;
+                        debugLog("📌", "Ticket ID changed to:", currentTicketId);
+                    } else {
+                        debugLog("🔄", "Force recreating buttons for:", currentTicketId);
+                    }
 
                     // Add a small delay before fetching the summary
                     setTimeout(() => {
                         // !! new UI (2024-09-29)
                         const summaryElement = document.querySelector(CONFIG.SELECTORS.SUMMARY);
                         const currentSummary = summaryElement ? summaryElement.textContent.trim() : "";
+                        
+                        // Store summary for potential recreation
+                        if (currentSummary) {
+                            lastProcessedSummary = currentSummary;
+                        }
 
-                        console.log("Fetched summary:", currentSummary);
+                        debugLog("📝", "Fetched summary:", currentSummary);
 
                         main(
                             currentTicketId,
@@ -124,11 +180,11 @@
                             text2url_patterns,
                             utils
                         );
-                    }, 1000); // 1000ms delay, adjust if needed
+                    }, forceRecreate ? 100 : 1000); // Faster for force recreation
                 }
             }
         } catch (error) {
-            console.error("Error in processChanges:", error);
+            console.error("❌ Error in processChanges:", error);
         } finally {
             isProcessing = false;
         }
@@ -139,11 +195,29 @@
         const config = { childList: true, subtree: true };
 
         const callback = function (mutationsList, observer) {
-            processChanges();
+            // Debounce: avoid processing too frequently
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+            
+            debounceTimer = setTimeout(() => {
+                // Check if our button container was removed
+                const container = document.getElementById(CONFIG.CONTAINER_ID);
+                if (lastProcessedTicketId && !container) {
+                    debugLog("🔧", "MutationObserver: Button container was removed, recreating...");
+                    stableChecks = 0; // Reset stability counter
+                    checkInterval = CONFIG.INITIAL_CHECK_INTERVAL; // Reset to frequent checks
+                    processChanges(true); // Force recreation
+                } else {
+                    processChanges(false);
+                }
+            }, CONFIG.DEBOUNCE_DELAY);
         };
 
         const observer = new MutationObserver(callback);
         observer.observe(targetNode, config);
+        
+        debugLog("👀", "DOM observer started");
     }
 
     // Generic function to wait for a resource to load
@@ -222,6 +296,8 @@
     }
 
     async function main(ticketId, summary, contrainerLocSelectorStr, contentAreasForDsiable, text2url_patterns, utils) {
+        debugLog("🎨", `Creating button container for ticket: ${ticketId}`);
+        
         // setup the disabled editing and the btn to enable it
         setClickToEdit(false, contentAreasForDsiable, text2url_patterns, utils);
         const enableEditBtn = createEnableEditingBtn(contentAreasForDsiable, text2url_patterns, utils);
@@ -229,6 +305,7 @@
         // Remove existing container if any
         const existingContainer = document.getElementById(CONFIG.CONTAINER_ID);
         if (existingContainer) {
+            debugLog("🗑️", "Removing existing button container");
             existingContainer.remove();
         }
 
@@ -236,6 +313,9 @@
 
         const buttonContainer = utils.createButtonContainer();
         buttonContainer.id = CONFIG.CONTAINER_ID;
+        
+        // Add a dataset attribute to help identify our container
+        buttonContainer.setAttribute('data-tampermonkey-container', 'true');
 
         buttonContainer.append(
             enableEditBtn,
@@ -263,9 +343,26 @@
 
         if (CONFIG.IS_FIXED_POS) {
             utils.addFixedPosContainerToPage(buttonContainer, CONFIG.BUTTON_POSITION);
+            debugLog("✅", "Button container added to DOM (fixed position)");
         } else {
             const ticketIdElement = document.querySelector(contrainerLocSelectorStr);
-            utils.addContainerNextToElement1(buttonContainer, ticketIdElement);
+            if (ticketIdElement) {
+                utils.addContainerNextToElement1(buttonContainer, ticketIdElement);
+                debugLog("✅", "Button container added to DOM");
+                
+                // Verify container is still in DOM after a short delay
+                setTimeout(() => {
+                    const container = document.getElementById(CONFIG.CONTAINER_ID);
+                    if (!container) {
+                        console.warn("⚠️ WARNING: Button container disappeared shortly after creation!");
+                        stableChecks = 0; // Reset stability counter
+                    } else {
+                        debugLog("✔️", "Button container confirmed in DOM");
+                    }
+                }, 500);
+            } else {
+                console.error("❌ Could not find ticket ID element to attach buttons");
+            }
         }
     }
 })();
