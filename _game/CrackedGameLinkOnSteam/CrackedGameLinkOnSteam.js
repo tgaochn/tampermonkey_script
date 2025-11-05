@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.2
+// @version 0.5.3
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.3: Organize buttons into three rows - row 1: game downloads, row 2: mod sites, row 3: video/trainer sites
 // 0.5.2: Organize buttons into two rows - first row has 4 game download site buttons, second row has mod and video site buttons
 // 0.5.1: Center-align buttons in the container for better visual appearance
 // 0.5.0: Major refactor - create independent button container and insert before franchise_notice to avoid Steam's dynamic button sizing affecting our buttons
@@ -688,23 +689,32 @@
             padding: 16px;
             background: linear-gradient(to bottom, rgba(42,71,94,0.6) 5%, rgba(42,71,94,0.2) 95%);
             border-radius: 4px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            box-shadow: 0 0 5px rgba(154, 124, 124, 0.5);
         `;
         
-        // Create first row (first 4 buttons: gamer520, SkidrowReloaded, IGG, x1337x)
+        // Create first row (game download sites: gamer520, SkidrowReloaded, IGG, x1337x)
         const row1 = document.createElement("div");
         row1.style.cssText = `
             display: flex;
-            justify-content: center;
+            justify-content: "left";
             gap: 4px;
             flex-wrap: wrap;
         `;
         
-        // Create second row (remaining buttons: workshop, nexusmods, etc.)
+        // Create second row (mod related: workshop, nexusmods, + nexusmods)
         const row2 = document.createElement("div");
         row2.style.cssText = `
             display: flex;
-            justify-content: center;
+            justify-content: "left";
+            gap: 4px;
+            flex-wrap: wrap;
+        `;
+        
+        // Create third row (remaining: B站, + B站中文名, 风灵月影)
+        const row3 = document.createElement("div");
+        row3.style.cssText = `
+            display: flex;
+            justify-content: "left";
             gap: 4px;
             flex-wrap: wrap;
         `;
@@ -713,15 +723,21 @@
         for (var i = 0; i < allButtons.length; i++) {
             allButtons[i].style.marginLeft = "0"; // Reset margin since we're using gap
             if (i < 4) {
+                // First 4 buttons: game download sites
                 row1.appendChild(allButtons[i]);
-            } else {
+            } else if (i < 7) {
+                // Next 3 buttons: mod related
                 row2.appendChild(allButtons[i]);
+            } else {
+                // Remaining buttons: video and trainer sites
+                row3.appendChild(allButtons[i]);
             }
         }
         
         // Add rows to container
         buttonContainer.appendChild(row1);
         buttonContainer.appendChild(row2);
+        buttonContainer.appendChild(row3);
         
         // Try to insert before franchise_notice, fallback to other locations
         let insertTarget = document.querySelector(".franchise_notice");
