@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.3
+// @version 0.5.5
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.5: Move button container to after #game_highlights > div.leftcol > div for better positioning at the top of game info area
+// 0.5.4: Change insertion point to game_area_purchase_game_wrapper for consistent positioning; use fixed position as fallback; left-align buttons within rows
 // 0.5.3: Organize buttons into three rows - row 1: game downloads, row 2: mod sites, row 3: video/trainer sites
 // 0.5.2: Organize buttons into two rows - first row has 4 game download site buttons, second row has mod and video site buttons
 // 0.5.1: Center-align buttons in the container for better visual appearance
@@ -696,7 +698,7 @@
         const row1 = document.createElement("div");
         row1.style.cssText = `
             display: flex;
-            justify-content: "left";
+            justify-content: flex-start;
             gap: 4px;
             flex-wrap: wrap;
         `;
@@ -705,7 +707,7 @@
         const row2 = document.createElement("div");
         row2.style.cssText = `
             display: flex;
-            justify-content: "left";
+            justify-content: flex-start;
             gap: 4px;
             flex-wrap: wrap;
         `;
@@ -714,7 +716,7 @@
         const row3 = document.createElement("div");
         row3.style.cssText = `
             display: flex;
-            justify-content: "left";
+            justify-content: flex-start;
             gap: 4px;
             flex-wrap: wrap;
         `;
@@ -739,25 +741,27 @@
         buttonContainer.appendChild(row2);
         buttonContainer.appendChild(row3);
         
-        // Try to insert before franchise_notice, fallback to other locations
-        let insertTarget = document.querySelector(".franchise_notice");
+        // Try to insert after #game_highlights > div.leftcol > div
+        let insertTarget = document.querySelector("#game_highlights > div.leftcol > div");
         
         if (insertTarget && insertTarget.parentNode) {
-            // Insert before franchise_notice
-            insertTarget.parentNode.insertBefore(buttonContainer, insertTarget);
-        } else {
-            // Fallback: try to insert at the top of game area
-            insertTarget = document.querySelector(".game_page_background") || 
-                          document.querySelector(".page_content") ||
-                          document.querySelector("#game_highlights");
-            
-            if (insertTarget) {
-                insertTarget.insertBefore(buttonContainer, insertTarget.firstChild);
+            // Insert after the target element
+            if (insertTarget.nextSibling) {
+                insertTarget.parentNode.insertBefore(buttonContainer, insertTarget.nextSibling);
             } else {
-                // Last resort: append to body
-                console.warn("Could not find suitable insertion point, appending to body");
-                document.body.appendChild(buttonContainer);
+                insertTarget.parentNode.appendChild(buttonContainer);
             }
+        } else {
+            // Fallback: use fixed position at top of viewport
+            console.warn("#game_highlights > div.leftcol > div not found, using fixed position");
+            buttonContainer.style.position = "fixed";
+            buttonContainer.style.top = "80px";  // Below Steam header
+            buttonContainer.style.left = "50%";
+            buttonContainer.style.transform = "translateX(-50%)";
+            buttonContainer.style.zIndex = "9999";
+            buttonContainer.style.maxWidth = "90%";
+            buttonContainer.style.width = "auto";
+            document.body.appendChild(buttonContainer);
         }
     }
 })();
