@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.4.3
+// @version 0.5.2
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,11 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.2: Organize buttons into two rows - first row has 4 game download site buttons, second row has mod and video site buttons
+// 0.5.1: Center-align buttons in the container for better visual appearance
+// 0.5.0: Major refactor - create independent button container and insert before franchise_notice to avoid Steam's dynamic button sizing affecting our buttons
+// 0.4.5: Fix button size and positioning by using inline styles instead of CSS classes to avoid affecting Steam's native buttons
+// 0.4.4: Fix button size issue by adding custom CSS styles to maintain consistent button dimensions
 // 0.4.3: Add middle-click (mouse wheel button) support for all buttons
 // 0.4.2: Replace blocking alert() with non-blocking toast notification (auto-dismiss after 3 seconds)
 // 0.4.1: Add bilibili mapping functionality with external storage
@@ -31,9 +36,30 @@
     const appid = (window.location.pathname.match(/\/app\/(\d+)/) ?? [null, null])[1];
     if (appid === null) { return; }
 
-    // Find the ignore button
-    var ignoreButton = document.querySelector("#ignoreBtn");
-    if (!ignoreButton) { return; }
+    // Helper function to apply consistent inline styles to custom buttons
+    function applyButtonStyles(button) {
+        button.style.display = "inline-block";
+        button.style.padding = "1px 15px";
+        button.style.fontSize = "15px";
+        button.style.lineHeight = "30px";
+        button.style.height = "32px";
+        button.style.verticalAlign = "middle";
+        button.style.textDecoration = "none";
+        button.style.color = "#D2E885";
+        button.style.borderRadius = "2px";
+        button.style.cursor = "pointer";
+        button.style.whiteSpace = "nowrap";
+        button.style.border = "none";
+        button.style.boxSizing = "border-box";
+        
+        // Add hover effect
+        button.addEventListener('mouseenter', function() {
+            this.style.color = "#fff";
+        });
+        button.addEventListener('mouseleave', function() {
+            this.style.color = "#D2E885";
+        });
+    }
 
     // NexusMods mapping storage functions using GM_getValue/GM_setValue for cross-device sync
     function getNexusModsMapping() {
@@ -364,10 +390,9 @@
 
     // Create workshop button (doesn't need game name)
     var buttonWorkshop = document.createElement("a");
-    buttonWorkshop.className = "btnv6_blue_hoverfade btn_medium";
-    buttonWorkshop.style.marginLeft = "2px";
     buttonWorkshop.innerHTML = '<span>mods - workshop</span>';
     buttonWorkshop.style.backgroundColor = "#902600";
+    applyButtonStyles(buttonWorkshop);
     buttonWorkshop.onclick = function () {
         window.open("https://steamcommunity.com/workshop/browse/?appid=" + appid);
     };
@@ -483,10 +508,9 @@
     // Helper function to create nexusmods button with mapping logic
     function createNexusModsButton(modifiedGameName) {
         var button = document.createElement("a");
-        button.className = "btnv6_blue_hoverfade btn_medium";
-        button.style.marginLeft = "2px";
         button.innerHTML = '<span>mods - nexusmods</span>';
         button.style.backgroundColor = "#902600";
+        applyButtonStyles(button);
         
         const openNexusModsLink = function () {
             const mapping = getNexusModsMapping();
@@ -515,10 +539,9 @@
     // Helper function to create bilibili button with mapping logic
     function createBilibiliButton(modifiedGameName) {
         var button = document.createElement("a");
-        button.className = "btnv6_blue_hoverfade btn_medium";
-        button.style.marginLeft = "2px";
         button.innerHTML = '<span>B站</span>';
         button.style.backgroundColor = "#6f4e37";
+        applyButtonStyles(button);
         
         const openBilibiliLink = function () {
             const mapping = getBilibiliMapping();
@@ -547,8 +570,7 @@
     // Helper function to create add mapping button with dynamic state
     function createAddMappingButton() {
         var button = document.createElement("a");
-        button.className = "btnv6_blue_hoverfade btn_medium";
-        button.style.marginLeft = "2px";
+        applyButtonStyles(button);
         
         // Check if mapping already exists
         const mapping = getNexusModsMapping();
@@ -593,8 +615,7 @@
     // Helper function to create add bilibili mapping button with dynamic state
     function createAddBilibiliMappingButton() {
         var button = document.createElement("a");
-        button.className = "btnv6_blue_hoverfade btn_medium";
-        button.style.marginLeft = "2px";
+        applyButtonStyles(button);
         
         // Check if mapping already exists
         const mapping = getBilibiliMapping();
@@ -639,10 +660,9 @@
     // Helper function to create buttons
     function createButton(text, color, url) {
         var button = document.createElement("a");
-        button.className = "btnv6_blue_hoverfade btn_medium";
-        button.style.marginLeft = "2px";
         button.innerHTML = '<span>' + text + '</span>';
         button.style.backgroundColor = color;
+        applyButtonStyles(button);
         button.onclick = function () {
             window.open(url);
         };
@@ -658,9 +678,70 @@
     
     // Helper function to add all buttons in order
     function addButtonsInOrder() {
-        // Add all buttons in the specified order
-        for (var i = allButtons.length - 1; i >= 0; i--) {
-            ignoreButton.parentNode.insertBefore(allButtons[i], ignoreButton.nextSibling);
+        // Create a container for all custom buttons
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(42,71,94,0.6) 5%, rgba(42,71,94,0.2) 95%);
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        `;
+        
+        // Create first row (first 4 buttons: gamer520, SkidrowReloaded, IGG, x1337x)
+        const row1 = document.createElement("div");
+        row1.style.cssText = `
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        `;
+        
+        // Create second row (remaining buttons: workshop, nexusmods, etc.)
+        const row2 = document.createElement("div");
+        row2.style.cssText = `
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        `;
+        
+        // Add buttons to respective rows
+        for (var i = 0; i < allButtons.length; i++) {
+            allButtons[i].style.marginLeft = "0"; // Reset margin since we're using gap
+            if (i < 4) {
+                row1.appendChild(allButtons[i]);
+            } else {
+                row2.appendChild(allButtons[i]);
+            }
+        }
+        
+        // Add rows to container
+        buttonContainer.appendChild(row1);
+        buttonContainer.appendChild(row2);
+        
+        // Try to insert before franchise_notice, fallback to other locations
+        let insertTarget = document.querySelector(".franchise_notice");
+        
+        if (insertTarget && insertTarget.parentNode) {
+            // Insert before franchise_notice
+            insertTarget.parentNode.insertBefore(buttonContainer, insertTarget);
+        } else {
+            // Fallback: try to insert at the top of game area
+            insertTarget = document.querySelector(".game_page_background") || 
+                          document.querySelector(".page_content") ||
+                          document.querySelector("#game_highlights");
+            
+            if (insertTarget) {
+                insertTarget.insertBefore(buttonContainer, insertTarget.firstChild);
+            } else {
+                // Last resort: append to body
+                console.warn("Could not find suitable insertion point, appending to body");
+                document.body.appendChild(buttonContainer);
+            }
         }
     }
 })();
