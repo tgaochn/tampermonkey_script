@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         model_text2link
-// @version      0.2.1
+// @version      0.2.2
 // @description  Convert text patterns to clickable links using regex
 // @author              gtfish
 // @license             MIT
 // @match        http*://idash.sandbox.indeed.net/*
+// @match        https://data.indeed.tech/idash/*
 // @match        http://127.0.0.1:5500/*
 // @grant        none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -12,6 +13,7 @@
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/model_text2link/model_text2link.js
 // ==/UserScript==
+// 0.2.2: add new url pattern for idash
 // 0.2.1: refactor with generic waitForResource function to reduce code duplication
 // 0.2.0: add waitForPatterns function to ensure text2url_patterns is loaded before use
 // 0.1.9: refactor to use shared text2url_patterns from external config
