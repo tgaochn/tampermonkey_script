@@ -1,19 +1,20 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.3
+// @version             1.0.4
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://teststats.sandbox.indeed.net/*
 // @match               https://proctor.sandbox.indeed.net/proctor/*
 // @match               https://butterfly.sandbox.indeed.net/*
-// @match               https://cloudops-prod.indeed.tech/portal/*
+// @match               https://cloudops-prod.indeed.tech/portal*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.4: add color highlighting for AWS account descriptions
 // 1.0.3: refactor: extract Butterfly_proctor patterns to a separate constant
 // 1.0.2: add AWS account description mapping for cloudops portal
 // 1.0.1: 优化代码, 增加注释
@@ -134,10 +135,14 @@
         {
             regex: /^indeed-empaq-loom-prod$/,
             replacement: "$& (employer)",
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,255,153)", // Light yellow
         },
         {
             regex: /^indeed-rjp-datasci-prod$/,
             replacement: "$& (online-rankers)",
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,255,153)", // Light yellow
         },
     ];
 
