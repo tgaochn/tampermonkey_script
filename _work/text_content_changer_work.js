@@ -1,18 +1,21 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.1
+// @version             1.0.3
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://teststats.sandbox.indeed.net/*
 // @match               https://proctor.sandbox.indeed.net/proctor/*
 // @match               https://butterfly.sandbox.indeed.net/*
+// @match               https://cloudops-prod.indeed.tech/portal/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.3: refactor: extract Butterfly_proctor patterns to a separate constant
+// 1.0.2: add AWS account description mapping for cloudops portal
 // 1.0.1: 优化代码, 增加注释
 // 1.0.0: init, split from text_content_changer.js
 // 0.3.2: remove JP models mach
@@ -126,6 +129,162 @@
         },
     ];
 
+    // ! AWS账户说明映射
+    const awsAccountDesc = [
+        {
+            regex: /^indeed-empaq-loom-prod$/,
+            replacement: "$& (employer)",
+        },
+        {
+            regex: /^indeed-rjp-datasci-prod$/,
+            replacement: "$& (online-rankers)",
+        },
+    ];
+
+    // ! Butterfly proctor页面的颜色标记
+    const butterflyProctorPatterns = [
+        // ! Group 1 - ranking targets
+        {
+            regex: /^IDX P\(AS \| seen\)$/,
+            textColor: "rgb(0,0,128)", // Dark blue
+            backColor: "rgb(255,192,255)",
+        },
+        {
+            regex: /^IDX Spon P\(click \| seen\)$/,
+            textColor: "rgb(0,0,128)", // Dark blue
+            backColor: "rgb(255,192,255)",
+        },
+        {
+            regex: /^Online Ranker Apply Model$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(255,192,255)",
+        },
+        {
+            regex: /^Online Ranker CTR Model$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(255,192,255)",
+        },
+
+        // ! Group 2 - bidding targets
+        {
+            regex: /^IDX Spon P\(AC \| clicked\)$/,
+            textColor: "rgb(0,0,128)", // Dark blue
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^IDX Spon P\(AS \| clicked\)$/,
+            textColor: "rgb(0,0,128)", // Dark blue
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^Online Ranker Spon P\(AC \| clicked\)$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^Online Ranker Spon P\(AS \| Clicked\)$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+
+        // ! Group 3 - PO targets
+        {
+            regex: /^IDX Org Attainability$/,
+            textColor: "rgb(0,0,128)", // Dark blue
+            backColor: "rgb(255, 243, 205)",
+        },
+        // {
+        //     regex: /^IDX Spon P\(AS \| clicked\)$/,
+        //     textColor: "rgb(0,0,128)",  // Dark blue
+        //     backColor: "rgb(255, 243, 205)",
+        // },
+        {
+            regex: /^Online Ranker Org Attainability$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(255, 243, 205)",
+        },
+        {
+            regex: /^Online Ranker Qualified New \(BP\)$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(255, 243, 205)",
+        },
+
+        // !! allocation color
+        // HP US
+        {
+            regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        {
+            regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS Shadow Traffic$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,225,225)",
+        },
+
+        // HP ROW
+        {
+            regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,218,171)",
+        },
+        {
+            regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,225,225)",
+        },
+
+        // // HP JP
+        // we don't own JP models
+        // {
+        //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
+        //     textColor: "rgb(0,0,0)",
+        //     backColor: "rgb(255,208,161)",
+        // },
+        // {
+        //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
+        //     textColor: "rgb(0,0,0)",
+        //     backColor: "rgb(255,225,225)",
+        // },
+
+        // SERP US
+        {
+            regex: /^SERP US w\/\s*IS$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,182,193)",
+        },
+        {
+            regex: /^SERP US w\/\s*IS Shadow Traffic$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,225,225)",
+        },
+
+        // SERP ROW
+        {
+            regex: /^SERP (ROW)|(ROTW) w\/\s*IS$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,172,183)",
+        },
+        {
+            regex: /^SERP (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,225,225)",
+        },
+
+        // // SERP JP
+        // we don't own JP models
+        // {
+        //     regex: /^SERP JP w\/\s*IS$/,
+        //     textColor: "rgb(0,0,0)",
+        //     backColor: "rgb(255,162,173)",
+        // },
+        // {
+        //     regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
+        //     textColor: "rgb(0,0,0)",
+        //     backColor: "rgb(255,225,225)",
+        // },
+    ];
+
     // !! 匹配url后修改文本颜色/内容
     const urlPatterns = {
         testStats: {
@@ -151,150 +310,14 @@
             // https://butterfly.sandbox.indeed.net/proctor/jobsearch/isbutterflyapplymodeltst // old url
             // https://butterfly.sandbox.indeed.net/proctor/jobsearch/isbutterflyapplymodeltst // new url
             urlRegex: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor\/jobsearch\/.*/,
-            textPatterns: [
-                ...proctorDesc,
+            textPatterns: [...proctorDesc, ...butterflyProctorPatterns],
+        },
 
-                // ! Group 1 - ranking targets
-                {
-                    regex: /^IDX P\(AS \| seen\)$/,
-                    textColor: "rgb(0,0,128)", // Dark blue
-                    backColor: "rgb(255,192,255)",
-                },
-                {
-                    regex: /^IDX Spon P\(click \| seen\)$/,
-                    textColor: "rgb(0,0,128)", // Dark blue
-                    backColor: "rgb(255,192,255)",
-                },
-                {
-                    regex: /^Online Ranker Apply Model$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(255,192,255)",
-                },
-                {
-                    regex: /^Online Ranker CTR Model$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(255,192,255)",
-                },
-
-                // ! Group 2 - bidding targets
-                {
-                    regex: /^IDX Spon P\(AC \| clicked\)$/,
-                    textColor: "rgb(0,0,128)", // Dark blue
-                    backColor: "rgb(144,238,144)",
-                },
-                {
-                    regex: /^IDX Spon P\(AS \| clicked\)$/,
-                    textColor: "rgb(0,0,128)", // Dark blue
-                    backColor: "rgb(144,238,144)",
-                },
-                {
-                    regex: /^Online Ranker Spon P\(AC \| clicked\)$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(144,238,144)",
-                },
-                {
-                    regex: /^Online Ranker Spon P\(AS \| Clicked\)$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(144,238,144)",
-                },
-
-                // ! Group 3 - PO targets
-                {
-                    regex: /^IDX Org Attainability$/,
-                    textColor: "rgb(0,0,128)", // Dark blue
-                    backColor: "rgb(255, 243, 205)",
-                },
-                // {
-                //     regex: /^IDX Spon P\(AS \| clicked\)$/,
-                //     textColor: "rgb(0,0,128)",  // Dark blue
-                //     backColor: "rgb(255, 243, 205)",
-                // },
-                {
-                    regex: /^Online Ranker Org Attainability$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(255, 243, 205)",
-                },
-                {
-                    regex: /^Online Ranker Qualified New \(BP\)$/,
-                    textColor: "rgb(153,0,0)", // Dark red
-                    backColor: "rgb(255, 243, 205)",
-                },
-
-                // !! allocation color
-                // HP US
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,228,181)",
-                },
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
-
-                // HP ROW
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,218,171)",
-                },
-                {
-                    regex: /^((RJP HP)|(HP)|(RJP)) (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
-
-                // // HP JP
-                // we don't own JP models
-                // {
-                //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
-                //     textColor: "rgb(0,0,0)",
-                //     backColor: "rgb(255,208,161)",
-                // },
-                // {
-                //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
-                //     textColor: "rgb(0,0,0)",
-                //     backColor: "rgb(255,225,225)",
-                // },
-
-                // SERP US
-                {
-                    regex: /^SERP US w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,182,193)",
-                },
-                {
-                    regex: /^SERP US w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
-
-                // SERP ROW
-                {
-                    regex: /^SERP (ROW)|(ROTW) w\/\s*IS$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,172,183)",
-                },
-                {
-                    regex: /^SERP (ROW)|(ROTW) w\/\s*IS Shadow Traffic$/,
-                    textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,225,225)",
-                },
-
-                // // SERP JP
-                // we don't own JP models
-                // {
-                //     regex: /^SERP JP w\/\s*IS$/,
-                //     textColor: "rgb(0,0,0)",
-                //     backColor: "rgb(255,162,173)",
-                // },
-                // {
-                //     regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
-                //     textColor: "rgb(0,0,0)",
-                //     backColor: "rgb(255,225,225)",
-                // },
-            ],
+        // aws account 说明
+        cloudops_portal: {
+            // https://cloudops-prod.indeed.tech/portal
+            urlRegex: /^https:\/\/cloudops-prod\.indeed\.tech\/portal.*/,
+            textPatterns: [...awsAccountDesc],
         },
     };
 
