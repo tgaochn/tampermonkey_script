@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name CrackedGameLinkOnSteam
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.5
+// @version 0.5.6
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.6: Fix workshop button to use actualsort=lastupdated&browsesort=lastupdated&p=1 for latest mods
 // 0.5.5: Move button container to after #game_highlights > div.leftcol > div for better positioning at the top of game info area
 // 0.5.4: Change insertion point to game_area_purchase_game_wrapper for consistent positioning; use fixed position as fallback; left-align buttons within rows
 // 0.5.3: Organize buttons into three rows - row 1: game downloads, row 2: mod sites, row 3: video/trainer sites
@@ -397,13 +398,15 @@
     buttonWorkshop.style.backgroundColor = "#902600";
     applyButtonStyles(buttonWorkshop);
     buttonWorkshop.onclick = function () {
-        window.open("https://steamcommunity.com/workshop/browse/?appid=" + appid);
+        const workshopUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&actualsort=lastupdated&browsesort=lastupdated&p=1`;
+        window.open(workshopUrl);
     };
     // Add middle-click support
     buttonWorkshop.addEventListener('mousedown', function(e) {
         if (e.button === 1) { // Middle mouse button
             e.preventDefault();
-            window.open("https://steamcommunity.com/workshop/browse/?appid=" + appid);
+            const workshopUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&actualsort=lastupdated&browsesort=lastupdated&p=1`;
+            window.open(workshopUrl);
         }
     });
     
