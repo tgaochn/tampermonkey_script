@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Block AdBlock Upgrade Pages
-// @version      0.1.0
+// @version      0.1.1
 // @description  自动关闭 AdBlock 的升级和付费推广页面
 // @author       gtfish
 // @match        https://getadblock.com/en/update/*
+// @match        https://getadblock.com/zh_CN/update/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -11,6 +12,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/blockAdBlockUpgrade/blockAdBlockUpgrade.js
 
 // ==/UserScript==
+// 0.1.1: add match for getadblock.com
 // 0.1.0: initial version, 关闭 AdBlock 的升级和付费推广页面
 
 (function () {
