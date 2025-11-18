@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.0
+// @version      1.0.1
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -15,6 +15,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.0.1: added Citi button
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
 // 0.4.7: added new url pattern for monarchmoney
 // 0.4.6: added new url pattern for butterfly
@@ -112,6 +113,7 @@
                 return [
                     utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),
                     utils.createButtonOpenUrl("Chase", "https://www.chase.com"),
+                    utils.createButtonOpenUrl("Citi", "https://www.citi.com"),
                     utils.createButtonOpenUrl("Bilt(Wells Fargo)", "https://www.wellsfargo.com"),
                     utils.createButtonOpenUrl("Fidelity", "https://digital.fidelity.com/prgw/digital/login/full-page"),
                     utils.createButtonOpenUrl("Merrill Lynch", "https://www.ml.com"),
