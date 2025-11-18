@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.7
+// @version      1.0.8
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.8: adjusted button positions for proctor-v2
 // 1.0.7: adjusted max display length for button display text
 // 1.0.6: adjusted button positions for butterfly proctor/testStats/proctor
 // 1.0.5: fixed butterfly proctor parser to support non-hash URLs
@@ -45,8 +46,6 @@
 // 0.0.4: specify enabled sites for butterfly
 // 0.0.2: adjust the btn position
 // 0.0.1: init
-// wiki page for debugging
-// @match        https://indeed.atlassian.net/*
 
 (async function () {
     "use strict";
@@ -131,7 +130,7 @@
     const jumpButtonMappings = [
         // ! indeed websites: jump to related indeed pages
         {
-            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))\.sandbox\.indeed\.net.*$/,
+            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))(-v2)?\.sandbox\.indeed\.net.*$/,
             jumpButtons: (url, utils, textColor, testNameParam) => {
                 // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
                 // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
@@ -143,15 +142,15 @@
                 return [
                     utils.createButtonOpenUrl(
                         "Butterfly Proctor",
-                        `https://butterfly.sandbox.indeed.net/proctor/jobsearch/${testNameParam}`
+                        `${BASE_URLS.BUTTERFLY_PROCTOR}/${testNameParam}`
                     ),
                     utils.createButtonOpenUrl(
                         "proctor",
-                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/${testNameParam}`
+                        `${BASE_URLS.PROCTOR}/${testNameParam}`
                     ),
                     utils.createButtonOpenUrl(
                         "testStats",
-                        `https://teststats.sandbox.indeed.net/analyze/${testNameParam}`
+                        `${BASE_URLS.TESTSTATS}/${testNameParam}`
                     ),
                 ];
             },
@@ -189,6 +188,13 @@
             replacement: "eQualified",
         },
     ];
+
+    // Base URLs for jump buttons
+    const BASE_URLS = {
+        BUTTERFLY_PROCTOR: "https://butterfly.sandbox.indeed.net/proctor/jobsearch",
+        PROCTOR: "https://proctor.sandbox.indeed.net/proctor/toggles/view",
+        TESTSTATS: "https://teststats.sandbox.indeed.net/analyze",
+    };
 
     const inclusionPatterns = [];
 
@@ -242,38 +248,8 @@
             buttonPosition: {top: "-10px", left: "1050px"}, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from butterfly proctor URL
-                try {
-                    // Support both hash-based URLs (#/proctor/...) and regular path URLs (/proctor/...)
-                    let pathSegments;
-                    
-                    if (url.includes("#")) {
-                        // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
-                        const hashPart = url.split("#")[1] || "";
-                        pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
-                    } else {
-                        // For URLs like: /proctor/jobsearch/idxbutterflyapplymodeltst
-                        const urlObj = new URL(url);
-                        pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
-                    }
-
-                    // Look for the segment after 'proctor'
-                    const proctorIndex = pathSegments.indexOf("proctor");
-                    if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
-                        const testName = pathSegments[proctorIndex + 2].split("?")[0]; // Remove query params
-                        const mappedSegment = applyPathSegmentMapping(testName);
-
-                        // Return both raw and mapped segments
-                        return {
-                            displayTitle: mappedSegment,
-                            rawSegment: testName,
-                        };
-                    }
-
-                    return null;
-                } catch (error) {
-                    console.error("Error in butterfly proctor custom parser:", error);
-                    return null;
-                }
+                const testName = extractTestNameFromButterflyProctor(url);
+                return createParserResult(testName);
             },
         },
 
@@ -285,22 +261,8 @@
             showBothTitles: true, // Show both fixed and dynamic title buttons
             customParser: (url) => {
                 // Extract model name from teststats URL
-                try {
-                    const urlObj = new URL(url);
-                    const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
-                    const testName = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    if (testName) {
-                        const mappedSegment = applyPathSegmentMapping(testName);
-                        return {
-                            displayTitle: mappedSegment,
-                            rawSegment: testName,
-                        };
-                    }
-                    return null;
-                } catch (error) {
-                    console.error("Error in teststats custom parser:", error);
-                    return null;
-                }
+                const testName = extractTestNameFromPath(url);
+                return createParserResult(testName);
             },
         },
 
@@ -311,25 +273,11 @@
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
             textColor: "#000000", // black color for proctor
-            buttonPosition: {top: "-10px", left: "700px"}, // Custom position to avoid blocking content
+            buttonPosition: {top: "-10px", left: "600px"}, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from proctor URL
-                try {
-                    const urlObj = new URL(url);
-                    const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
-                    const testName = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-                    if (testName) {
-                        const mappedSegment = applyPathSegmentMapping(testName);
-                        return {
-                            displayTitle: mappedSegment,
-                            rawSegment: testName,
-                        };
-                    }
-                    return null;
-                } catch (error) {
-                    console.error("Error in proctor custom parser:", error);
-                    return null;
-                }
+                const testName = extractTestNameFromPath(url);
+                return createParserResult(testName);
             },
         },
 
@@ -339,7 +287,7 @@
             title: "wiki",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
-            buttonPosition: { top: "20px", left: "750px" }, // Custom position to avoid blocking content
+            // Note: buttonPosition is defined in customButtonMappings for wiki
             customParser: (url) => {
                 // Extract page title from wiki page DOM
                 try {
@@ -364,6 +312,57 @@
         }
 
         return pathSegment; // Return original if no mapping found
+    }
+
+    // Helper function to extract test name from URL path (last segment)
+    function extractTestNameFromPath(url) {
+        try {
+            const urlObj = new URL(url);
+            const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+            return pathSegments.length > 0 ? pathSegments[pathSegments.length - 1].split("?")[0] : null;
+        } catch (error) {
+            console.error("Error extracting test name from path:", error);
+            return null;
+        }
+    }
+
+    // Helper function to extract test name from butterfly proctor URL (supports hash-based URLs)
+    function extractTestNameFromButterflyProctor(url) {
+        try {
+            // Support both hash-based URLs (#/proctor/...) and regular path URLs (/proctor/...)
+            let pathSegments;
+            
+            if (url.includes("#")) {
+                // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
+                const hashPart = url.split("#")[1] || "";
+                pathSegments = hashPart.split("/").filter((segment) => segment.length > 0);
+            } else {
+                // For URLs like: /proctor/jobsearch/idxbutterflyapplymodeltst
+                const urlObj = new URL(url);
+                pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+            }
+
+            // Look for the segment after 'proctor'
+            const proctorIndex = pathSegments.indexOf("proctor");
+            if (proctorIndex >= 0 && proctorIndex + 2 < pathSegments.length) {
+                return pathSegments[proctorIndex + 2].split("?")[0]; // Remove query params
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Error extracting test name from butterfly proctor URL:", error);
+            return null;
+        }
+    }
+
+    // Helper function to create parser result with mapped and raw segments
+    function createParserResult(testName) {
+        if (!testName) return null;
+        const mappedSegment = applyPathSegmentMapping(testName);
+        return {
+            displayTitle: mappedSegment,
+            rawSegment: testName,
+        };
     }
 
     // Wait for utils to load
