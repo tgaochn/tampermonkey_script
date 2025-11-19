@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.2.0
+// @version      0.2.1
 // @description  Convert S3 path to AWS S3 Console URL and redirect
 // @author       gtfish
 // @match        https://us-east-2.console.aws.amazon.com/*
@@ -12,6 +12,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 
 // ==/UserScript==
+// 0.2.1: add Parse button to show parsed URL, Copy URL also shows parsed URL
 // 0.2.0: add button position config, add Copy URL button in dialog
 // 0.1.0: initial version, convert S3 path to AWS S3 Console URL and redirect
 
@@ -24,8 +25,8 @@
         AWS_REGION: "us-east-2", // Default AWS region
         AWS_S3_CONSOLE_BASE_URL: "https://us-east-2.console.aws.amazon.com/s3/buckets",
         BUTTON_POSITION: {
-            top: "20px",
-            right: "20px",
+            top: "10px",
+            right: "1600px",
         },
     };
 
@@ -168,6 +169,38 @@
                 display: none;
             `;
 
+            // Add parsed URL display area
+            const parsedUrlDisplay = document.createElement("div");
+            parsedUrlDisplay.style.cssText = `
+                margin-bottom: 15px;
+                padding: 10px;
+                background: #f5f5f5;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                display: none;
+            `;
+
+            const parsedUrlLabel = document.createElement("div");
+            parsedUrlLabel.textContent = "Parsed URL:";
+            parsedUrlLabel.style.cssText = `
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 5px;
+                font-weight: bold;
+            `;
+
+            const parsedUrlText = document.createElement("div");
+            parsedUrlText.style.cssText = `
+                font-family: monospace;
+                font-size: 12px;
+                color: #333;
+                word-break: break-all;
+                user-select: all;
+            `;
+
+            parsedUrlDisplay.appendChild(parsedUrlLabel);
+            parsedUrlDisplay.appendChild(parsedUrlText);
+
             // Add buttons
             const buttonContainer = document.createElement("div");
             buttonContainer.style.cssText = `
@@ -177,11 +210,12 @@
             `;
 
             // Helper function to validate and parse S3 path
-            function validateAndParseS3Path() {
+            function validateAndParseS3Path(showUrl = false) {
                 const s3Path = input.value.trim();
                 if (!s3Path) {
                     errorMsg.textContent = "Please enter an S3 path";
                     errorMsg.style.display = "block";
+                    parsedUrlDisplay.style.display = "none";
                     return null;
                 }
 
@@ -189,12 +223,37 @@
                 if (!parsed) {
                     errorMsg.textContent = "Invalid S3 path format. Expected format: s3://bucket-name/path";
                     errorMsg.style.display = "block";
+                    parsedUrlDisplay.style.display = "none";
                     return null;
                 }
 
                 errorMsg.style.display = "none";
-                return buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
+                const url = buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
+                
+                if (showUrl) {
+                    parsedUrlText.textContent = url;
+                    parsedUrlDisplay.style.display = "block";
+                }
+                
+                return url;
             }
+
+            // Parse button
+            const parseButton = document.createElement("button");
+            parseButton.textContent = "Parse";
+            parseButton.style.cssText = `
+                padding: 8px 16px;
+                background: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            `;
+
+            parseButton.onclick = () => {
+                validateAndParseS3Path(true);
+            };
 
             // Redirect button
             const redirectButton = document.createElement("button");
@@ -210,7 +269,7 @@
             `;
 
             redirectButton.onclick = () => {
-                const url = validateAndParseS3Path();
+                const url = validateAndParseS3Path(true);
                 if (url) {
                     modal.remove();
                     window.location.href = url;
@@ -232,7 +291,7 @@
             `;
 
             copyUrlButton.onclick = async () => {
-                const url = validateAndParseS3Path();
+                const url = validateAndParseS3Path(true);
                 if (url) {
                     try {
                         await navigator.clipboard.writeText(url);
@@ -286,12 +345,14 @@
 
             // Assemble and show dialog
             buttonContainer.appendChild(cancelButton);
+            buttonContainer.appendChild(parseButton);
             buttonContainer.appendChild(copyUrlButton);
             buttonContainer.appendChild(redirectButton);
             dialog.appendChild(titleElement);
             dialog.appendChild(descElement);
             dialog.appendChild(input);
             dialog.appendChild(errorMsg);
+            dialog.appendChild(parsedUrlDisplay);
             dialog.appendChild(buttonContainer);
             modal.appendChild(dialog);
             document.body.appendChild(modal);
