@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.1.0
+// @version      0.2.0
 // @description  Convert S3 path to AWS S3 Console URL and redirect
 // @author       gtfish
 // @match        https://us-east-2.console.aws.amazon.com/*
@@ -12,6 +12,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 
 // ==/UserScript==
+// 0.2.0: add button position config, add Copy URL button in dialog
 // 0.1.0: initial version, convert S3 path to AWS S3 Console URL and redirect
 
 (function () {
@@ -22,6 +23,10 @@
         UTILS_TIMEOUT: 10000,
         AWS_REGION: "us-east-2", // Default AWS region
         AWS_S3_CONSOLE_BASE_URL: "https://us-east-2.console.aws.amazon.com/s3/buckets",
+        BUTTON_POSITION: {
+            top: "20px",
+            right: "20px",
+        },
     };
 
     // Parse S3 path and extract bucket and prefix
@@ -171,9 +176,30 @@
                 gap: 10px;
             `;
 
-            const submitButton = document.createElement("button");
-            submitButton.textContent = "Submit";
-            submitButton.style.cssText = `
+            // Helper function to validate and parse S3 path
+            function validateAndParseS3Path() {
+                const s3Path = input.value.trim();
+                if (!s3Path) {
+                    errorMsg.textContent = "Please enter an S3 path";
+                    errorMsg.style.display = "block";
+                    return null;
+                }
+
+                const parsed = parseS3Path(s3Path);
+                if (!parsed) {
+                    errorMsg.textContent = "Invalid S3 path format. Expected format: s3://bucket-name/path";
+                    errorMsg.style.display = "block";
+                    return null;
+                }
+
+                errorMsg.style.display = "none";
+                return buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
+            }
+
+            // Redirect button
+            const redirectButton = document.createElement("button");
+            redirectButton.textContent = "Redirect";
+            redirectButton.style.cssText = `
                 padding: 8px 16px;
                 background: #009688;
                 color: white;
@@ -182,6 +208,49 @@
                 cursor: pointer;
                 font-size: 14px;
             `;
+
+            redirectButton.onclick = () => {
+                const url = validateAndParseS3Path();
+                if (url) {
+                    modal.remove();
+                    window.location.href = url;
+                    resolve(url);
+                }
+            };
+
+            // Copy URL button
+            const copyUrlButton = document.createElement("button");
+            copyUrlButton.textContent = "Copy URL";
+            copyUrlButton.style.cssText = `
+                padding: 8px 16px;
+                background: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            `;
+
+            copyUrlButton.onclick = async () => {
+                const url = validateAndParseS3Path();
+                if (url) {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        // Show success feedback
+                        const originalText = copyUrlButton.textContent;
+                        copyUrlButton.textContent = "Copied!";
+                        copyUrlButton.style.background = "#4CAF50";
+                        setTimeout(() => {
+                            copyUrlButton.textContent = originalText;
+                            copyUrlButton.style.background = "#2196F3";
+                        }, 2000);
+                    } catch (err) {
+                        console.error("Failed to copy URL:", err);
+                        errorMsg.textContent = "Failed to copy URL to clipboard";
+                        errorMsg.style.display = "block";
+                    }
+                }
+            };
 
             const cancelButton = document.createElement("button");
             cancelButton.textContent = "Cancel";
@@ -194,40 +263,18 @@
                 font-size: 14px;
             `;
 
-            function handleSubmit() {
-                const s3Path = input.value.trim();
-                if (!s3Path) {
-                    errorMsg.textContent = "Please enter an S3 path";
-                    errorMsg.style.display = "block";
-                    return;
-                }
-
-                const parsed = parseS3Path(s3Path);
-                if (!parsed) {
-                    errorMsg.textContent = "Invalid S3 path format. Expected format: s3://bucket-name/path";
-                    errorMsg.style.display = "block";
-                    return;
-                }
-
-                const url = buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
-                modal.remove();
-                window.location.href = url;
-                resolve(url);
-            }
-
             function handleCancel() {
                 modal.remove();
                 resolve(null);
             }
 
-            // Handle Enter key
+            // Handle Enter key - default to redirect
             input.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") {
-                    handleSubmit();
+                    redirectButton.click();
                 }
             });
 
-            submitButton.onclick = handleSubmit;
             cancelButton.onclick = handleCancel;
 
             // Close on background click
@@ -239,7 +286,8 @@
 
             // Assemble and show dialog
             buttonContainer.appendChild(cancelButton);
-            buttonContainer.appendChild(submitButton);
+            buttonContainer.appendChild(copyUrlButton);
+            buttonContainer.appendChild(redirectButton);
             dialog.appendChild(titleElement);
             dialog.appendChild(descElement);
             dialog.appendChild(input);
@@ -276,12 +324,12 @@
     // Create floating button to trigger dialog
     function createFloatingButton() {
         const button = document.createElement("button");
-        button.textContent = "S3 Path";
+        button.textContent = "Parse S3 Path";
         button.id = "aws-s3-path-redirector-btn";
         button.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: ${CONFIG.BUTTON_POSITION.top};
+            right: ${CONFIG.BUTTON_POSITION.right};
             z-index: 9999;
             padding: 10px 16px;
             background: #009688;
