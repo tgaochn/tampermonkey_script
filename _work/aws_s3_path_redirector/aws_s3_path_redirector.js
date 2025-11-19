@@ -1,17 +1,17 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.2.1
+// @version      0.2.2
 // @description  Convert S3 path to AWS S3 Console URL and redirect
 // @author       gtfish
-// @match        https://us-east-2.console.aws.amazon.com/*
-// @match        https://*.console.aws.amazon.com/*
+// @match        https://*.console.aws.amazon.com/s3/*
 // @grant        none
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 
 // ==/UserScript==
+// 0.2.2: update match to https://*.console.aws.amazon.com/s3/*
 // 0.2.1: add Parse button to show parsed URL, Copy URL also shows parsed URL
 // 0.2.0: add button position config, add Copy URL button in dialog
 // 0.1.0: initial version, convert S3 path to AWS S3 Console URL and redirect
