@@ -8,8 +8,8 @@
 // @grant        none
 // @license MIT
 // @run-at       document-start
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/wide_zhihu/wide_zhihu.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/_common/wide_zhihu/wide_zhihu.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/wide_zhihu/wide_zhihu.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/wide_zhihu/wide_zhihu.js
 // ==/UserScript==
 // 0.2.0: fix: remove transform property that breaks fixed positioning of bottom action bar
 // 0.1.2: disable overly broad CSS selectors that hide answer action bar
