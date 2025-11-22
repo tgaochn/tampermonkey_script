@@ -7,10 +7,10 @@
 // @match        http*://*.xxxxx520.cam/*
 // @grant        none
 // @license      GPL-3.0 License
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
 // ==/UserScript==
-// 0.1.0: Refactored to support multiple URL patterns and keyword patterns
+// 0.1.0: init
 
 (function () {
     'use strict';
