@@ -10,8 +10,8 @@
 // @grant       GM_setValue
 // @grant       GM_registerMenuCommand
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/LLM_add_buttons/LLM_add_buttons.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/LLM_add_buttons/LLM_add_buttons.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // ==/UserScript==
 // LLM_add_buttons 1.1.8: update prompt
 // LLM_add_buttons 1.1.7: update prompt
