@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         wide_zhihu
+// @name         知乎宽屏显示
 // @namespace    http://tampermonkey.net/
 // @version      0.2.3
 // @description  Sets custom widths and hides specified elements on Zhihu
