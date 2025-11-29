@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        LLM 宽屏
+// @name        LLM 宽屏显示
 // @namespace   https://claude.ai/
 // @version     0.1.1
 // @description 使 LLM 的内容更宽敞，提升阅读体验
