@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Slickdeals Relative Time
+// @name         Slickdeals 改时间格式
 // @version      0.1.5
 // @description  在 Slickdeals 网站的日期后面添加相对时间显示 (如 "3 days ago")
 // @author       gtfish
@@ -25,7 +25,8 @@
 
     // Regular expression to match date format: "Oct 27, 2025 08:27 PM"
     // This pattern matches: MonthName Day, Year Hour:Minute AM/PM
-    const DATE_REGEX = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+(AM|PM)\b/gi;
+    const DATE_REGEX =
+        /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+(AM|PM)\b/gi;
 
     // Marker attribute to identify already processed content
     const PROCESSED_ATTR = "data-slickdeals-time-processed";
@@ -117,7 +118,7 @@
      */
     function hasRelativeTimeSpan(element) {
         if (!element || !element.parentNode) return false;
-        
+
         // Check if next sibling is our relative time span
         const nextSibling = element.nextSibling;
         if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
@@ -125,18 +126,20 @@
                 return true;
             }
         }
-        
+
         // Check all siblings for our span
         const siblings = element.parentNode.childNodes;
         for (let i = 0; i < siblings.length; i++) {
             const sibling = siblings[i];
-            if (sibling.nodeType === Node.ELEMENT_NODE && 
-                sibling.classList && 
-                sibling.classList.contains(PROCESSED_MARKER_CLASS)) {
+            if (
+                sibling.nodeType === Node.ELEMENT_NODE &&
+                sibling.classList &&
+                sibling.classList.contains(PROCESSED_MARKER_CLASS)
+            ) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -234,7 +237,7 @@
             if (node.tagName === "SCRIPT" || node.tagName === "STYLE" || node.tagName === "NOSCRIPT") {
                 return;
             }
-            
+
             // Skip our added elements
             if (node.classList && node.classList.contains(PROCESSED_MARKER_CLASS)) {
                 return;
@@ -267,16 +270,16 @@
      */
     function initialize() {
         console.log("[Slickdeals Relative Time] Initializing...");
-        
+
         // Initial processing
         processPage();
         initialProcessingDone = true;
-        
+
         // Set up mutation observer
         const observer = new MutationObserver((mutations) => {
             // Batch process mutations to avoid excessive processing
             const nodesToProcess = new Set();
-            
+
             mutations.forEach((mutation) => {
                 // Process added nodes
                 mutation.addedNodes.forEach((node) => {
@@ -285,7 +288,7 @@
                     }
                 });
             });
-            
+
             // Process all collected nodes
             if (nodesToProcess.size > 0) {
                 requestAnimationFrame(() => {
@@ -317,4 +320,3 @@
         setTimeout(initialize, 2000);
     }
 })();
-

@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Amazon Subscribe & Save Batch Canceller
+// @name         Amazon取消所有订阅
 // @namespace    http://tampermonkey.net/
 // @version      0.1.0
-// @description  Batch cancel all Amazon subscriptions on the Subscribe & Save page.
+// @description  批量取消所有Amazon订阅
 // @match        https://www.amazon.com/auto-deliveries/*
 // @grant        none
 // @license      MIT

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Block AdBlock Upgrade Pages
+// @name         阻止AdBlock提示
 // @version      0.1.1
 // @description  自动关闭 AdBlock 的升级和付费推广页面
 // @author       gtfish
@@ -32,6 +32,4 @@
             window.location.href = "https://www.google.com/";
         }
     }, 100);
-
 })();
-
