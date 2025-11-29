@@ -6,7 +6,7 @@
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*
 // @match        http*://www.javbus.com/*
-// @include      /https?:\/\/www\.hacg\..*\/wp\/.*/
+// @match        http*://www.hacg.wp/*
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E6%8F%90%E5%8F%96%E7%A3%81%E5%8A%9B%E9%93%BE/GetMagnetLinks.js
