@@ -6,8 +6,8 @@
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @match https://store.steampowered.com/app/*
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/CrackedGameLinkOnSteam/CrackedGameLinkOnSteam.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Steam%E6%B7%BB%E5%8A%A0%E7%A0%B4%E8%A7%A3%E7%89%88%E6%B8%B8%E6%88%8F%E9%93%BE%E6%8E%A5/CrackedGameLinkOnSteam.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Steam%E6%B7%BB%E5%8A%A0%E7%A0%B4%E8%A7%A3%E7%89%88%E6%B8%B8%E6%88%8F%E9%93%BE%E6%8E%A5/CrackedGameLinkOnSteam.js
 // ==/UserScript==
 
 // changelog:
@@ -25,9 +25,9 @@
 // 0.4.1: Add bilibili mapping functionality with external storage
 // 0.4.0: Add nexusmods mapping functionality with external storage
 // 0.3.5: 固定按钮顺序
-// 0.3.4: update searching keyword for 风灵月影 
-// 0.3.3: update searching keyword for bilibili 
-// 0.3.2: update searching keyword in google for nexusmods 
+// 0.3.4: update searching keyword for 风灵月影
+// 0.3.3: update searching keyword for bilibili
+// 0.3.2: update searching keyword in google for nexusmods
 
 // forked from "Steam Search For SkidrowReloaded, IGG-Games, and x1337x."
 // added gamer520
@@ -35,10 +35,12 @@
 // add workshop/nexusmods link
 
 (function () {
-    'use strict';
+    "use strict";
 
     const appid = (window.location.pathname.match(/\/app\/(\d+)/) ?? [null, null])[1];
-    if (appid === null) { return; }
+    if (appid === null) {
+        return;
+    }
 
     // Helper function to apply consistent inline styles to custom buttons
     function applyButtonStyles(button) {
@@ -55,24 +57,24 @@
         button.style.whiteSpace = "nowrap";
         button.style.border = "none";
         button.style.boxSizing = "border-box";
-        
+
         // Add hover effect
-        button.addEventListener('mouseenter', function() {
+        button.addEventListener("mouseenter", function () {
             this.style.color = "#fff";
         });
-        button.addEventListener('mouseleave', function() {
+        button.addEventListener("mouseleave", function () {
             this.style.color = "#D2E885";
         });
     }
 
     // NexusMods mapping storage functions using GM_getValue/GM_setValue for cross-device sync
     function getNexusModsMapping() {
-        const stored = GM_getValue('nexusmods_mapping', '{}');
+        const stored = GM_getValue("nexusmods_mapping", "{}");
         return JSON.parse(stored);
     }
 
     function saveNexusModsMapping(mapping) {
-        GM_setValue('nexusmods_mapping', JSON.stringify(mapping));
+        GM_setValue("nexusmods_mapping", JSON.stringify(mapping));
     }
 
     function addNexusModsMapping(steamId, nexusGameName) {
@@ -89,12 +91,12 @@
 
     // Bilibili mapping storage functions using GM_getValue/GM_setValue for cross-device sync
     function getBilibiliMapping() {
-        const stored = GM_getValue('bilibili_mapping', '{}');
+        const stored = GM_getValue("bilibili_mapping", "{}");
         return JSON.parse(stored);
     }
 
     function saveBilibiliMapping(mapping) {
-        GM_setValue('bilibili_mapping', JSON.stringify(mapping));
+        GM_setValue("bilibili_mapping", JSON.stringify(mapping));
     }
 
     function addBilibiliMapping(steamId, bilibiliGameName) {
@@ -111,7 +113,7 @@
 
     // Function to show toast notification (non-blocking, auto-dismiss after 3 seconds)
     function showToast(message) {
-        const toast = document.createElement('div');
+        const toast = document.createElement("div");
         toast.style.cssText = `
             position: fixed;
             top: 20px;
@@ -128,9 +130,9 @@
             animation: slideIn 0.3s ease-out;
         `;
         toast.textContent = message;
-        
+
         // Add slide-in animation
-        const style = document.createElement('style');
+        const style = document.createElement("style");
         style.textContent = `
             @keyframes slideIn {
                 from {
@@ -154,12 +156,12 @@
             }
         `;
         document.head.appendChild(style);
-        
+
         document.body.appendChild(toast);
-        
+
         // Auto-dismiss after 3 seconds
         setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease-out';
+            toast.style.animation = "slideOut 0.3s ease-out";
             setTimeout(() => {
                 if (toast.parentNode) {
                     document.body.removeChild(toast);
@@ -170,10 +172,10 @@
 
     // Function to show mapping input dialog
     function showMappingDialog() {
-        const nexusGameName = prompt('请输入NexusMods上的游戏名称用于直接访问 \n例如: hollowknightsilksong');
+        const nexusGameName = prompt("请输入NexusMods上的游戏名称用于直接访问 \n例如: hollowknightsilksong");
         if (nexusGameName && nexusGameName.trim()) {
             addNexusModsMapping(appid, nexusGameName.trim());
-            showToast('映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。');
+            showToast("映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。");
             // Update button state immediately
             updateAddMappingButton();
         }
@@ -181,10 +183,10 @@
 
     // Function to show bilibili mapping input dialog
     function showBilibiliMappingDialog() {
-        const bilibiliGameName = prompt('请输入B站搜索用的中文游戏名称 \n例如: 空洞骑士丝之歌');
+        const bilibiliGameName = prompt("请输入B站搜索用的中文游戏名称 \n例如: 空洞骑士丝之歌");
         if (bilibiliGameName && bilibiliGameName.trim()) {
             addBilibiliMapping(appid, bilibiliGameName.trim());
-            showToast('B站映射已添加！现在可以点击B站按钮使用中文名称搜索。');
+            showToast("B站映射已添加！现在可以点击B站按钮使用中文名称搜索。");
             // Update button state immediately
             updateAddBilibiliMappingButton();
         }
@@ -193,9 +195,9 @@
     // Generic function to show mapping verification dialog with clickable URL
     function showMappingVerificationDialog(config) {
         const { title, nameLabel, nameValue, urlLabel, url, clearButtonId, closeButtonId, onClear } = config;
-        
+
         // Create custom dialog
-        const dialog = document.createElement('div');
+        const dialog = document.createElement("div");
         dialog.style.cssText = `
             position: fixed;
             top: 50%;
@@ -211,7 +213,7 @@
             max-width: 500px;
             text-align: center;
         `;
-        
+
         dialog.innerHTML = `
             <h3 style="margin-top: 0; color: #333;">${title}</h3>
             <p style="color: #000;"><strong>${nameLabel}:</strong> ${nameValue}</p>
@@ -247,9 +249,9 @@
                 ">关闭</button>
             </div>
         `;
-        
+
         // Add event listeners using event delegation
-        dialog.addEventListener('click', function(e) {
+        dialog.addEventListener("click", function (e) {
             if (e.target.id === clearButtonId) {
                 onClear();
                 document.body.removeChild(dialog);
@@ -257,7 +259,7 @@
                 document.body.removeChild(dialog);
             }
         });
-        
+
         // Add to page
         document.body.appendChild(dialog);
     }
@@ -265,56 +267,56 @@
     // Function to show nexusmods mapping verification dialog
     function showNexusModsMappingVerificationDialog(nexusGameName) {
         const fullUrl = `https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`;
-        
+
         showMappingVerificationDialog({
-            title: 'NexusMods 映射信息',
-            nameLabel: '游戏名称',
+            title: "NexusMods 映射信息",
+            nameLabel: "游戏名称",
             nameValue: nexusGameName,
-            urlLabel: '完整URL',
+            urlLabel: "完整URL",
             url: fullUrl,
-            clearButtonId: 'clearMapping',
-            closeButtonId: 'closeDialog',
+            clearButtonId: "clearMapping",
+            closeButtonId: "closeDialog",
             onClear: () => {
                 removeNexusModsMapping(appid);
                 updateAddMappingButton();
-            }
+            },
         });
     }
 
     // Function to show bilibili mapping verification dialog
     function showBilibiliMappingVerificationDialog(bilibiliGameName) {
         const searchUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(bilibiliGameName)}`;
-        
+
         showMappingVerificationDialog({
-            title: 'B站搜索映射信息',
-            nameLabel: '搜索名称',
+            title: "B站搜索映射信息",
+            nameLabel: "搜索名称",
             nameValue: bilibiliGameName,
-            urlLabel: '搜索URL',
+            urlLabel: "搜索URL",
             url: searchUrl,
-            clearButtonId: 'clearBilibiliMapping',
-            closeButtonId: 'closeBilibiliDialog',
+            clearButtonId: "clearBilibiliMapping",
+            closeButtonId: "closeBilibiliDialog",
             onClear: () => {
                 removeBilibiliMapping(appid);
                 updateAddBilibiliMappingButton();
-            }
+            },
         });
     }
 
     // Function to update add mapping button state dynamically
     function updateAddMappingButton() {
         if (!addMappingButton) return;
-        
+
         const mapping = getNexusModsMapping();
         const nexusGameName = mapping[appid];
-        
+
         // Remove old event listeners by cloning the button
         const newButton = addMappingButton.cloneNode(true);
         addMappingButton.parentNode.replaceChild(newButton, addMappingButton);
         addMappingButton = newButton;
-        
+
         if (nexusGameName) {
             // Mapping exists - show as disabled/gray with clear option
-            addMappingButton.innerHTML = '<span>✓ nexusmods</span>';
+            addMappingButton.innerHTML = "<span>✓ nexusmods</span>";
             addMappingButton.style.backgroundColor = "#666666";
             addMappingButton.style.cursor = "default";
             const showDialog = function () {
@@ -322,23 +324,25 @@
             };
             addMappingButton.onclick = showDialog;
             // Add middle-click support
-            addMappingButton.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            addMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         } else {
             // No mapping - show as active
-            addMappingButton.innerHTML = '<span>+ nexusmods</span>';
+            addMappingButton.innerHTML = "<span>+ nexusmods</span>";
             addMappingButton.style.backgroundColor = "#902600";
             const showDialog = function () {
                 showMappingDialog();
             };
             addMappingButton.onclick = showDialog;
             // Add middle-click support
-            addMappingButton.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            addMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
@@ -349,18 +353,18 @@
     // Function to update add bilibili mapping button state dynamically
     function updateAddBilibiliMappingButton() {
         if (!addBilibiliMappingButton) return;
-        
+
         const mapping = getBilibiliMapping();
         const bilibiliGameName = mapping[appid];
-        
+
         // Remove old event listeners by cloning the button
         const newButton = addBilibiliMappingButton.cloneNode(true);
         addBilibiliMappingButton.parentNode.replaceChild(newButton, addBilibiliMappingButton);
         addBilibiliMappingButton = newButton;
-        
+
         if (bilibiliGameName) {
             // Mapping exists - show as disabled/gray with clear option
-            addBilibiliMappingButton.innerHTML = '<span>✓ B站</span>';
+            addBilibiliMappingButton.innerHTML = "<span>✓ B站</span>";
             addBilibiliMappingButton.style.backgroundColor = "#666666";
             addBilibiliMappingButton.style.cursor = "default";
             const showDialog = function () {
@@ -368,23 +372,25 @@
             };
             addBilibiliMappingButton.onclick = showDialog;
             // Add middle-click support
-            addBilibiliMappingButton.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            addBilibiliMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         } else {
             // No mapping - show as active
-            addBilibiliMappingButton.innerHTML = '<span>+ B站</span>';
+            addBilibiliMappingButton.innerHTML = "<span>+ B站</span>";
             addBilibiliMappingButton.style.backgroundColor = "#6f4e37";
             const showDialog = function () {
                 showBilibiliMappingDialog();
             };
             addBilibiliMappingButton.onclick = showDialog;
             // Add middle-click support
-            addBilibiliMappingButton.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            addBilibiliMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
@@ -394,7 +400,7 @@
 
     // Create workshop button (doesn't need game name)
     var buttonWorkshop = document.createElement("a");
-    buttonWorkshop.innerHTML = '<span>mods - workshop</span>';
+    buttonWorkshop.innerHTML = "<span>mods - workshop</span>";
     buttonWorkshop.style.backgroundColor = "#902600";
     applyButtonStyles(buttonWorkshop);
     buttonWorkshop.onclick = function () {
@@ -402,21 +408,22 @@
         window.open(workshopUrl);
     };
     // Add middle-click support
-    buttonWorkshop.addEventListener('mousedown', function(e) {
-        if (e.button === 1) { // Middle mouse button
+    buttonWorkshop.addEventListener("mousedown", function (e) {
+        if (e.button === 1) {
+            // Middle mouse button
             e.preventDefault();
             const workshopUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&actualsort=lastupdated&browsesort=lastupdated&p=1`;
             window.open(workshopUrl);
         }
     });
-    
+
     // Array to store all buttons in desired order
     var allButtons = [];
-    
+
     // Global reference to add mapping button for dynamic updates
     var addMappingButton = null;
     var addBilibiliMappingButton = null;
-    
+
     // This will fetch the English name and create most buttons
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
         .then(async (response) => {
@@ -436,22 +443,34 @@
                 var modifiedGameName = gameName.replace(/_/g, "+");
 
                 // Create all buttons
-                var buttonSkidrow = createButton("SkidrowReloaded", "#007037", 
-                    "https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName));
-                
-                var buttonIGG = createButton("IGG", "#3B3B3B", 
-                    "https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
-                
-                var buttonTorrent = createButton("x1337x", "#3B3B3B", 
-                    "https://x1337x.ws/srch?search=" + encodeURIComponent(gameName));
-                
+                var buttonSkidrow = createButton(
+                    "SkidrowReloaded",
+                    "#007037",
+                    "https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName)
+                );
+
+                var buttonIGG = createButton(
+                    "IGG",
+                    "#3B3B3B",
+                    "https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                );
+
+                var buttonTorrent = createButton(
+                    "x1337x",
+                    "#3B3B3B",
+                    "https://x1337x.ws/srch?search=" + encodeURIComponent(gameName)
+                );
+
                 // Create nexusmods button with mapping logic
                 var buttonNexusmods = createNexusModsButton(modifiedGameName);
-                
+
                 var bilibili = createBilibiliButton(modifiedGameName);
-                
-                var FLiNG = createButton("风灵月影", "#6f4e37", 
-                    "https://flingtrainer.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+
+                var FLiNG = createButton(
+                    "风灵月影",
+                    "#6f4e37",
+                    "https://flingtrainer.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                );
 
                 // Create add mapping button with dynamic state
                 var buttonAddMapping = createAddMappingButton();
@@ -460,22 +479,22 @@
                 // Create add bilibili mapping button with dynamic state
                 var buttonAddBilibiliMapping = createAddBilibiliMappingButton();
                 addBilibiliMappingButton = buttonAddBilibiliMapping; // Store reference for dynamic updates
-                
+
                 // Store buttons in the desired order
                 allButtons = [
-                    buttonSkidrow,       // 2. SkidrowReloaded
-                    buttonIGG,           // 3. IGG
-                    buttonTorrent,       // 4. x1337x
+                    buttonSkidrow, // 2. SkidrowReloaded
+                    buttonIGG, // 3. IGG
+                    buttonTorrent, // 4. x1337x
 
-                    buttonWorkshop,      // 5. Workshop
-                    buttonNexusmods,     // 6. NexusMods 
-                    buttonAddMapping,    // 6.5. Add NexusMods Mapping
-                    
-                    bilibili,            // 7. Bilibili
+                    buttonWorkshop, // 5. Workshop
+                    buttonNexusmods, // 6. NexusMods
+                    buttonAddMapping, // 6.5. Add NexusMods Mapping
+
+                    bilibili, // 7. Bilibili
                     buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
-                    FLiNG                // 8. FLiNG
+                    FLiNG, // 8. FLiNG
                 ];
-                
+
                 // We'll wait for the second fetch before adding buttons
                 return fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=chinese`);
             }
@@ -495,17 +514,20 @@
                 var modifiedGameName = gameName.replace(/_/g, "+");
 
                 // Create gamer520 button
-                var button520 = createButton("gamer520", "#007037", 
-                    "https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
-                
+                var button520 = createButton(
+                    "gamer520",
+                    "#007037",
+                    "https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                );
+
                 // Insert gamer520 at the desired position (before SkidrowReloaded)
                 allButtons.splice(0, 0, button520);
-                
+
                 // Now add all buttons in order
                 addButtonsInOrder();
             }
         })
-        .catch(error => {
+        .catch((error) => {
             console.error("Error fetching game details:", error);
             // If there was an error, still add the buttons we have
             addButtonsInOrder();
@@ -514,27 +536,31 @@
     // Helper function to create nexusmods button with mapping logic
     function createNexusModsButton(modifiedGameName) {
         var button = document.createElement("a");
-        button.innerHTML = '<span>mods - nexusmods</span>';
+        button.innerHTML = "<span>mods - nexusmods</span>";
         button.style.backgroundColor = "#902600";
         applyButtonStyles(button);
-        
+
         const openNexusModsLink = function () {
             const mapping = getNexusModsMapping();
             const nexusGameName = mapping[appid];
-            
+
             if (nexusGameName) {
                 // Direct link to nexusmods game page
                 window.open(`https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`);
             } else {
                 // Fallback to Google search
-                window.open("https://www.google.com/search?q=nexusmods+mods+download+" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                window.open(
+                    "https://www.google.com/search?q=nexusmods+mods+download+" +
+                        encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                );
             }
         };
-        
+
         button.onclick = openNexusModsLink;
         // Add middle-click support
-        button.addEventListener('mousedown', function(e) {
-            if (e.button === 1) { // Middle mouse button
+        button.addEventListener("mousedown", function (e) {
+            if (e.button === 1) {
+                // Middle mouse button
                 e.preventDefault();
                 openNexusModsLink();
             }
@@ -545,27 +571,31 @@
     // Helper function to create bilibili button with mapping logic
     function createBilibiliButton(modifiedGameName) {
         var button = document.createElement("a");
-        button.innerHTML = '<span>B站</span>';
+        button.innerHTML = "<span>B站</span>";
         button.style.backgroundColor = "#6f4e37";
         applyButtonStyles(button);
-        
+
         const openBilibiliLink = function () {
             const mapping = getBilibiliMapping();
             const bilibiliGameName = mapping[appid];
-            
+
             if (bilibiliGameName) {
                 // Use mapped Chinese name for search
                 window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(bilibiliGameName));
             } else {
                 // Fallback to English name search
-                window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+"));
+                window.open(
+                    "https://search.bilibili.com/all?keyword=" +
+                        encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                );
             }
         };
-        
+
         button.onclick = openBilibiliLink;
         // Add middle-click support
-        button.addEventListener('mousedown', function(e) {
-            if (e.button === 1) { // Middle mouse button
+        button.addEventListener("mousedown", function (e) {
+            if (e.button === 1) {
+                // Middle mouse button
                 e.preventDefault();
                 openBilibiliLink();
             }
@@ -577,14 +607,14 @@
     function createAddMappingButton() {
         var button = document.createElement("a");
         applyButtonStyles(button);
-        
+
         // Check if mapping already exists
         const mapping = getNexusModsMapping();
         const nexusGameName = mapping[appid];
-        
+
         if (nexusGameName) {
             // Mapping exists - show as disabled/gray with clear option
-            button.innerHTML = '<span>✓ nexusmods</span>';
+            button.innerHTML = "<span>✓ nexusmods</span>";
             button.style.backgroundColor = "#666666";
             button.style.cursor = "default";
             const showDialog = function () {
@@ -592,29 +622,31 @@
             };
             button.onclick = showDialog;
             // Add middle-click support
-            button.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         } else {
             // No mapping - show as active
-            button.innerHTML = '<span>+ nexusmods</span>';
+            button.innerHTML = "<span>+ nexusmods</span>";
             button.style.backgroundColor = "#902600";
             const showDialog = function () {
                 showMappingDialog();
             };
             button.onclick = showDialog;
             // Add middle-click support
-            button.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         }
-        
+
         return button;
     }
 
@@ -622,14 +654,14 @@
     function createAddBilibiliMappingButton() {
         var button = document.createElement("a");
         applyButtonStyles(button);
-        
+
         // Check if mapping already exists
         const mapping = getBilibiliMapping();
         const bilibiliGameName = mapping[appid];
-        
+
         if (bilibiliGameName) {
             // Mapping exists - show as disabled/gray with clear option
-            button.innerHTML = '<span>✓ B站中文名</span>';
+            button.innerHTML = "<span>✓ B站中文名</span>";
             button.style.backgroundColor = "#666666";
             button.style.cursor = "default";
             const showDialog = function () {
@@ -637,51 +669,54 @@
             };
             button.onclick = showDialog;
             // Add middle-click support
-            button.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         } else {
             // No mapping - show as active
-            button.innerHTML = '<span>+ B站中文名</span>';
+            button.innerHTML = "<span>+ B站中文名</span>";
             button.style.backgroundColor = "#6f4e37";
             const showDialog = function () {
                 showBilibiliMappingDialog();
             };
             button.onclick = showDialog;
             // Add middle-click support
-            button.addEventListener('mousedown', function(e) {
-                if (e.button === 1) { // Middle mouse button
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    // Middle mouse button
                     e.preventDefault();
                     showDialog();
                 }
             });
         }
-        
+
         return button;
     }
 
     // Helper function to create buttons
     function createButton(text, color, url) {
         var button = document.createElement("a");
-        button.innerHTML = '<span>' + text + '</span>';
+        button.innerHTML = "<span>" + text + "</span>";
         button.style.backgroundColor = color;
         applyButtonStyles(button);
         button.onclick = function () {
             window.open(url);
         };
         // Add middle-click support
-        button.addEventListener('mousedown', function(e) {
-            if (e.button === 1) { // Middle mouse button
+        button.addEventListener("mousedown", function (e) {
+            if (e.button === 1) {
+                // Middle mouse button
                 e.preventDefault();
                 window.open(url);
             }
         });
         return button;
     }
-    
+
     // Helper function to add all buttons in order
     function addButtonsInOrder() {
         // Create a container for all custom buttons
@@ -696,7 +731,7 @@
             border-radius: 4px;
             box-shadow: 0 0 5px rgba(154, 124, 124, 0.5);
         `;
-        
+
         // Create first row (game download sites: gamer520, SkidrowReloaded, IGG, x1337x)
         const row1 = document.createElement("div");
         row1.style.cssText = `
@@ -705,7 +740,7 @@
             gap: 4px;
             flex-wrap: wrap;
         `;
-        
+
         // Create second row (mod related: workshop, nexusmods, + nexusmods)
         const row2 = document.createElement("div");
         row2.style.cssText = `
@@ -714,7 +749,7 @@
             gap: 4px;
             flex-wrap: wrap;
         `;
-        
+
         // Create third row (remaining: B站, + B站中文名, 风灵月影)
         const row3 = document.createElement("div");
         row3.style.cssText = `
@@ -723,7 +758,7 @@
             gap: 4px;
             flex-wrap: wrap;
         `;
-        
+
         // Add buttons to respective rows
         for (var i = 0; i < allButtons.length; i++) {
             allButtons[i].style.marginLeft = "0"; // Reset margin since we're using gap
@@ -738,15 +773,15 @@
                 row3.appendChild(allButtons[i]);
             }
         }
-        
+
         // Add rows to container
         buttonContainer.appendChild(row1);
         buttonContainer.appendChild(row2);
         buttonContainer.appendChild(row3);
-        
+
         // Try to insert after #game_highlights > div.leftcol > div
         let insertTarget = document.querySelector("#game_highlights > div.leftcol > div");
-        
+
         if (insertTarget && insertTarget.parentNode) {
             // Insert after the target element
             if (insertTarget.nextSibling) {
@@ -758,7 +793,7 @@
             // Fallback: use fixed position at top of viewport
             console.warn("#game_highlights > div.leftcol > div not found, using fixed position");
             buttonContainer.style.position = "fixed";
-            buttonContainer.style.top = "80px";  // Below Steam header
+            buttonContainer.style.top = "80px"; // Below Steam header
             buttonContainer.style.left = "50%";
             buttonContainer.style.transform = "translateX(-50%)";
             buttonContainer.style.zIndex = "9999";
