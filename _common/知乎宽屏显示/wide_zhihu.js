@@ -8,8 +8,8 @@
 // @grant        none
 // @license MIT
 // @run-at       document-start
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/wide_zhihu/wide_zhihu.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/wide_zhihu/wide_zhihu.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E7%9F%A5%E4%B9%8E%E5%AE%BD%E5%B1%8F%E6%98%BE%E7%A4%BA/wide_zhihu.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E7%9F%A5%E4%B9%8E%E5%AE%BD%E5%B1%8F%E6%98%BE%E7%A4%BA/wide_zhihu.js
 // ==/UserScript==
 // 0.2.3: center the entire content container on homepage
 // 0.2.2: use percentage width with auto margins to fix content alignment
