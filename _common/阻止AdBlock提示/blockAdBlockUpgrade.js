@@ -8,8 +8,8 @@
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/blockAdBlockUpgrade/blockAdBlockUpgrade.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/blockAdBlockUpgrade/blockAdBlockUpgrade.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E9%98%BB%E6%AD%A2AdBlock%E6%8F%90%E7%A4%BA/blockAdBlockUpgrade.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E9%98%BB%E6%AD%A2AdBlock%E6%8F%90%E7%A4%BA/blockAdBlockUpgrade.js
 
 // ==/UserScript==
 // 0.1.1: add match for getadblock.com

@@ -6,8 +6,8 @@
 // @match        https://www.amazon.com/auto-deliveries/*
 // @grant        none
 // @license      MIT
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_game/fetchKeywordOnGamer520/fetchKeywordOnGamer520.js
+// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/Amazon%E5%8F%96%E6%B6%88%E6%89%80%E6%9C%89%E8%AE%A2%E9%98%85/cancelAmazonSubscribe.js
+// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/Amazon%E5%8F%96%E6%B6%88%E6%89%80%E6%9C%89%E8%AE%A2%E9%98%85/cancelAmazonSubscribe.js
 
 // ==/UserScript==
 // 0.1.0: Initial version

@@ -9,8 +9,8 @@
 // @include      /https?:\/\/www\.hacg\..*\/wp\/.*/
 // @grant        none
 // @license      GPL-3.0 License
-// @updateURL       https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/GetMagnetLinks/GetMagnetLinks.js
-// @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/GetMagnetLinks/GetMagnetLinks.js
+// @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E6%8F%90%E5%8F%96%E7%A3%81%E5%8A%9B%E9%93%BE/GetMagnetLinks.js
+// @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E6%8F%90%E5%8F%96%E7%A3%81%E5%8A%9B%E9%93%BE/GetMagnetLinks.js
 // ==/UserScript==
 // 0.4.0: 添加了对ed2k链接的支持
 

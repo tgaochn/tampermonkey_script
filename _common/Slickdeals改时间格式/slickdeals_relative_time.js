@@ -8,8 +8,8 @@
 // @grant        none
 // @license      GNU General Public License v3.0
 // @run-at       document-idle
-// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
-// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/slickdeals_relative_time/slickdeals_relative_time.js
+// @updateURL    https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/Slickdeals%E6%94%B9%E6%97%B6%E9%97%B4%E6%A0%BC%E5%BC%8F/slickdeals_relative_time.js
+// @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/Slickdeals%E6%94%B9%E6%97%B6%E9%97%B4%E6%A0%BC%E5%BC%8F/slickdeals_relative_time.js
 // ==/UserScript==
 // 0.1.5: increase font size for relative time
 // 0.1.4: wait for hydration to complete before processing, use aggressive re-processing strategy
