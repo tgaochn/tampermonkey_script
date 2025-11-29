@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 添加按钮
 // @namespace   https://claude.ai/
-// @version     1.1.8
+// @version     1.1.9
 // @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*

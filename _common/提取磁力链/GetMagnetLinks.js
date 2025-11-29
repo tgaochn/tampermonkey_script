@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         磁力链接提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.4.1
 // @description  提取该网页的所有磁力链接
 // @match        http*://www.w3schools.com/*
 // @match        http*://nutbread.github.io/t2m/*

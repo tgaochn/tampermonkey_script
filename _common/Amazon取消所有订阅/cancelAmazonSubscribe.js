@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon 取消所有订阅
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  批量取消所有Amazon订阅
 // @match        https://www.amazon.com/auto-deliveries/*
 // @grant        none

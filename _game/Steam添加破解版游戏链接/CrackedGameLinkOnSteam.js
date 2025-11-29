@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.6
+// @version 0.5.7
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gamer520 关键词提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  提取该网页的指定关键词
 // @match        http*://*.gamer520.com/*
 // @match        http*://*.xxxxx520.cam/*

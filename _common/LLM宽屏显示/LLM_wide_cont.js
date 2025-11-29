@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 宽屏显示
 // @namespace   https://claude.ai/
-// @version     0.1.1
+// @version     0.1.2
 // @description 使 LLM 的内容更宽敞，提升阅读体验
 // @author      gtfish
 // @match       https://claude.ai/*

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Slickdeals 改时间格式
-// @version      0.1.5
+// @version      0.1.6
 // @description  在 Slickdeals 网站的日期后面添加相对时间显示 (如 "3 days ago")
 // @author       gtfish
 // @match        https://slickdeals.net/*

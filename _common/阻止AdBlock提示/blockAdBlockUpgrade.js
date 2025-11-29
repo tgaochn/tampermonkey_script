@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         阻止 AdBlock 提示
-// @version      0.1.1
+// @version      0.1.2
 // @description  自动关闭 AdBlock 的升级和付费推广页面
 // @author       gtfish
 // @match        https://getadblock.com/en/update/*
