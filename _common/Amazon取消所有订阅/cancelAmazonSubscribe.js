@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Amazon取消所有订阅
+// @name         Amazon 取消所有订阅
 // @namespace    http://tampermonkey.net/
 // @version      0.1.0
 // @description  批量取消所有Amazon订阅

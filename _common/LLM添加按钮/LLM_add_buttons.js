@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name        LLM_add_buttons
+// @name        LLM 添加按钮
 // @namespace   https://claude.ai/
 // @version     1.1.8
-// @description Adds buttons for Claude and Gemini (more LLMs will be supported in the future)
+// @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*
 // @match       https://gemini.google.com/*

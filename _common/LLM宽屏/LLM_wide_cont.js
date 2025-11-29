@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name        LLM_wide_cont
+// @name        LLM 宽屏
 // @namespace   https://claude.ai/
 // @version     0.1.1
-// @description Make the contents in LLM wider
+// @description 使 LLM 的内容更宽敞，提升阅读体验
 // @author      gtfish
 // @match       https://claude.ai/*
 // @match       https://gemini.google.com/*
