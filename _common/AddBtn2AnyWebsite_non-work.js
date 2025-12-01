@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.2
+// @version      1.0.3
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -74,7 +74,8 @@
         // https://www.amazon.com/gp/css/order-history
         {
             pattern: /^https:\/\/www\.amazon\.com\/gp\/css\/order-history.*$/,
-            buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            // buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            buttonPosition: { top: "100px", left: "0px" }, // Custom position
             customButtons: (url, utils) => {
                 return [utils.createButtonOpenUrl("联系客服", "https://www.amazon.com/hz/contact-us")];
             },
@@ -83,9 +84,10 @@
         // ! amazon: 取消所有订阅
         {
             pattern: /^https:\/\/www\.amazon\.com\/gp\/subscribe-and-save\/manager\/viewsubscriptions.*$/,
-            buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            // buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            buttonPosition: { top: "220px", left: "0px" }, // Custom position
             customButtons: (url, utils) => {
-                return [utils.createButtonOpenUrl("去订阅管理页面取消所有订阅", "https://www.amazon.com/auto-deliveries/subscriptionList")];
+                return [utils.createButtonOpenUrl("管理页面<br>取消所有", "https://www.amazon.com/auto-deliveries/subscriptionList")];
             },
         },
 
