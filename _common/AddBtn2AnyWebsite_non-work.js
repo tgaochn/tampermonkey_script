@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.1
+// @version      1.0.2
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -10,11 +10,13 @@
 // @match        https://frontier.com/*
 // @match        https://www.atmosenergy.com/*
 // @match        https://www.energyogre.com/*
+// @match        https://www.amazon.com/gp/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.0.2: adjusted button positions for amazon
 // 1.0.1: added Citi button
 // 1.0.0: init, split from AddBtn2AnyWebsite.js
 // 0.4.7: added new url pattern for monarchmoney
@@ -68,6 +70,25 @@
     // !! custom button config for specific URL patterns
     // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
     const customButtonMappings = [
+        // ! amazon: 订单页面 -> 联系客服
+        // https://www.amazon.com/gp/css/order-history
+        {
+            pattern: /^https:\/\/www\.amazon\.com\/gp\/css\/order-history.*$/,
+            buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            customButtons: (url, utils) => {
+                return [utils.createButtonOpenUrl("联系客服", "https://www.amazon.com/hz/contact-us")];
+            },
+        },
+
+        // ! amazon: 取消所有订阅
+        {
+            pattern: /^https:\/\/www\.amazon\.com\/gp\/subscribe-and-save\/manager\/viewsubscriptions.*$/,
+            buttonPosition: { top: "100px", left: "800px" }, // Custom position
+            customButtons: (url, utils) => {
+                return [utils.createButtonOpenUrl("去订阅管理页面取消所有订阅", "https://www.amazon.com/auto-deliveries/subscriptionList")];
+            },
+        },
+
         // ! allocommunications: 网费报销
         {
             pattern: /^https:\/\/allocommunications\.smarthub\.coop\/.*$/,
