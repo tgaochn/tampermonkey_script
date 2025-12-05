@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         AutoCloseAndRedirect
+// @name         自动关闭与跳转页面
 // @namespace    AutoCloseAndRedirect
 // @version      0.2.0
 // @description  自动关闭或跳转指定页面 (通用脚本)
@@ -9,8 +9,8 @@
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
-// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseRedirectPage.js
-// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseRedirectPage.js
+// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/AutoCloseAndRedirect.js
+// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/AutoCloseAndRedirect.js
 
 // ==/UserScript==
 // 0.2.0: refactored to be a generic script with configurable patterns
