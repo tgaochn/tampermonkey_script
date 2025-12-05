@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         自动关闭与跳转页面
 // @namespace    AutoCloseAndRedirect
-// @version      0.2.0
+// @version      0.2.1
 // @description  自动关闭或跳转指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
