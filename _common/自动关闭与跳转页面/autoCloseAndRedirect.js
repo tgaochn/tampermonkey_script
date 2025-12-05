@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         自动关闭与跳转页面
 // @namespace    AutoCloseAndRedirect
-// @version      0.2.1
+// @version      0.2.2
 // @description  自动关闭或跳转指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
@@ -13,6 +13,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.2.2: add match for amazon subscribe success page
 // 0.2.0: refactored to be a generic script with configurable patterns
 // 0.1.2: renamed script
 // 0.1.1: add match for getadblock.com
@@ -37,6 +38,13 @@
         // amazon unsubscribe success page
         {
             pattern: /^https:\/\/www\.amazon\.com\/fmc\/everyday-essentials-sns\?.*snsActionCompleted=cancelSubscription.*$/,
+            action: "redirect",
+            targetUrl: "https://www.amazon.com/auto-deliveries",
+        },
+
+        // amazon subscribe success page
+        {
+            pattern: /^https:\/\/www\.amazon\.com\/gp\/buy\/thankyou\/handlers\/display\.html\?purchaseId=.*$/,
             action: "redirect",
             targetUrl: "https://www.amazon.com/auto-deliveries",
         },
