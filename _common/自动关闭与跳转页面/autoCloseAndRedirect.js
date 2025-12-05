@@ -9,8 +9,8 @@
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
-// @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/AutoCloseAndRedirect.js
-// @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/AutoCloseAndRedirect.js
+// @updateURL    https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
+// @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
 // 0.2.0: refactored to be a generic script with configurable patterns
