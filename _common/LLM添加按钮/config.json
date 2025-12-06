@@ -1,0 +1,120 @@
+{
+    "customUserPrompts_Group1": {
+        "continue_": {
+            "btnNm": "Continue⏎",
+            "sendOutPrompt": true,
+            "prompt": "Is the answer finished? if not, please continue answering. If the response ends with a code truncation, output the remaining code in the code box rather than starting over. If it is already finished, reply with \"The answer is finished.\""
+        },
+        "chn_": {
+            "btnNm": "中文⏎",
+            "sendOutPrompt": true,
+            "prompt": "\nRepeat the response in Chinese.\n"
+        },
+        "md_": {
+            "btnNm": "MD_format⏎",
+            "sendOutPrompt": true,
+            "prompt": "\nRepeat the response in the format of raw markdown code.\n\nDetailed instructions:\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+        },
+        "mle_": {
+            "btnNm": "MLE⏎",
+            "sendOutPrompt": true,
+            "prompt": "\nRepeat the response as a MLE in Recsys.\n\nDetailed instructions:\n\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+        },
+        "example_": {
+            "btnNm": "加例子解释⏎",
+            "sendOutPrompt": true,
+            "prompt": "Make the response more understandable and give me more examples to explain the response if applicable. The examples should be easy to understand and explain why the example supports the response if applicable."
+        },
+        "rewrite_": {
+            "btnNm": "改写response⏎",
+            "sendOutPrompt": true,
+            "prompt": "Rewrite the response and make the response more understandable."
+        }
+    },
+    "customUserPrompts_Group2": {
+        "rewrite_doc": {
+            "btnNm": "日常-改写-doc",
+            "sendOutPrompt": false,
+            "prompt": "\nRewrite the following text in the same tone. The author of the text is not a native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth.\nPlease follow these instructions in all the responses in this session for any further questions.\n\nBackground:\n1. The text will be used in project documentation.\n\nAdditional instructions:\n\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nDon't use unnecessary bold in md (\"**text**\" or \"*text*\").\nDon't render the markdown code.\n\n\nPlease explain what is changed and why you made the changes.\n        \n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+        },
+        "rewrite_slack": {
+            "btnNm": "日常-改写-slack",
+            "sendOutPrompt": false,
+            "prompt": "\nRewrite the following text in the same tone. The author of the text is not a native English speaker, so the text may include grammar mistakes or strange expressions. Please correct them if applicable and make the revised text smooth.\nPlease follow these instructions in all the responses in this session for any further questions.\n\nBackground:\n1. The text will be used in a discussion on Slack between colleagues.\n\nAdditional instructions:\n\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nDon't use unnecessary bold in md (\"**text**\" or \"*text*\").\nDon't render the markdown code.\n\n\nPlease explain what is changed and why you made the changes.\n        \n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+        },
+        "explain_translate": {
+            "btnNm": "日常-解释翻译",
+            "sendOutPrompt": false,
+            "prompt": "\nI'm not a native English speaker, and I cannot fully understand the following content. Could you explain what it means and what it may possibly imply so that it can be easily understood? \nPlease follow these instructions in all the responses in this session for any further questions.\n\nBackground:\n1. Your response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English. If the response includes a code block, the code and the comments should be in English.\n2. The text is from a discussion on Slack between American colleagues or documentation of some projects. The company is high-tech, such as Google, and the colleagues are managers, data scientists, or machine learning engineers on Recsys.\n3. Please have a separate section to explain all the points that may cause confusing in the background of ML/AI/Recsys. \n4. If it is a question, explain the background and the main points. Then provide a possible answer.\n5. If it is a request, explain the main points and the objective. Then provide a possible answer.\n6. If it is a suggestion, explain the main points, the objective, and the reasons.\nThe text is:"
+        },
+        "summarize": {
+            "btnNm": "日常-总结",
+            "sendOutPrompt": false,
+            "prompt": "\nSummarize the following text in both English and Chinese in a paragraph, then reformat it into some bullets. \n\nAdditional instructions:\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nDon't use unnecessary bold in md (\"**text**\" or \"*text*\").\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+        },
+        "chn2eng": {
+            "btnNm": "日常-中翻英",
+            "sendOutPrompt": false,
+            "prompt": "\nTranslate the following Chinese text into English in different tones: \n"
+        },
+        "MD_formatter": {
+            "btnNm": "日常-MD格式化",
+            "sendOutPrompt": false,
+            "prompt": "\nThe following md code is converted from html by some softwares. It may include formatting issues or unnecessary content. Please fix them and make it as readable and cleat as possible.\nHere are the issues type I found, please fix more if applicable:\n1. [google](https://www.google.com \"https://www.google.com\") -> [google](https://www.google.com)\n\nDetailed instructions:\n\nPlease explain what is changed and why you made the changes.\n        \n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n\nThe md code is:\n\n"
+        }
+    },
+    "customUserPrompts_Group3": {
+        "what_mle": {
+            "btnNm": "MLE-what",
+            "sendOutPrompt": false,
+            "prompt": "What is XXX?\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "how_mle": {
+            "btnNm": "MLE-how",
+            "sendOutPrompt": false,
+            "prompt": "How to XXX?\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "compare_mle": {
+            "btnNm": "MLE-比较",
+            "sendOutPrompt": false,
+            "prompt": "What is the difference between \"XXX\" and \"YYY\"?\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "improve_code_mle": {
+            "btnNm": "MLE-改code",
+            "sendOutPrompt": false,
+            "prompt": "Fix or improve the code.\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "reply_on_slack": {
+            "btnNm": "slack 完整回复优化",
+            "sendOutPrompt": false,
+            "prompt": "\nI'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'd like to ensure my planned reply is clear and appropriate. Could you help analyze my draft response, check for any misunderstandings of the discussion context, and suggest improvements?\nRequirements:\nPlease analyze this from the perspective of a senior ML engineer on Recsys and native English speaker\n\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nDon't use unnecessary bold in md (\"**text**\" or \"*text*\").\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n\nContext:\n\nMy draft reply:\n\n"
+        },
+        "slack_content_understand": {
+            "btnNm": "slack 完整内容理解",
+            "sendOutPrompt": false,
+            "prompt": "\nI'm reviewing a Slack discussion between me (Tian Gao) and my colleagues at high-tech company like google or amazon. As a non-native English speaker, I'm concerned about misunderstanding the meaning of the conversation. Could you read the conversation and answer my questions based on it in our future chats?\n\nRequirements:\n\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nDon't use unnecessary bold in md (\"**text**\" or \"*text*\").\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n\nQuestions:\nWhat does it mean when XXX?\n\nFull conversation:\n\n"
+        }
+    },
+    "customUserPrompts_Group4": {
+        "in_chn": {
+            "btnNm": "中文",
+            "sendOutPrompt": false,
+            "prompt": "\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "in_md": {
+            "btnNm": "markdown",
+            "sendOutPrompt": false,
+            "prompt": "\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "in_chn_md": {
+            "btnNm": "md且中文",
+            "sendOutPrompt": false,
+            "prompt": "\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        },
+        "in_mle": {
+            "btnNm": "MLE身份",
+            "sendOutPrompt": false,
+            "prompt": "\nYour response should follow these backgrounds and instructions:\n1. You need to act as a senior machine learning engineer. \n2. The task is to make some explanations to the newbie interns. \n3. The explanation should be easy to understand. Please explain the use case and why the mentioned term is necessary, explain the main features, and give examples for each feature.\n4. You need to give some comparison with some similar or related tools/models/tech if applicable.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+        }
+    }
+}
