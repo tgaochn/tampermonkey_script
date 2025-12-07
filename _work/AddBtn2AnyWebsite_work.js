@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.10
+// @version      1.0.11
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -431,8 +431,12 @@
 
             const container = document.getElementById(CONFIG.CONTAINER_ID);
             if (!container) {
-                console.log("Periodic check: Button container missing, recreating...");
-                utils.initAddBtn2AnyWebsite(scriptConfig);
+                console.log("Periodic check: Button container missing, triggering recreation...");
+                // Trigger a DOM change to activate the observer set by initAddBtn2AnyWebsite
+                // The observer only fires on DOM mutations, not on direct calls
+                const tempNode = document.createElement("div");
+                document.body.appendChild(tempNode);
+                document.body.removeChild(tempNode);
             }
         }, CONFIG.PERIODIC_CHECK_INTERVAL);
     }
