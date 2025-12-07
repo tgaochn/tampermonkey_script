@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.9
+// @version      1.0.10
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -57,6 +57,7 @@
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_work",
         BUTTON_POSITION: { top: "-10px", left: "1200px" },
+        PERIODIC_CHECK_INTERVAL: 2000, // Interval to check if button container still exists (ms)
         REQUIRED_UTILS: [
             "observeDOM",
             "shouldRunScript",
@@ -164,7 +165,7 @@
             jumpButtons: (url, utils, textColor, testNameParam) => {
                 return [
                     utils.createButtonOpenUrl(
-                        "Sagemaker Studio",
+                        "Sagemaker Studio Trigger",
                         "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
                     ),
                 ];
@@ -418,6 +419,24 @@
         });
     }
 
+    // Periodic check to ensure button container persists after page fully loads
+    function startPeriodicCheck(utils, scriptConfig) {
+        const { CONFIG, inclusionPatterns, exclusionPatterns } = scriptConfig;
+
+        setInterval(() => {
+            // Skip if URL doesn't match
+            if (!utils.shouldRunScript(inclusionPatterns || [], exclusionPatterns || [], window.location.href)) {
+                return;
+            }
+
+            const container = document.getElementById(CONFIG.CONTAINER_ID);
+            if (!container) {
+                console.log("Periodic check: Button container missing, recreating...");
+                utils.initAddBtn2AnyWebsite(scriptConfig);
+            }
+        }, CONFIG.PERIODIC_CHECK_INTERVAL);
+    }
+
     async function initScript() {
         try {
             const utils = await waitForUtils();
@@ -433,6 +452,9 @@
             };
 
             utils.initAddBtn2AnyWebsite(scriptConfig);
+
+            // Start periodic check to handle cases where container disappears after page load
+            startPeriodicCheck(utils, scriptConfig);
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
