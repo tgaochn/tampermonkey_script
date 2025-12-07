@@ -1,5 +1,6 @@
 // utils.js
-// version: 0.1.5
+// https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
+// version: 0.2.0
 (function (window) {
     "use strict";
 
@@ -1027,15 +1028,25 @@
                 return;
             }
 
-            const observeTarget = document.body;
             const targetElementId = CONFIG.CONTAINER_ID;
 
-            // Check if the target element exists, if not, add the buttons
-            utils.observeDOM(observeTarget, () => {
+            // Helper function to create buttons if container doesn't exist
+            const createButtonsIfNeeded = () => {
                 if (!document.getElementById(targetElementId)) {
                     addBtn2AnyWebsiteMain(CONFIG, customButtonMappings, url2title, pathSegmentMappings, jumpButtonMappings);
                 }
-            });
+            };
+
+            // Initial check - create buttons immediately if container doesn't exist
+            createButtonsIfNeeded();
+
+            // Set up observer for future DOM changes
+            utils.observeDOM(document.body, createButtonsIfNeeded);
+
+            // Start periodic check to handle cases where container disappears after page load
+            // Some websites (e.g., AWS console) re-render after initial load, removing the button container
+            const checkInterval = CONFIG.PERIODIC_CHECK_INTERVAL || 2000;
+            setInterval(createButtonsIfNeeded, checkInterval);
         } catch (error) {
             console.error("Failed to initialize AddBtn2AnyWebsite:", error);
         }
