@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.8
+// @version      1.0.9
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -11,11 +11,13 @@
 // @match        https://code.corp.indeed.com/*
 // @match        https://app.datadoghq.com/*
 // @match        https://indeed.atlassian.net/wiki/*
+// @match        https://us-east-2.console.aws.amazon.com/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.9: added jump button for sagemaker studio
 // 1.0.8: adjusted button positions for proctor-v2
 // 1.0.7: adjusted max display length for button display text
 // 1.0.6: adjusted button positions for butterfly proctor/testStats/proctor
@@ -155,6 +157,19 @@
                 ];
             },
         },
+
+        // ! aws
+        {
+            pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2(#)?$/,
+            jumpButtons: (url, utils, textColor, testNameParam) => {
+                return [
+                    utils.createButtonOpenUrl(
+                        "Sagemaker Studio",
+                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
+                    ),
+                ];
+            },
+        }
     ];
 
     // !! Path segment mapping rules for easy understanding

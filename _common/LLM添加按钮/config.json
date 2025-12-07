@@ -13,7 +13,7 @@
         "md_": {
             "btnNm": "MD_format⏎",
             "sendOutPrompt": true,
-            "prompt": "\nRepeat the response in the format of raw markdown code.\n\nDetailed instructions:\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
+            "prompt": "\nRepeat the response in the format of raw markdown code.\n\nDetailed instructions:\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease keep the response simple and plain. Avoid any fancy formatting or emojis. Strip out all Markdown styling, strictly preserving only the syntax for ordered and bulleted lists and headers. Ensure lists are compact, with no extra blank lines between items.\nDon't render the markdown code.\n\n\nPlease follow these instructions in all the responses in this session for any further questions.\n\n"
         },
         "mle_": {
             "btnNm": "MLE⏎",
@@ -104,12 +104,12 @@
         "in_md": {
             "btnNm": "markdown",
             "sendOutPrompt": false,
-            "prompt": "\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+            "prompt": "\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease keep the response simple and plain. Avoid any fancy formatting or emojis. Strip out all Markdown styling, strictly preserving only the syntax for ordered and bulleted lists and headers. Ensure lists are compact, with no extra blank lines between items.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
         },
         "in_chn_md": {
             "btnNm": "md且中文",
             "sendOutPrompt": false,
-            "prompt": "\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease ensure the response is simple and easy to understand. Avoid using any fancy formatting, such as bold text or unnecessary emojis. Strip out all decorative Markdown tags, strictly preserving only the syntax for ordered (numbered) and unordered (bullet) lists.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
+            "prompt": "\nYour response for my understanding should be in Chinese but all the content that is expected to be presented to other people should be in English.\nFor example, if I ask you to improve my doc and explain the reason for the improvement, the explanation should be in Chinese but the revised doc should be in English.\nIf the response includes a code block, the code and the comments should be in English.\n\nYour response should be in the format of raw markdown code so I can copy the content into my markdown editor.\nPlease keep the response simple and plain. Avoid any fancy formatting or emojis. Strip out all Markdown styling, strictly preserving only the syntax for ordered and bulleted lists and headers. Ensure lists are compact, with no extra blank lines between items.\nDon't render the markdown code.\n\nPlease follow these instructions in all the responses in this session for any further questions.\n"
         },
         "in_mle": {
             "btnNm": "MLE身份",
