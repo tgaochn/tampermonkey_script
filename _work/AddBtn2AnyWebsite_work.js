@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.12
+// @version      1.0.13
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.13: added jump button for sagemaker studio, fix bug
 // 1.0.9: added jump button for sagemaker studio
 // 1.0.8: adjusted button positions for proctor-v2
 // 1.0.7: adjusted max display length for button display text
@@ -80,6 +81,21 @@
     // !! custom button config for specific URL patterns
     // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
     const customButtonMappings = [
+        // ! aws console - only show jump button
+        {
+            pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2.*$/,
+            buttonPosition: { top: "60px", left: "500px" },
+            customButtons: (url, utils) => {
+                console.log("[AWS Debug] customButtons called with URL:", url);
+                return [
+                    utils.createButtonOpenUrl(
+                        "Sagemaker Studio Trigger",
+                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
+                    ),
+                ];
+            },
+        },
+
         // ! indeed wiki
         {
             pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/,
@@ -137,11 +153,11 @@
             jumpButtons: (url, utils, textColor, testNameParam) => {
                 // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
                 // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
-                
+
                 if (!testNameParam) {
                     return []; // Return empty array if no test name available
                 }
-                
+
                 return [
                     utils.createButtonOpenUrl(
                         "Butterfly Proctor",
@@ -159,18 +175,6 @@
             },
         },
 
-        // ! aws
-        {
-            pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2(#)?$/,
-            jumpButtons: (url, utils, textColor, testNameParam) => {
-                return [
-                    utils.createButtonOpenUrl(
-                        "Sagemaker Studio Trigger",
-                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
-                    ),
-                ];
-            },
-        }
     ];
 
     // !! Path segment mapping rules for easy understanding
@@ -347,7 +351,7 @@
         try {
             // Support both hash-based URLs (#/proctor/...) and regular path URLs (/proctor/...)
             let pathSegments;
-            
+
             if (url.includes("#")) {
                 // For URLs like: #/proctor/jobsearch/idxbutterflyapplymodeltst?q=...
                 const hashPart = url.split("#")[1] || "";
@@ -422,7 +426,13 @@
     async function initScript() {
         try {
             const utils = await waitForUtils();
-            
+
+            // Debug: Log current URL and pattern match status
+            const currentUrl = window.location.href;
+            const awsPattern = /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2.*$/;
+            console.log("[AWS Debug] Current URL:", currentUrl);
+            console.log("[AWS Debug] AWS pattern matches:", awsPattern.test(currentUrl));
+
             const scriptConfig = {
                 CONFIG,
                 customButtonMappings,
@@ -434,6 +444,13 @@
             };
 
             utils.initAddBtn2AnyWebsite(scriptConfig);
+
+            // Debug: Monitor URL changes
+            setInterval(() => {
+                const newUrl = window.location.href;
+                const containerExists = document.getElementById(CONFIG.CONTAINER_ID);
+                console.log("[AWS Debug] Periodic check - URL:", newUrl, "| Pattern matches:", awsPattern.test(newUrl), "| Container exists:", !!containerExists);
+            }, 3000);
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
