@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         自动关闭与跳转页面
 // @namespace    AutoCloseAndRedirect
-// @version      0.2.3
+// @version      0.2.4
 // @description  自动关闭或跳转指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
 // @match        https://www.amazon.com/fmc/*
 // @match        https://www.amazon.com/gp/buy/thankyou/handlers/display.html?purchaseId=*
+// @match        https://*.taobao.com/shop/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -14,6 +15,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.2.4: add match for taobao shop page
 // 0.2.3: add match for amazon subscribe success page
 // 0.2.2: add match for amazon subscribe success page
 // 0.2.0: refactored to be a generic script with configurable patterns
@@ -37,6 +39,16 @@
         },
 
         // ! auto redirect pages
+        // taobao redirect - remove query params from shop URL
+        {
+            pattern: /^https:\/\/shop\d+\.taobao\.com\/shop\/view_shop\.htm\?/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const urlObj = new URL(url);
+                return urlObj.origin + urlObj.pathname;
+            },
+        },
+
         // amazon unsubscribe success page
         {
             pattern: /^https:\/\/www\.amazon\.com\/fmc\/everyday-essentials-sns\?.*snsActionCompleted=cancelSubscription.*$/,
@@ -64,9 +76,12 @@
     console.log("[AutoCloseAndRedirect] Matched pattern, action:", matchedAction.action);
 
     if (matchedAction.action === "redirect") {
-        // Direct redirect
-        console.log("[AutoCloseAndRedirect] Redirecting to:", matchedAction.targetUrl);
-        window.location.href = matchedAction.targetUrl;
+        // Direct redirect (support dynamic targetUrl via getTargetUrl function)
+        const targetUrl = matchedAction.getTargetUrl
+            ? matchedAction.getTargetUrl(currentUrl)
+            : matchedAction.targetUrl;
+        console.log("[AutoCloseAndRedirect] Redirecting to:", targetUrl);
+        window.location.href = targetUrl;
     } else if (matchedAction.action === "close") {
         // Try to close the window
         console.log("[AutoCloseAndRedirect] Attempting to close window...");
