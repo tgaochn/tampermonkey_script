@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.2.2
+// @version      0.2.3
 // @description  Convert S3 path to AWS S3 Console URL and redirect
 // @author       gtfish
 // @match        https://*.console.aws.amazon.com/s3/*
@@ -10,7 +10,9 @@
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector/aws_s3_path_redirector.js
 
+
 // ==/UserScript==
+// 0.2.3: improve parsing logic for S3 path
 // 0.2.2: update match to https://*.console.aws.amazon.com/s3/*
 // 0.2.1: add Parse button to show parsed URL, Copy URL also shows parsed URL
 // 0.2.0: add button position config, add Copy URL button in dialog
@@ -56,38 +58,39 @@
         const bucket = pathWithoutPrefix.substring(0, firstSlashIndex);
         let prefix = pathWithoutPrefix.substring(firstSlashIndex + 1);
 
-        // If it's a file (has a filename, not ending with /), get the parent directory
-        // Check if it ends with a filename (not ending with /)
-        if (prefix && !prefix.endsWith("/")) {
-            // Extract directory path (remove filename)
-            const lastSlashIndex = prefix.lastIndexOf("/");
+        // If path ends with /, it's a directory - keep as is
+        if (prefix.endsWith("/")) {
+            return { bucket, prefix };
+        }
+
+        // Path doesn't end with /
+        // Check if the last part looks like a file (has extension)
+        const lastSlashIndex = prefix.lastIndexOf("/");
+        const lastPart = lastSlashIndex !== -1 ? prefix.substring(lastSlashIndex + 1) : prefix;
+
+        // Determine if it's a file by checking for extension pattern
+        // File criteria: contains "." where the part after last "." is 1-10 chars (extension)
+        // and the "." is not at the start (hidden files like .gitignore are files too)
+        const dotIndex = lastPart.lastIndexOf(".");
+        const hasExtension = dotIndex > 0 && (lastPart.length - dotIndex - 1) >= 1 && (lastPart.length - dotIndex - 1) <= 10;
+        // Also consider hidden files like .gitignore as files (dot at start, no other dot)
+        const isHiddenFile = lastPart.startsWith(".") && lastPart.length > 1 && !lastPart.substring(1).includes("/");
+        const isLikelyFile = hasExtension || isHiddenFile;
+
+        if (isLikelyFile) {
+            // It's a file, navigate to its parent directory
             if (lastSlashIndex !== -1) {
-                // Remove filename, get the directory containing the file
                 prefix = prefix.substring(0, lastSlashIndex + 1);
-                // Remove the last directory level (parent directory)
-                // e.g., "a/b/c/" -> "a/b/"
-                const secondLastSlashIndex = prefix.substring(0, prefix.length - 1).lastIndexOf("/");
-                if (secondLastSlashIndex !== -1) {
-                    prefix = prefix.substring(0, secondLastSlashIndex + 1);
-                } else {
-                    // Only one directory level, set to empty (root)
-                    prefix = "";
-                }
             } else {
-                // No directory, just a file in the root
+                // File in root, prefix is empty
                 prefix = "";
             }
+        } else {
+            // It's likely a directory without trailing /, add the trailing /
+            prefix = prefix + "/";
         }
 
-        // Ensure prefix ends with / if it's not empty
-        if (prefix && !prefix.endsWith("/")) {
-            prefix += "/";
-        }
-
-        return {
-            bucket,
-            prefix,
-        };
+        return { bucket, prefix };
     }
 
     // Build AWS S3 Console URL
