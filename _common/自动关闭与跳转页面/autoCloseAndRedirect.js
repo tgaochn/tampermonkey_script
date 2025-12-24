@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         自动关闭与跳转页面
 // @namespace    AutoCloseAndRedirect
-// @version      0.2.4
+// @version      0.2.5
 // @description  自动关闭或跳转指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
 // @match        https://www.amazon.com/fmc/*
 // @match        https://www.amazon.com/gp/buy/thankyou/handlers/display.html?purchaseId=*
 // @match        https://*.taobao.com/shop/*
+// @match        https://*.annas-archive.org/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -15,6 +16,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.2.5: add epub/mobi filter for annas-archive search
 // 0.2.4: add match for taobao shop page
 // 0.2.3: add match for amazon subscribe success page
 // 0.2.2: add match for amazon subscribe success page
@@ -46,6 +48,24 @@
             getTargetUrl: (url) => {
                 const urlObj = new URL(url);
                 return urlObj.origin + urlObj.pathname;
+            },
+        },
+
+        // annas-archive search - add epub/mobi filter (skip if ext already exists)
+        {
+            pattern: /^https:\/\/[^/]*\.annas-archive\.org\/search\?(?!.*ext=)/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const urlObj = new URL(url);
+                const query = urlObj.searchParams.get("q");
+                // Build new URL with ext params first, then q
+                const newUrl = new URL(urlObj.origin + urlObj.pathname);
+                newUrl.searchParams.append("ext", "epub");
+                newUrl.searchParams.append("ext", "mobi");
+                if (query) {
+                    newUrl.searchParams.append("q", query);
+                }
+                return newUrl.toString();
             },
         },
 
