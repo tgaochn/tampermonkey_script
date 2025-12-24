@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         自动关闭与跳转页面
+// @name         匹配网页自动关闭或跳转
 // @namespace    AutoCloseAndRedirect
 // @version      0.2.5
 // @description  自动关闭或跳转指定页面 (通用脚本)
