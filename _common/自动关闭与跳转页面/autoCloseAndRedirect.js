@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         匹配网页自动关闭或跳转
+// @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.2.6
-// @description  自动关闭或跳转指定页面 (通用脚本)
+// @version      0.3.0
+// @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
 // @match        https://www.amazon.com/fmc/*
@@ -10,6 +10,7 @@
 // @match        https://*.taobao.com/shop/*
 // @match        https://item.taobao.com/*
 // @match        https://*.annas-archive.org/*
+// @match        https://www.1lou.info/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -17,6 +18,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.3.0: add scrollToKeyword action for auto-scrolling to keyword
 // 0.2.6: clean taobao item URL, keep only id and skuId params
 // 0.2.5: add epub/mobi filter for annas-archive search
 // 0.2.4: add match for taobao shop page
@@ -33,6 +35,8 @@
     // !! Configuration: Define page actions here
     // action: "close" - close the page (fallback to redirect if close fails)
     // action: "redirect" - redirect to targetUrl
+    // action: "scrollToKeyword" - scroll to first occurrence of keyword
+    //         keyword: string or array of strings (finds earliest match in document)
     const pageActions = [
         // ! auto close pages
         // AdBlock upgrade/payment pages
@@ -104,6 +108,14 @@
             action: "redirect",
             targetUrl: "https://www.amazon.com/auto-deliveries",
         },
+
+        // ! auto scroll to keyword
+        // bt之家 (1lou) - scroll to "最新回复" section
+        {
+            pattern: /^https:\/\/www\.1lou\.info\/thread-\d+\.htm/,
+            action: "scrollToKeyword",
+            keyword: ["上传的附件", ".torr", "最新回复"],
+        },
     ];
 
     // Find matching action for current URL
@@ -129,6 +141,78 @@
         }
         console.log("[AutoCloseAndRedirect] Redirecting to:", targetUrl);
         window.location.href = targetUrl;
+    } else if (matchedAction.action === "scrollToKeyword") {
+        // Scroll to first occurrence of keyword (supports string or array of keywords)
+        const scrollToKeyword = (source) => {
+            console.log(`[AutoCloseAndRedirect] scrollToKeyword called from: ${source}, readyState: ${document.readyState}`);
+            
+            const keywordConfig = matchedAction.keyword;
+            if (!keywordConfig) {
+                console.log("[AutoCloseAndRedirect] No keyword specified");
+                return;
+            }
+
+            // Support both single keyword (string) and multiple keywords (array)
+            const keywords = Array.isArray(keywordConfig) ? keywordConfig : [keywordConfig];
+            console.log("[AutoCloseAndRedirect] Searching for keywords:", keywords);
+
+            // Find the first match among all keywords (by document position)
+            let bestMatch = null;
+            let bestMatchKeyword = null;
+
+            for (const keyword of keywords) {
+                const walker = document.createTreeWalker(
+                    document.body,
+                    NodeFilter.SHOW_TEXT,
+                    {
+                        acceptNode: (node) => {
+                            return node.textContent.includes(keyword)
+                                ? NodeFilter.FILTER_ACCEPT
+                                : NodeFilter.FILTER_REJECT;
+                        },
+                    }
+                );
+
+                const match = walker.nextNode();
+                if (match) {
+                    // Compare document position to find the earliest match
+                    if (!bestMatch || (match.compareDocumentPosition(bestMatch) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                        bestMatch = match;
+                        bestMatchKeyword = keyword;
+                    }
+                }
+            }
+
+            if (bestMatch) {
+                const element = bestMatch.parentElement;
+                console.log(`[AutoCloseAndRedirect] Found keyword "${bestMatchKeyword}", scrolling to:`, element);
+                element.scrollIntoView({ behavior: "instant", block: "center" });
+                console.log("[AutoCloseAndRedirect] scrollIntoView executed, scrollY:", window.scrollY);
+
+                // Optional: highlight the element briefly
+                const originalBg = element.style.backgroundColor;
+                element.style.backgroundColor = "yellow";
+                setTimeout(() => {
+                    element.style.backgroundColor = originalBg;
+                }, 2000);
+            } else {
+                console.log("[AutoCloseAndRedirect] No keyword found from:", keywords);
+            }
+        };
+
+        // Wait for page to be fully loaded (including all resources)
+        // Add delay to ensure other scripts finish executing
+        const delay = matchedAction.delay || 300; // default 300ms delay
+        console.log("[AutoCloseAndRedirect] Current readyState:", document.readyState, "delay:", delay);
+        
+        if (document.readyState === "complete") {
+            setTimeout(() => scrollToKeyword("immediate+delay"), delay);
+        } else {
+            // Use window.onload to ensure page is fully loaded, then add delay
+            window.addEventListener("load", () => {
+                setTimeout(() => scrollToKeyword("load+delay"), delay);
+            });
+        }
     } else if (matchedAction.action === "close") {
         // Try to close the window
         console.log("[AutoCloseAndRedirect] Attempting to close window...");
