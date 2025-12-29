@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 添加按钮
 // @namespace   https://claude.ai/
-// @version     1.1.9
+// @version     1.2.0
 // @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.2.0: lazy storage creation - only create external storage when user edits config, otherwise use built-in defaults for easier updates
 // LLM_add_buttons 1.1.8: update prompt
 // LLM_add_buttons 1.1.7: update prompt
 // LLM_add_buttons 1.1.6: update prompt
@@ -250,89 +251,20 @@ Translate the following Chinese text into English in different tones:
 `,
         },
 
-        MD_formatter: {
-            btnNm: "日常-MD格式化",
+        repeat_wo_illusion: {
+            btnNm: "日常-重复无幻觉",
             sendOutPrompt: false,
             prompt: `
-The following md code is converted from html by some softwares. It may include formatting issues or unnecessary content. Please fix them and make it as readable and cleat as possible.
-Here are the issues type I found, please fix more if applicable:
-1. [google](https://www.google.com "https://www.google.com") -> [google](https://www.google.com)
+我没有找到你说的品牌或型号. 帮我利用工具 (如联网搜索) 进行核实. 确认一下刚才的回答是不是你的幻觉. 
 
-Detailed instructions:
-${basic_prompt.explain}
-${basic_prompt.same_rules}
-
-The md code is:
-
+同时, 在未来的对话中, 当问题涉及事实查询, 知识科普, 数据检索, 产品推荐或技术细节时, 请严格遵守以下规则:
+零容忍幻觉: 对于具体的实体名称 (如产品型号, 人名), 参数指标, 历史时间等, 必须利用工具 (如联网搜索) 进行核实. 如果无法确认信息的真实性, 请直接回答 "不确定" 或 "未找到", 严禁依据模糊的训练数据进行编造或猜测.
+可验证性: 在回答关键事实时, 请隐式地进行自我核查: "这个东西真的存在吗? ". 如果涉及推荐, 请确保该对象在现实世界中有据可查.
+区分场景: 此协议不适用于创意写作 (如写故事) 或日常情感闲聊.
 `,
         },
 
-        //         ocr: {
-        //             btnNm: "img_OCR",
-        //             sendOutPrompt: false,
-        //             prompt: `Please OCR the attached image following these backgrounds and instructions:
-        // 1. You need to act as a very senior machine learning engineer in an OCR software developing company.
-        // 2. The task is to identify the content, same as what OCR software does.
-        // 3. The content could be a piece of code, some plain text, or a table.
-        // 4. Please also check whether sentence or words the OCR results are reasonable. If there are any issues due to inaccurate OCR results, please fix them.
-        // 5. Please follow these instructions in all the responses in this session for any further questions.
-        // 6. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-        // `,
-        //         },
 
-        //         fix_ocr: {
-        //             btnNm: "fix_cont_OCR",
-        //             sendOutPrompt: false,
-        //             prompt: `Response based on the given content obtained from OCR software following these backgrounds and instructions:
-        // 1. You need to act as a very senior machine learning engineer in an OCR software developing company.
-        // 2. The task is to manually improve the raw results from OCR software.
-        // 3. The content could be a piece of code, some plain text or a table.
-        // 4. Please follow these instructions in all the responses in this session for further questions.
-        // 5. Take a deep breath and work on this problem step by step.
-        // 6. If applicable, the response should be in the format of raw markdown code so I can copy and paste into my markdown editor.
-        // 7. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-        // It may include some errors or formatting issues due to inaccurate OCR results. You need to fix these issues and make it as readable and explainable as possible. Also, you need to have a brief explanation of the content.
-        // `,
-        //         },
-
-        //         mermaid_ocr: {
-        //             btnNm: "mermaid_OCR",
-        //             sendOutPrompt: false,
-        //             prompt: `Please transform the attached flowchart into mermaid code following these backgrounds and instructions:
-        // 1. You need to act as a very senior machine learning engineer and a mermaid expert in an OCR software developing company.
-        // 2. Check whether sentences or words in the flowchart are reasonable. If there are any issues due to inaccurate OCR results, please fix them and list the changes.
-        // 3. Follow these instructions in all the responses in this session for further questions.
-        // 4. Respond in the format of raw markdown code (\`\`\`mermaid\`\`\`), so I can copy and paste it into a markdown editor. Don't respond with raw mermaid code.
-        // 5. Use "classDef defaultNode fill:#f9f9f9,stroke:#0000ff,stroke-width:2px,color:black" as the default style for all the nodes.
-        // `,
-        //         },
-
-        //         format_tex_formula: {
-        //             btnNm: "format tex formula",
-        //             sendOutPrompt: false,
-        //             prompt: `Could you format the following tex formula and make it more readable?
-        // Please provide the response following these backgrounds and instructions:
-        // 1. You need to act as a senior latex expert and a senior machine learning engineer.
-        // 2. The overall purpose of the revision is to make the formula more readable so the reader of the latex code can easily understand it.
-        // 3. Please respond in the format of raw markdown code (markdown code wrapped in triple backticks), so I can copy and paste it into a markdown editor.
-        // 4. The latex code for the formula is from OCR, so it may include errors. If there are errors, please correct them and explain the changes in detail.
-        // 5. Please follow these instructions in all the responses in this session for further questions.
-        // 6. Take a deep breath and work on this problem step by step.
-        // `,
-        //         },
-
-        //         online_debate: {
-        //             btnNm: "网上吵架",
-        //             sendOutPrompt: false,
-        //             prompt: `请你作为一位资深的网络辩论专家，精通分析对方观点中的漏洞并激怒对方. 帮我分析并改进以下网络辩论中的回复。我的一部分目的是激怒对方, 所以请不要在意语气和态度. 可以使用反讽、挖苦等语言技巧. 重点是论据的锐利性和对方情绪的操控.
-        // 1. 如果不改变我回复的大致结构, 请分析我的回复中有什么逻辑漏洞. 对方之前的论述中有什么我遗漏的弱点可以利用. 以及对方的情绪触发点在哪里, 如何让对方失去理性陷入情绪化. 另外请预判对方可能的反驳并给出后续应对策略.
-        // 2. 如果完全改变我回复的结构, 请给出新的回复建议并说明理由. 另外请预判对方可能的反驳并给出后续应对策略
-        // 争论背景：
-        //
-        // 我的预计回复：
-        //
-        // `,
-        //         },
     };
     const myPromptJson3_default = {
         what_mle: {
@@ -438,24 +370,25 @@ Full conversation:
         myPromptJson4_default,
     ];
 
-    // Function to initialize storage - will make storage values visible in Tampermonkey UI
-    function initializeStorage() {
-        // For each prompt group, initialize it with the stored value or default if not present
-        for (let i = 0; i < PROMPT_STORAGE_KEYS.length; i++) {
-            const key = PROMPT_STORAGE_KEYS[i];
-            const defaultValue = DEFAULT_PROMPTS_ARRAY[i];
-            const currentValue = GM_getValue(key, defaultValue);
-
-            // Always set the value to ensure it appears in the Tampermonkey Storage tab
-            GM_setValue(key, currentValue);
-        }
+    // Check if a storage key has been customized by user (exists in external storage)
+    function isStorageCustomized(key) {
+        return GM_getValue(key) !== undefined;
     }
 
-    // Load Prompts from Storage or Use Defaults
-    let myPromptJson1 = GM_getValue(PROMPT_STORAGE_KEYS[0], myPromptJson1_default);
-    let myPromptJson2 = GM_getValue(PROMPT_STORAGE_KEYS[1], myPromptJson2_default);
-    let myPromptJson3 = GM_getValue(PROMPT_STORAGE_KEYS[2], myPromptJson3_default);
-    let myPromptJson4 = GM_getValue(PROMPT_STORAGE_KEYS[3], myPromptJson4_default);
+    // Load Prompts: use external storage if customized, otherwise use built-in defaults
+    // This allows script updates to propagate default prompts while preserving user customizations
+    let myPromptJson1 = isStorageCustomized(PROMPT_STORAGE_KEYS[0])
+        ? GM_getValue(PROMPT_STORAGE_KEYS[0])
+        : myPromptJson1_default;
+    let myPromptJson2 = isStorageCustomized(PROMPT_STORAGE_KEYS[1])
+        ? GM_getValue(PROMPT_STORAGE_KEYS[1])
+        : myPromptJson2_default;
+    let myPromptJson3 = isStorageCustomized(PROMPT_STORAGE_KEYS[2])
+        ? GM_getValue(PROMPT_STORAGE_KEYS[2])
+        : myPromptJson3_default;
+    let myPromptJson4 = isStorageCustomized(PROMPT_STORAGE_KEYS[3])
+        ? GM_getValue(PROMPT_STORAGE_KEYS[3])
+        : myPromptJson4_default;
 
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
@@ -610,9 +543,6 @@ To reset to default, you can save an empty JSON object like {}
 
     async function initScript() {
         try {
-            // Initialize storage to make values visible in Tampermonkey storage tab
-            initializeStorage();
-
             const utils = await waitForUtils();
 
             GM_registerMenuCommand(
