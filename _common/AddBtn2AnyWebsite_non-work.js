@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.4
+// @version      1.0.5
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.0.5: adjusted button positions for monarchmoney
 // 1.0.4: 修改脚本显示名称
 // 1.0.2: adjusted button positions for amazon
 // 1.0.1: added Citi button
@@ -132,7 +133,7 @@
         // ! monarchmoney: 资产管理
         {
             pattern: /^https:\/\/app\.(monarchmoney|monarch)\.com\/.*$/,
-            buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
+            buttonPosition: { top: "-10px", left: "400px" }, // Custom position
             customButtons: (url, utils) => {
                 return [
                     utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),
