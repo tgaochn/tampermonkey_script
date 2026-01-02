@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.3.0
+// @version      0.3.1
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://getadblock.com/*
@@ -11,6 +11,7 @@
 // @match        https://item.taobao.com/*
 // @match        https://*.annas-archive.org/*
 // @match        https://www.1lou.info/*
+// @match        https://app.monarch.com/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -18,6 +19,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.3.1: add match for monarch cash-flow page
 // 0.3.0: add scrollToKeyword action for auto-scrolling to keyword
 // 0.2.6: clean taobao item URL, keep only id and skuId params
 // 0.2.5: add epub/mobi filter for annas-archive search
@@ -47,6 +49,18 @@
         },
 
         // ! auto redirect pages
+        // Monarch cash-flow page - set view=sankey and sankey=both
+        {
+            pattern: /^https:\/\/app\.monarch\.com\/cash-flow\?/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const urlObj = new URL(url);
+                // urlObj.searchParams.set("view", "sankey");
+                urlObj.searchParams.set("sankey", "both");
+                return urlObj.toString();
+            },
+        },
+
         // taobao redirect - remove query params from shop URL
         {
             pattern: /^https:\/\/shop\d+\.taobao\.com\/shop\/view_shop\.htm\?/,
