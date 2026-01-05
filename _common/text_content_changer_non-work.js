@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.0.3
+// @version             1.0.4
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -16,6 +16,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.0.4: add GTX 1060 3GB and GTX 780 to tianti
 // 1.0.3: add annas-archive 安娜图书馆的url匹配
 // 1.0.2: 增加 aetna 的颜色匹配
 // 1.0.1: 优化代码, 增加注释
@@ -156,6 +157,16 @@
                 },
                 {
                     regex: /^GTX 1070$/g,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
+                },
+                {
+                    regex: /^GTX 1060 3GB$/g,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
+                },
+                {
+                    regex: /^GTX 780$/g,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
