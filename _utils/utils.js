@@ -799,7 +799,9 @@
             const observeTarget = document.body;
             const currentUrl = window.location.href;
 
-            const currentUrlPatterns = Object.values(urlPatterns).find((urlPattern) =>
+            // Support both array and object formats for backward compatibility
+            const patternsArray = Array.isArray(urlPatterns) ? urlPatterns : Object.values(urlPatterns);
+            const currentUrlPatterns = patternsArray.find((urlPattern) =>
                 urlPattern.urlRegex.test(currentUrl)
             );
 

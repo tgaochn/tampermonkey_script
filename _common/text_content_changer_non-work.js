@@ -1,21 +1,24 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.0.5
+// @version             1.0.6   
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://www.skidrowreloaded.com/*
 // @match               https://www.amazon.com/spr/returns/*
+// @match               https://www.amazon.com/checkout*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
 // @match               https://onlinebanking.usbank.com/*
 // @match               https://health.aetna.com/*
 // @match               https://*.annas-archive.org/*
+// @match               https://myaccount.cleanskyenergy.com*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.0.6: add Citi CustomCash and BOA CustomizedCashRewards
 // 1.0.5: add RTX 2060 6GB to tianti
 // 1.0.4: add GTX 1060 3GB and GTX 780 to tianti
 // 1.0.3: add annas-archive 安娜图书馆的url匹配
@@ -42,28 +45,43 @@
 (function () {
     "use strict";
 
-    // ! 文本替换规则
-    const generalTextReplacement = [
-        // usbank 高亮显示缴网费的卡
-        {
-            regex: /(USBankCashPlus)/g,
-            replacement: "$1 (网费)",
-            backColor: "rgb(255,192,255)",
-        },
-    ];
-
     // !! 匹配url后修改文本颜色/内容
-    const urlPatterns = {
-        // annas-archive 高亮应该显示的下载链接
-        annasArchive: {
+    const urlPatterns = [
+        // ! annas-archive 高亮应该显示的下载链接
+        {
             urlRegex: /^https?:\/\/[^/]*\.annas-archive\.org\/.*/,
             textPatterns: [
                 { regex: /无需排队，但可能非常慢/g, textColor: "rgb(0,0,0)", backColor: "rgb(255,192,255)" },
             ],
         },
 
-        // aetna 高亮显示没有报销的记录
-        aetna: {
+        // ! 银行卡加注释
+        // Citi CustomCash
+        {
+            urlRegex: /.*/,
+            textPatterns: [
+                {
+                    regex: /ending in 9991/g,
+                    // replacement: "$1 (Citi)",
+                    backColor: "rgb(255,192,255)",
+                }
+            ],
+        },
+
+        // BOA CustomizedCashRewards
+        {
+            urlRegex: /.*/,
+            textPatterns: [
+                {
+                    regex: /ending in 2623/g,
+                    // replacement: "$1 (BOA 3%)",
+                    backColor: "rgb(255,192,255)",
+                }
+            ],
+        },
+
+        // ! aetna 高亮显示没有报销的记录
+        {
             urlRegex: /^https?:\/\/health\.aetna\.com\/.*/,
             textPatterns: [
                 // Pending
@@ -81,8 +99,8 @@
             ],
         },
 
-        // skidrow 高亮显示最好用的几个网盘
-        skidrow: {
+        // ! skidrow 高亮显示最好用的几个网盘
+        {
             urlRegex: /^https?:\/\/www\.skidrowreloaded\.com\/.*/,
             textPatterns: [
                 {
@@ -113,8 +131,8 @@
             ],
         },
 
-        // amazon 高亮显示退货最常用选项
-        amazon_return: {
+        // ! amazon 高亮显示退货最常用选项
+        {
             urlRegex: /^https?:\/\/www\.amazon\.com\/.*/,
             textPatterns: [
                 {
@@ -125,8 +143,8 @@
             ],
         },
 
-        // 天梯榜关注的cpu/gpu
-        tianti: {
+        // ! 天梯榜关注的cpu/gpu
+        {
             urlRegex: /^https?:\/\/www\.mydrivers\.com\/.*/,
             textPatterns: [
                 // Items planning to get
@@ -179,12 +197,18 @@
             ],
         },
 
-        // usbank 高亮显示缴网费的卡
-        usbank: {
+        // ! usbank 高亮显示缴网费的卡
+        {
             urlRegex: /^https?:\/\/onlinebanking\.usbank\.com\/.*/,
-            textPatterns: [...generalTextReplacement],
+            textPatterns: [
+                {
+                    regex: /(USBankCashPlus)/g,
+                    replacement: "$1 (网费)",
+                    backColor: "rgb(255,192,255)",
+                },
+            ],
         },
-    };
+    ];
 
     function waitForUtils(timeout = 10000) {
         const requiredFunctions = ["initTextContentChanger"];
