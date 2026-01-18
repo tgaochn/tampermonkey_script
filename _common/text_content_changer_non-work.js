@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.0.6   
+// @version             1.0.7
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -18,7 +18,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
-// 1.0.6: add Citi CustomCash and BOA CustomizedCashRewards
+// 1.0.7: add Citi CustomCash and BOA CustomizedCashRewards
 // 1.0.5: add RTX 2060 6GB to tianti
 // 1.0.4: add GTX 1060 3GB and GTX 780 to tianti
 // 1.0.3: add annas-archive 安娜图书馆的url匹配
