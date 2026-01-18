@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.0
+// version: 0.2.1
 (function (window) {
     "use strict";
 
