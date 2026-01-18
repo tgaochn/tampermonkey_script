@@ -60,20 +60,34 @@
         {
             urlRegex: [
                 /^https:\/\/www\.amazon\.com\/checkout/,
+                /^https:\/\/myaccount\.cleanskyenergy\.com.*/,
             ],
             textPatterns: [
                 // Citi CustomCash
                 {
-                    regex: /ending in 9991/g,
-                    // replacement: "$1 (Citi)",
-                    backColor: "rgb(255,192,255)",
+                    regex: /(ending in 9991)/g,
+                    replacement: "$1 (Citi)",
                 },
-                // BOA CustomizedCashRewards
+                // BOA CustomizedCashRewards, 3% online
                 {
-                    regex: /ending in 2623/g,
-                    // replacement: "$1 (BOA 3%)",
-                    backColor: "rgb(255,192,255)",
-                }
+                    regex: /(ending in 2623)/g,
+                    replacement: "$1 (BOA 3%)",
+                },
+                // BOA 1.5%
+                {
+                    regex: /(ending in 8923)/g,
+                    replacement: "$1 (BOA 1.5%)",
+                },
+                // Bilt
+                {
+                    regex: /(ending in 6537)/g,
+                    replacement: "$1 (Bilt)",
+                },
+                // Amazon
+                {
+                    regex: /(ending in 8057)/g,
+                    replacement: "$1 (Amazon 5%)",
+                },
             ],
         },
 
