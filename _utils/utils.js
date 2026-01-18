@@ -1,10 +1,10 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.1
+// version: 0.2.2
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.2.1");
+    console.log("Utils script starting to load - v0.2.2");
     const utils = {};
     console.log("utils object created");
 
@@ -801,14 +801,26 @@
 
             // Support both array and object formats for backward compatibility
             const patternsArray = Array.isArray(urlPatterns) ? urlPatterns : Object.values(urlPatterns);
-            const currentUrlPatterns = patternsArray.find((urlPattern) =>
-                urlPattern.urlRegex.test(currentUrl)
+            
+            // Helper to check if urlRegex matches (supports both single regex and array of regexes)
+            const isUrlMatch = (urlRegex, url) => {
+                if (Array.isArray(urlRegex)) {
+                    return urlRegex.some((regex) => regex.test(url));
+                }
+                return urlRegex.test(url);
+            };
+            
+            // Apply all matching patterns instead of just the first one
+            const matchedPatterns = patternsArray.filter((urlPattern) =>
+                isUrlMatch(urlPattern.urlRegex, currentUrl)
             );
 
-            if (!currentUrlPatterns) return;
+            if (matchedPatterns.length === 0) return;
 
             const debouncedColorChange = utils.debounce(() => {
-                changeTextColor(observeTarget, currentUrlPatterns);
+                matchedPatterns.forEach((pattern) => {
+                    changeTextColor(observeTarget, pattern);
+                });
             }, 300);
 
             utils.observeDOM(document.body, debouncedColorChange);

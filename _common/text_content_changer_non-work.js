@@ -46,6 +46,7 @@
     "use strict";
 
     // !! 匹配url后修改文本颜色/内容
+    // NOTE: 更具体的 URL 规则放前面，通用规则 (urlRegex: /.*/) 放最后
     const urlPatterns = [
         // ! annas-archive 高亮应该显示的下载链接
         {
@@ -56,22 +57,18 @@
         },
 
         // ! 银行卡加注释
-        // Citi CustomCash
         {
-            urlRegex: /.*/,
+            urlRegex: [
+                /^https:\/\/www\.amazon\.com\/checkout/,
+            ],
             textPatterns: [
+                // Citi CustomCash
                 {
                     regex: /ending in 9991/g,
                     // replacement: "$1 (Citi)",
                     backColor: "rgb(255,192,255)",
-                }
-            ],
-        },
-
-        // BOA CustomizedCashRewards
-        {
-            urlRegex: /.*/,
-            textPatterns: [
+                },
+                // BOA CustomizedCashRewards
                 {
                     regex: /ending in 2623/g,
                     // replacement: "$1 (BOA 3%)",
@@ -208,6 +205,8 @@
                 },
             ],
         },
+
+
     ];
 
     function waitForUtils(timeout = 10000) {
