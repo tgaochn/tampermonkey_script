@@ -4,7 +4,7 @@
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.1.5");
+    console.log("Utils script starting to load - v0.2.1");
     const utils = {};
     console.log("utils object created");
 
