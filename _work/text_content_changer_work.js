@@ -1,19 +1,20 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.5
+// @version             1.0.6
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://teststats.sandbox.indeed.net/*
 // @match               https://proctor.sandbox.indeed.net/proctor/*
 // @match               https://butterfly.sandbox.indeed.net/*
-// @match               https://cloudops-prod.indeed.tech/portal*
+// @match               https://cloudops-prod.indeed.tech/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.6: add cloudops portal url pattern
 // 1.0.5: use utils.initTextContentChanger with built-in SPA support (URL change detection)
 // 1.0.4: add color highlighting for AWS account descriptions
 // 1.0.3: refactor: extract Butterfly_proctor patterns to a separate constant
