@@ -1,10 +1,10 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.2
+// version: 0.2.3
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.2.2");
+    console.log("Utils script starting to load - v0.2.3");
     const utils = {};
     console.log("utils object created");
 
@@ -626,6 +626,7 @@
     };
 
     // 监听 URL 变化并执行回调函数, 防止因为 URL 变化导致功能失效
+    // (Legacy function using polling, prefer onUrlChange for better performance)
     utils.monitorUrlChanges = function (callback, interval = 500) {
         let lastUrl = window.location.href;
 
@@ -648,6 +649,104 @@
         return {
             stop: () => clearInterval(intervalId),
             currentUrl: lastUrl,
+        };
+    };
+
+    // Enhanced URL change detection for SPA navigation
+    // Uses History API interception + popstate + MutationObserver for comprehensive detection
+    utils.onUrlChange = function (callback, options = {}) {
+        const {
+            debounceDelay = 100,  // Delay before triggering callback (ms)
+            debug = false,        // Enable debug logging
+        } = options;
+
+        let lastUrl = window.location.href;
+        let debounceTimer = null;
+
+        const debugLog = (emoji, message, ...args) => {
+            if (debug) {
+                console.log(`${emoji} [onUrlChange] ${message}`, ...args);
+            }
+        };
+
+        // Debounced URL check and callback trigger
+        const checkUrlChange = (source) => {
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+
+            debounceTimer = setTimeout(() => {
+                const currentUrl = window.location.href;
+                if (currentUrl !== lastUrl) {
+                    const oldUrl = lastUrl;
+                    lastUrl = currentUrl;
+                    debugLog("🔄", `URL changed (${source}):`, oldUrl, "→", currentUrl);
+                    callback(currentUrl, oldUrl);
+                }
+            }, debounceDelay);
+        };
+
+        // 1. Listen for popstate events (browser back/forward buttons)
+        const popstateHandler = () => {
+            debugLog("🔙", "Popstate event detected");
+            checkUrlChange("popstate");
+        };
+        window.addEventListener("popstate", popstateHandler);
+
+        // 2. Intercept History API (pushState/replaceState) - only once globally
+        if (!window._utilsHistoryIntercepted) {
+            window._utilsHistoryIntercepted = true;
+            window._utilsHistoryCallbacks = [];
+
+            const originalPushState = history.pushState;
+            const originalReplaceState = history.replaceState;
+
+            history.pushState = function (...args) {
+                originalPushState.apply(this, args);
+                window._utilsHistoryCallbacks.forEach(cb => cb("pushState"));
+            };
+
+            history.replaceState = function (...args) {
+                originalReplaceState.apply(this, args);
+                window._utilsHistoryCallbacks.forEach(cb => cb("replaceState"));
+            };
+        }
+
+        // Register this instance's callback for History API changes
+        const historyCallback = (source) => {
+            debugLog("➡️", `${source} detected`);
+            checkUrlChange(source);
+        };
+        window._utilsHistoryCallbacks.push(historyCallback);
+
+        // 3. MutationObserver as fallback for other SPA navigation methods
+        const observer = new MutationObserver(() => {
+            checkUrlChange("mutation");
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        debugLog("👀", "URL change listener started, initial URL:", lastUrl);
+
+        // Return cleanup function
+        return {
+            stop: () => {
+                window.removeEventListener("popstate", popstateHandler);
+                
+                // Remove from History callbacks
+                const index = window._utilsHistoryCallbacks.indexOf(historyCallback);
+                if (index > -1) {
+                    window._utilsHistoryCallbacks.splice(index, 1);
+                }
+                
+                observer.disconnect();
+                
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                
+                debugLog("🛑", "URL change listener stopped");
+            },
+            getCurrentUrl: () => lastUrl,
         };
     };
 
@@ -794,39 +893,86 @@
     }
 
     // Initialize text content changer with URL patterns
-    utils.initTextContentChanger = async function(urlPatterns) {
-        try {
-            const observeTarget = document.body;
-            const currentUrl = window.location.href;
+    // Automatically handles SPA navigation (URL changes without page reload)
+    utils.initTextContentChanger = async function(urlPatterns, options = {}) {
+        const {
+            debug = false,  // Enable debug logging
+        } = options;
 
-            // Support both array and object formats for backward compatibility
-            const patternsArray = Array.isArray(urlPatterns) ? urlPatterns : Object.values(urlPatterns);
-            
-            // Helper to check if urlRegex matches (supports both single regex and array of regexes)
-            const isUrlMatch = (urlRegex, url) => {
-                if (Array.isArray(urlRegex)) {
-                    return urlRegex.some((regex) => regex.test(url));
+        const debugLog = (emoji, message, ...args) => {
+            if (debug) {
+                console.log(`${emoji} [initTextContentChanger] ${message}`, ...args);
+            }
+        };
+
+        // Support both array and object formats for backward compatibility
+        const patternsArray = Array.isArray(urlPatterns) ? urlPatterns : Object.values(urlPatterns);
+        
+        // Helper to check if urlRegex matches (supports both single regex and array of regexes)
+        const isUrlMatch = (urlRegex, url) => {
+            if (Array.isArray(urlRegex)) {
+                return urlRegex.some((regex) => regex.test(url));
+            }
+            return urlRegex.test(url);
+        };
+
+        // Store the current observer for cleanup
+        let currentObserver = null;
+        let urlChangeWatcher = null;
+
+        // Function to apply text changes for current URL
+        const applyTextChanges = (url) => {
+            try {
+                const observeTarget = document.body;
+                
+                // Find matching patterns for current URL
+                const matchedPatterns = patternsArray.filter((urlPattern) =>
+                    isUrlMatch(urlPattern.urlRegex, url)
+                );
+
+                if (matchedPatterns.length === 0) {
+                    debugLog("ℹ️", "No matching patterns for URL:", url);
+                    return;
                 }
-                return urlRegex.test(url);
-            };
-            
-            // Apply all matching patterns instead of just the first one
-            const matchedPatterns = patternsArray.filter((urlPattern) =>
-                isUrlMatch(urlPattern.urlRegex, currentUrl)
-            );
 
-            if (matchedPatterns.length === 0) return;
+                debugLog("✅", `Found ${matchedPatterns.length} matching pattern(s) for:`, url);
 
-            const debouncedColorChange = utils.debounce(() => {
-                matchedPatterns.forEach((pattern) => {
-                    changeTextColor(observeTarget, pattern);
-                });
-            }, 300);
+                const debouncedColorChange = utils.debounce(() => {
+                    matchedPatterns.forEach((pattern) => {
+                        changeTextColor(observeTarget, pattern);
+                    });
+                }, 300);
 
-            utils.observeDOM(document.body, debouncedColorChange);
-        } catch (error) {
-            console.error("Failed to initialize text content changer:", error);
-        }
+                // Apply immediately
+                debouncedColorChange();
+                
+                // Observe DOM for dynamic content
+                utils.observeDOM(document.body, debouncedColorChange);
+            } catch (error) {
+                console.error("Failed to apply text changes:", error);
+            }
+        };
+
+        // Apply text changes for initial URL
+        applyTextChanges(window.location.href);
+
+        // Set up URL change detection for SPA navigation
+        urlChangeWatcher = utils.onUrlChange((newUrl, oldUrl) => {
+            debugLog("🔄", "URL changed, re-applying text changes");
+            applyTextChanges(newUrl);
+        }, { debug });
+
+        debugLog("👀", "Text content changer initialized with SPA support");
+
+        // Return cleanup function
+        return {
+            stop: () => {
+                if (urlChangeWatcher) {
+                    urlChangeWatcher.stop();
+                }
+                debugLog("🛑", "Text content changer stopped");
+            }
+        };
     };
 
     /* !! -------------------------------------------------------------------------- */

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.4
+// @version             1.0.5
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.5: use utils.initTextContentChanger with built-in SPA support (URL change detection)
 // 1.0.4: add color highlighting for AWS account descriptions
 // 1.0.3: refactor: extract Butterfly_proctor patterns to a separate constant
 // 1.0.2: add AWS account description mapping for cloudops portal
@@ -349,6 +350,7 @@
     async function initScript() {
         try {
             const utils = await waitForUtils();
+            // initTextContentChanger now has built-in SPA support (URL change detection)
             utils.initTextContentChanger(urlPatterns);
         } catch (error) {
             console.error("Failed to initialize:", error);
