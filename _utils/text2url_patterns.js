@@ -28,6 +28,13 @@
             urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         },
 
+        // ! Latest MTM models
+        // preapply_online_us
+        {
+            regex: /^((preapply_online)|(postapply_online)|(LLM)|(LLM_relevance))_((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7}$/g,
+            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
+        },        
+
         // ! I2A models: elephant-multi-en-all_en-4e18057
         {
             regex: /^(elephant-multi-en-all_en-[a-zA-Z0-9]{7})$/g,
