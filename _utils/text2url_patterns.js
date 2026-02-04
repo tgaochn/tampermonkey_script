@@ -32,7 +32,7 @@
         // ! Latest MTM models
         // preapply_online_us
         {
-            regex: /^((preapply_online)|(postapply_online)|(LLM)|(LLM_relevance))_((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7}$/g,
+            regex: /^(((preapply_online)|(postapply_online)|(LLM)|(LLM_relevance))_((us)|(rot?w)|(jp)|(global))_[a-zA-Z0-9]{7})$/g,
             urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         },        
 
