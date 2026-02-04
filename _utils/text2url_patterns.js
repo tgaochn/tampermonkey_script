@@ -1,7 +1,7 @@
 // text2url_patterns.js
-// version: 0.1.1
+// version: 0.1.2
 // Shared text-to-URL conversion patterns for tampermonkey scripts
-// 0.1.1: add new url pattern for latest MTM models (preapply_online, postapply_online, LLM, LLM_relevance)
+// 0.1.2: add new url pattern for latest MTM models (preapply_online, postapply_online, LLM, LLM_relevance)
 // 0.1.0: initial version - extracted from JiraTicketAddBtn.js and model_text2link.js
 
 (function () {
