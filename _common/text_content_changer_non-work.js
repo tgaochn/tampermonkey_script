@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.0.7
+// @version             1.0.8
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://www.skidrowreloaded.com/*
+// @match               https://igg-games.com/*
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
@@ -18,6 +19,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.0.8: add igg-games url pattern
 // 1.0.7: add Citi CustomCash and BOA CustomizedCashRewards
 // 1.0.5: add RTX 2060 6GB to tianti
 // 1.0.4: add GTX 1060 3GB and GTX 780 to tianti
@@ -112,7 +114,8 @@
 
         // ! skidrow 高亮显示最好用的几个网盘
         {
-            urlRegex: /^https?:\/\/www\.skidrowreloaded\.com\/.*/,
+            // https://igg-games.com/sophie-the-girl-from-the-zone-free-download.html
+            urlRegex: /^https?:\/\/((www\.skidrowreloaded\.com)|(igg-games\.com))\/.*/,
             textPatterns: [
                 {
                     regex: /MEDIAFIRE/gi,
