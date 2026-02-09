@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.10
+// @version 0.6.0
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.6.0: Use parsed game name for all links, avoiding encoding issues with underscores
+// 0.5.11: Parse game name to split "Chinese(English)" format, treat all-English as single name
 // 0.5.10: Mapping dialog shows Chinese/English name info, "没有找到" when not loaded
 // 0.5.9: Mapping dialogs add "填入中文名" and "填入英文名" quick-fill buttons
 // 0.5.8: Bilibili button uses mapping if exists, else Chinese name (same as gamer520)
@@ -112,6 +114,23 @@
         const mapping = getBilibiliMapping();
         delete mapping[steamId];
         saveBilibiliMapping(mapping);
+    }
+
+    // Parse game name: "Chinese(English)" -> { chinese, english }; if both parts are English, treat as single name
+    function parseGameName(name) {
+        const trimmed = name.trim();
+        const match = trimmed.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+        if (!match) {
+            return { chinese: null, english: trimmed };
+        }
+        const before = match[1].trim();
+        const inside = match[2].trim();
+        // Only split when "before" contains Chinese (CJK characters)
+        const hasChinese = /[\u4e00-\u9fff]/.test(before);
+        if (hasChinese) {
+            return { chinese: before, english: inside };
+        }
+        return { chinese: null, english: trimmed };
     }
 
     // Function to show toast notification (non-blocking, auto-dismiss after 3 seconds)
@@ -572,39 +591,39 @@
                     gameName = data.data.name;
                 }
 
-                // Modified game name
-                var modifiedGameName = gameName.replace(/_/g, "+");
-                gameNameEnglish = modifiedGameName.replace(/\+/g, " ");
+                var parsed = parseGameName(gameName);
+                gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
+                var finalGameNameInEng = (parsed.english || gameName).replace(/_/g, "+");
 
                 // Create all buttons
                 var buttonSkidrow = createButton(
                     "SkidrowReloaded",
                     "#007037",
-                    "https://www.skidrowreloaded.com/?s=" + encodeURIComponent(gameName)
+                    "https://www.skidrowreloaded.com/?s=" + encodeURIComponent(finalGameNameInEng)
                 );
 
                 var buttonIGG = createButton(
                     "IGG",
                     "#3B3B3B",
-                    "https://igg-games.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                    "https://igg-games.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
                 );
 
                 var buttonTorrent = createButton(
                     "x1337x",
                     "#3B3B3B",
-                    "https://x1337x.ws/srch?search=" + encodeURIComponent(gameName)
+                    "https://x1337x.ws/srch?search=" + encodeURIComponent(finalGameNameInEng)
                 );
 
                 // Create nexusmods button with mapping logic
-                var buttonNexusmods = createNexusModsButton(modifiedGameName);
+                var buttonNexusmods = createNexusModsButton(finalGameNameInEng);
 
                 // Bilibili button: use English as fallback when Chinese fetch fails, replaced in second fetch
-                var bilibili = createBilibiliButton(modifiedGameName);
+                var bilibili = createBilibiliButton(finalGameNameInEng);
 
                 var FLiNG = createButton(
                     "风灵月影",
                     "#6f4e37",
-                    "https://flingtrainer.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                    "https://flingtrainer.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
                 );
 
                 // Create add mapping button with dynamic state
@@ -646,18 +665,22 @@
                     gameName = data.data.name;
                 }
 
-                var modifiedGameName = gameName.replace(/_/g, "+");
-                gameNameChinese = modifiedGameName.replace(/\+/g, " ");
+                var parsed = parseGameName(gameName);
+                gameNameChinese = (parsed.chinese || parsed.english || gameName).replace(/_/g, " ").trim();
+                if (parsed.chinese && !gameNameEnglish) {
+                    gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
+                }
+                var finalGameNameInChn = (parsed.chinese || parsed.english || gameName).replace(/_/g, "+");
 
                 // Create gamer520 button (uses Chinese name)
                 var button520 = createButton(
                     "gamer520",
                     "#007037",
-                    "https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                    "https://www.gamer520.com/?s=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
                 );
 
                 // Replace bilibili button with one using Chinese name (same as gamer520)
-                allButtons[6] = createBilibiliButton(modifiedGameName);
+                allButtons[6] = createBilibiliButton(finalGameNameInChn);
 
                 // Insert gamer520 at the desired position (before SkidrowReloaded)
                 allButtons.splice(0, 0, button520);
