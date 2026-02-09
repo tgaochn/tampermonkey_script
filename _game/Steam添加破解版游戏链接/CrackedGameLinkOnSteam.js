@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.6.1
+// @version 0.7.0
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.0: Custom name dialog adds "同时设为B站搜索关键字" option, default checked
+// 0.6.2: Add "+ 中英文名" button to set custom names, stored in GM and overrides API
 // 0.6.1: Add tm_debug=1 to IGG-Games link for debugging
 // 0.6.0: Use parsed game name for all links, avoiding encoding issues with underscores
 // 0.5.11: Parse game name to split "Chinese(English)" format, treat all-English as single name
@@ -115,6 +117,28 @@
         const mapping = getBilibiliMapping();
         delete mapping[steamId];
         saveBilibiliMapping(mapping);
+    }
+
+    // Custom name (Chinese/English) storage, overrides API when set
+    function getCustomNameMapping() {
+        const stored = GM_getValue("custom_name_mapping", "{}");
+        return JSON.parse(stored);
+    }
+
+    function saveCustomNameMapping(mapping) {
+        GM_setValue("custom_name_mapping", JSON.stringify(mapping));
+    }
+
+    function addCustomNameMapping(steamId, chinese, english) {
+        const mapping = getCustomNameMapping();
+        mapping[steamId] = { chinese: chinese || null, english: english || null };
+        saveCustomNameMapping(mapping);
+    }
+
+    function removeCustomNameMapping(steamId) {
+        const mapping = getCustomNameMapping();
+        delete mapping[steamId];
+        saveCustomNameMapping(mapping);
     }
 
     // Parse game name: "Chinese(English)" -> { chinese, english }; if both parts are English, treat as single name
@@ -341,6 +365,184 @@
         });
     }
 
+    // Dialog to set custom Chinese/English names (overrides API)
+    function showCustomNameDialog() {
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            min-width: 400px;
+        `;
+
+        const inputChn = document.createElement("input");
+        inputChn.type = "text";
+        inputChn.placeholder = "中文名";
+        inputChn.style.cssText = "width: 100%; padding: 10px; font-size: 14px; margin: 4px 0; box-sizing: border-box;";
+
+        const inputEng = document.createElement("input");
+        inputEng.type = "text";
+        inputEng.placeholder = "英文名";
+        inputEng.style.cssText = "width: 100%; padding: 10px; font-size: 14px; margin: 4px 0; box-sizing: border-box;";
+
+        const fillBtnStyle = "background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 8px; font-size: 13px;";
+        const btnFillChn = document.createElement("button");
+        btnFillChn.textContent = "填入中文名";
+        btnFillChn.style.cssText = fillBtnStyle + (gameNameChinese ? "" : " opacity: 0.5; cursor: not-allowed;");
+        btnFillChn.disabled = !gameNameChinese;
+        btnFillChn.onclick = () => { if (gameNameChinese) inputChn.value = gameNameChinese; };
+
+        const btnFillEng = document.createElement("button");
+        btnFillEng.textContent = "填入英文名";
+        btnFillEng.style.cssText = fillBtnStyle + (gameNameEnglish ? "" : " opacity: 0.5; cursor: not-allowed;");
+        btnFillEng.disabled = !gameNameEnglish;
+        btnFillEng.onclick = () => { if (gameNameEnglish) inputEng.value = gameNameEnglish; };
+
+        const infoStyle = "font-size: 12px; color: #666; margin: 4px 0;";
+        const infoChinese = document.createElement("div");
+        infoChinese.style.cssText = infoStyle;
+        infoChinese.textContent = "当前中文名: " + (gameNameChinese || "(没有找到)");
+        const infoEnglish = document.createElement("div");
+        infoEnglish.style.cssText = infoStyle;
+        infoEnglish.textContent = "当前英文名: " + (gameNameEnglish || "(Not Found)");
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "确认";
+        confirmBtn.style.cssText = "background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "取消";
+        cancelBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;";
+
+        const closeDialog = () => document.body.removeChild(dialog);
+
+        confirmBtn.onclick = () => {
+            const chn = inputChn.value.trim();
+            const eng = inputEng.value.trim();
+            if (chn || eng) {
+                addCustomNameMapping(appid, chn || null, eng || null);
+                if (chn && chkInput.checked) {
+                    addBilibiliMapping(appid, chn);
+                    updateAddBilibiliMappingButton();
+                }
+                gameNameChinese = chn || gameNameChinese;
+                gameNameEnglish = eng || gameNameEnglish;
+                showToast("中英文名已设置！将优先使用自定义名称。" + (chn && chkInput.checked ? " B站搜索已同步。" : ""));
+                updateAddCustomNameButton();
+                closeDialog();
+                location.reload();
+            }
+        };
+
+        cancelBtn.onclick = closeDialog;
+
+        dialog.innerHTML = `<h3 style="margin-top: 0; color: #333;">设置中英文名</h3><p style="font-size: 12px; color: #666;">设置后优先使用，可留空</p>`;
+        dialog.appendChild(infoChinese);
+        dialog.appendChild(infoEnglish);
+        const fillRow = document.createElement("div");
+        fillRow.style.marginTop = "8px";
+        fillRow.appendChild(btnFillChn);
+        fillRow.appendChild(btnFillEng);
+        dialog.appendChild(fillRow);
+        const labelChn = document.createElement("label");
+        labelChn.style.display = "block";
+        labelChn.textContent = "中文名:";
+        labelChn.style.marginTop = "10px";
+        dialog.appendChild(labelChn);
+        dialog.appendChild(inputChn);
+        const labelEng = document.createElement("label");
+        labelEng.style.display = "block";
+        labelEng.textContent = "英文名:";
+        labelEng.style.marginTop = "8px";
+        dialog.appendChild(labelEng);
+        dialog.appendChild(inputEng);
+
+        const chkBilibili = document.createElement("label");
+        chkBilibili.style.cssText = "display: flex; align-items: center; margin-top: 12px; font-size: 13px; cursor: pointer;";
+        const chkInput = document.createElement("input");
+        chkInput.type = "checkbox";
+        chkInput.checked = true;
+        chkInput.style.marginRight = "8px";
+        chkBilibili.appendChild(chkInput);
+        chkBilibili.appendChild(document.createTextNode("同时设为B站搜索关键字"));
+        dialog.appendChild(chkBilibili);
+
+        const btnRow = document.createElement("div");
+        btnRow.style.marginTop = "15px";
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        dialog.appendChild(btnRow);
+
+        document.body.appendChild(dialog);
+        inputChn.focus();
+    }
+
+    // Verification dialog for custom name (when already set)
+    function showCustomNameVerificationDialog(customNames) {
+        const searchUrlChn = customNames.chinese
+            ? `https://search.bilibili.com/all?keyword=${encodeURIComponent(customNames.chinese)}`
+            : null;
+        const searchUrlEng = customNames.english
+            ? `https://www.google.com/search?q=${encodeURIComponent(customNames.english)}`
+            : null;
+
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+        `;
+
+        let content = `<h3 style="margin-top: 0; color: #333;">已设置中英文名</h3>`;
+        if (customNames.chinese) {
+            content += `<p style="color: #000;"><strong>中文名:</strong> ${customNames.chinese}</p>`;
+            if (searchUrlChn) content += `<a href="${searchUrlChn}" target="_blank" style="color: #0066cc; word-break: break-all;">${searchUrlChn}</a><br>`;
+        }
+        if (customNames.english) {
+            content += `<p style="color: #000;"><strong>英文名:</strong> ${customNames.english}</p>`;
+            if (searchUrlEng) content += `<a href="${searchUrlEng}" target="_blank" style="color: #0066cc; word-break: break-all;">${searchUrlEng}</a><br>`;
+        }
+
+        content += `
+            <div style="margin-top: 20px;">
+                <button id="clearCustomName" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">清除</button>
+                <button id="closeCustomName" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">关闭</button>
+            </div>
+        `;
+        dialog.innerHTML = content;
+
+        dialog.addEventListener("click", function (e) {
+            if (e.target.id === "clearCustomName") {
+                removeCustomNameMapping(appid);
+                updateAddCustomNameButton();
+                document.body.removeChild(dialog);
+                showToast("已清除自定义名称");
+                location.reload();
+            } else if (e.target.id === "closeCustomName") {
+                document.body.removeChild(dialog);
+            }
+        });
+
+        document.body.appendChild(dialog);
+    }
+
     // Generic function to show mapping verification dialog with clickable URL
     function showMappingVerificationDialog(config) {
         const { title, nameLabel, nameValue, urlLabel, url, clearButtonId, closeButtonId, onClear } = config;
@@ -499,6 +701,35 @@
         }
     }
 
+    // Function to update add custom name button state dynamically
+    function updateAddCustomNameButton() {
+        if (!addCustomNameButton) return;
+
+        const customNames = getCustomNameMapping()[appid];
+        const newButton = addCustomNameButton.cloneNode(true);
+        addCustomNameButton.parentNode.replaceChild(newButton, addCustomNameButton);
+        addCustomNameButton = newButton;
+
+        if (customNames && (customNames.chinese || customNames.english)) {
+            addCustomNameButton.innerHTML = "<span>✓ 中英文名</span>";
+            addCustomNameButton.style.backgroundColor = "#666666";
+            addCustomNameButton.style.cursor = "default";
+            const showDialog = () => showCustomNameVerificationDialog(customNames);
+            addCustomNameButton.onclick = showDialog;
+            addCustomNameButton.addEventListener("mousedown", (e) => {
+                if (e.button === 1) { e.preventDefault(); showDialog(); }
+            });
+        } else {
+            addCustomNameButton.innerHTML = "<span>+ 中英文名</span>";
+            addCustomNameButton.style.backgroundColor = "#6f4e37";
+            const showDialog = () => showCustomNameDialog();
+            addCustomNameButton.onclick = showDialog;
+            addCustomNameButton.addEventListener("mousedown", (e) => {
+                if (e.button === 1) { e.preventDefault(); showDialog(); }
+            });
+        }
+    }
+
     // Function to update add bilibili mapping button state dynamically
     function updateAddBilibiliMappingButton() {
         if (!addBilibiliMappingButton) return;
@@ -572,6 +803,7 @@
     // Global reference to add mapping button for dynamic updates
     var addMappingButton = null;
     var addBilibiliMappingButton = null;
+    var addCustomNameButton = null;
 
     // Game names from Steam API, used by mapping dialogs
     var gameNameEnglish = null;
@@ -581,20 +813,25 @@
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
         .then(async (response) => {
             if (response.ok) {
-                // load game name in English from steampowered
-                const json = await response.json();
-                const data = json[appid];
+                const customNames = getCustomNameMapping()[appid];
                 var gameName;
-                if (data.success !== true) {
-                    // Get the game name from the URL after /app/number/
-                    gameName = window.location.pathname.split("/")[3];
-                } else {
-                    gameName = data.data.name;
-                }
+                var finalGameNameInEng;
 
-                var parsed = parseGameName(gameName);
-                gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
-                var finalGameNameInEng = (parsed.english || gameName).replace(/_/g, "+");
+                if (customNames && customNames.english) {
+                    gameNameEnglish = customNames.english;
+                    finalGameNameInEng = customNames.english.replace(/_/g, "+");
+                } else {
+                    const json = await response.json();
+                    const data = json[appid];
+                    if (data.success !== true) {
+                        gameName = window.location.pathname.split("/")[3];
+                    } else {
+                        gameName = data.data.name;
+                    }
+                    var parsed = parseGameName(gameName);
+                    gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
+                    finalGameNameInEng = (parsed.english || gameName).replace(/_/g, "+");
+                }
 
                 // Create all buttons
                 var buttonSkidrow = createButton(
@@ -606,7 +843,7 @@
                 var buttonIGG = createButton(
                     "IGG",
                     "#3B3B3B",
-                    "https://igg-games.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+") + "?tm_debug=1"
+                    "https://igg-games.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
                 );
 
                 var buttonTorrent = createButton(
@@ -633,7 +870,11 @@
 
                 // Create add bilibili mapping button with dynamic state
                 var buttonAddBilibiliMapping = createAddBilibiliMappingButton();
-                addBilibiliMappingButton = buttonAddBilibiliMapping; // Store reference for dynamic updates
+                addBilibiliMappingButton = buttonAddBilibiliMapping;
+
+                // Create add custom name button
+                var buttonAddCustomName = createAddCustomNameButton();
+                addCustomNameButton = buttonAddCustomName;
 
                 // Store buttons in the desired order (bilibili replaced with Chinese name in second fetch)
                 allButtons = [
@@ -647,6 +888,7 @@
 
                     bilibili, // 7. Bilibili (English fallback, replaced with Chinese in second fetch)
                     buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
+                    buttonAddCustomName, // 7.6. Add custom Chinese/English names
                     FLiNG, // 8. FLiNG
                 ];
 
@@ -656,22 +898,28 @@
         })
         .then(async (response) => {
             if (response && response.ok) {
-                // load game name in Chinese from steampowered
-                const json = await response.json();
-                const data = json[appid];
-                var gameName;
-                if (data.success !== true) {
-                    gameName = window.location.pathname.split("/")[3];
-                } else {
-                    gameName = data.data.name;
-                }
+                const customNames = getCustomNameMapping()[appid];
+                var finalGameNameInChn;
 
-                var parsed = parseGameName(gameName);
-                gameNameChinese = (parsed.chinese || parsed.english || gameName).replace(/_/g, " ").trim();
-                if (parsed.chinese && !gameNameEnglish) {
-                    gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
+                if (customNames && customNames.chinese) {
+                    gameNameChinese = customNames.chinese;
+                    finalGameNameInChn = customNames.chinese.replace(/_/g, "+");
+                } else {
+                    const json = await response.json();
+                    const data = json[appid];
+                    var gameName;
+                    if (data.success !== true) {
+                        gameName = window.location.pathname.split("/")[3];
+                    } else {
+                        gameName = data.data.name;
+                    }
+                    var parsed = parseGameName(gameName);
+                    gameNameChinese = (parsed.chinese || parsed.english || gameName).replace(/_/g, " ").trim();
+                    if (parsed.chinese && !gameNameEnglish) {
+                        gameNameEnglish = parsed.english ? parsed.english.replace(/_/g, " ") : null;
+                    }
+                    finalGameNameInChn = (parsed.chinese || parsed.english || gameName).replace(/_/g, "+");
                 }
-                var finalGameNameInChn = (parsed.chinese || parsed.english || gameName).replace(/_/g, "+");
 
                 // Create gamer520 button (uses Chinese name)
                 var button520 = createButton(
@@ -858,6 +1106,33 @@
             });
         }
 
+        return button;
+    }
+
+    // Helper function to create add custom name button
+    function createAddCustomNameButton() {
+        var button = document.createElement("a");
+        applyButtonStyles(button);
+
+        const customNames = getCustomNameMapping()[appid];
+        if (customNames && (customNames.chinese || customNames.english)) {
+            button.innerHTML = "<span>✓ 中英文名</span>";
+            button.style.backgroundColor = "#666666";
+            button.style.cursor = "default";
+            const showDialog = () => showCustomNameVerificationDialog(customNames);
+            button.onclick = showDialog;
+            button.addEventListener("mousedown", (e) => {
+                if (e.button === 1) { e.preventDefault(); showDialog(); }
+            });
+        } else {
+            button.innerHTML = "<span>+ 中英文名</span>";
+            button.style.backgroundColor = "#6f4e37";
+            const showDialog = () => showCustomNameDialog();
+            button.onclick = showDialog;
+            button.addEventListener("mousedown", (e) => {
+                if (e.button === 1) { e.preventDefault(); showDialog(); }
+            });
+        }
         return button;
     }
 
