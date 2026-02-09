@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.9
+// @version 0.5.10
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.10: Mapping dialog shows Chinese/English name info, "没有找到" when not loaded
 // 0.5.9: Mapping dialogs add "填入中文名" and "填入英文名" quick-fill buttons
 // 0.5.8: Bilibili button uses mapping if exists, else Chinese name (same as gamer520)
 // 0.5.6: Fix workshop button to use actualsort=lastupdated&browsesort=lastupdated&p=1 for latest mods
@@ -270,11 +271,24 @@
 
         dialog.innerHTML = `<h3 style="margin-top: 0; color: #333;">${title}</h3>`;
         dialog.appendChild(input);
+
+        const infoStyle = "font-size: 12px; color: #666; margin: 4px 0;";
+        const infoChinese = document.createElement("div");
+        infoChinese.style.cssText = infoStyle;
+        infoChinese.textContent = "中文名: " + (gameNameChinese || "(没有找到)");
+        const infoEnglish = document.createElement("div");
+        infoEnglish.style.cssText = infoStyle;
+        infoEnglish.textContent = "英文名: " + (gameNameEnglish || "(Not Found)");
+        dialog.appendChild(infoChinese);
+        dialog.appendChild(infoEnglish);
+
         const fillRow = document.createElement("div");
         fillRow.style.marginBottom = "10px";
+        fillRow.style.marginTop = "8px";
         fillRow.appendChild(btnChinese);
         fillRow.appendChild(btnEnglish);
         dialog.appendChild(fillRow);
+
         const btnRow = document.createElement("div");
         btnRow.style.marginTop = "15px";
         btnRow.appendChild(confirmBtn);
