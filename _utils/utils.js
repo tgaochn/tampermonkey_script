@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.3
+// version: 0.2.4
 (function (window) {
     "use strict";
 
@@ -588,7 +588,8 @@
 
         if (MutationObserver) {
             const mutationObserver = new MutationObserver(function (mutations, observer) {
-                if (mutations[0].addedNodes.length && onAddCallback) {
+                const hasAddedNodes = mutations.length > 0 && mutations.some((m) => m.addedNodes && m.addedNodes.length > 0);
+                if (hasAddedNodes && onAddCallback) {
                     onAddCallback();
                 }
             });
@@ -945,6 +946,11 @@
 
                 // Apply immediately
                 debouncedColorChange();
+
+                // Delayed retries for dynamically loaded content (e.g. igg-games.com loads links via JS)
+                [1000, 3000, 6000].forEach((delay) => {
+                    setTimeout(debouncedColorChange, delay);
+                });
                 
                 // Observe DOM for dynamic content
                 utils.observeDOM(document.body, debouncedColorChange);
