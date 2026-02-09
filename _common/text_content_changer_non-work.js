@@ -6,6 +6,7 @@
 // @license             MIT
 // @match               https://www.skidrowreloaded.com/*
 // @match               https://igg-games.com/*
+// @match               https://www.igg-games.com/*
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
@@ -46,6 +47,8 @@
 
 (function () {
     "use strict";
+
+    console.log("[text_content_changer_non-work] script loaded for URL:", window.location.href);
 
     // !! 匹配url后修改文本颜色/内容
     // NOTE: 更具体的 URL 规则放前面，通用规则 (urlRegex: /.*/) 放最后
@@ -115,7 +118,7 @@
         // ! skidrow 高亮显示最好用的几个网盘
         {
             // https://igg-games.com/sophie-the-girl-from-the-zone-free-download.html
-            urlRegex: /^https?:\/\/((www\.skidrowreloaded\.com)|(igg-games\.com))\/.*/,
+            urlRegex: /^https?:\/\/((www\.)?skidrowreloaded\.com|(www\.)?igg-games\.com)\/.*/,
             textPatterns: [
                 {
                     regex: /MEDIAFIRE/gi,

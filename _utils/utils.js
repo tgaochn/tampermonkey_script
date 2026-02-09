@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.4
+// version: 0.2.4.1
 (function (window) {
     "use strict";
 
@@ -903,6 +903,9 @@
             debug = false,  // Enable debug logging
         } = options;
 
+        // Always log on init to verify script is running
+        console.log("[text_content_changer] init, URL:", window.location.href);
+
         const debugLog = (emoji, message, ...args) => {
             if (debug) {
                 console.log(`${emoji} [initTextContentChanger] ${message}`, ...args);
@@ -935,10 +938,12 @@
                 );
 
                 if (matchedPatterns.length === 0) {
+                    console.log("[text_content_changer] No URL match for:", url);
                     debugLog("ℹ️", "No matching patterns for URL:", url);
                     return;
                 }
 
+                console.log("[text_content_changer] URL matched, patterns:", matchedPatterns.length);
                 debugLog("✅", `Found ${matchedPatterns.length} matching pattern(s) for:`, url);
 
                 let runCount = 0;
