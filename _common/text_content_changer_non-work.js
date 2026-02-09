@@ -1,12 +1,11 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.1
+// @version             1.1.2
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://www.skidrowreloaded.com/*
 // @match               https://igg-games.com/*
-// @match               https://www.igg-games.com/*
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
@@ -21,6 +20,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.2: remove igg-games url pattern
 // 1.1.1: document-idle + load/pageshow for cached/bfcache pages
 // 1.1.0: remove debug logs
 // 1.0.8: add igg-games url pattern
