@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.6.0
+// @version 0.6.1
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.6.1: Add tm_debug=1 to IGG-Games link for debugging
 // 0.6.0: Use parsed game name for all links, avoiding encoding issues with underscores
 // 0.5.11: Parse game name to split "Chinese(English)" format, treat all-English as single name
 // 0.5.10: Mapping dialog shows Chinese/English name info, "没有找到" when not loaded
@@ -605,7 +606,7 @@
                 var buttonIGG = createButton(
                     "IGG",
                     "#3B3B3B",
-                    "https://igg-games.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
+                    "https://igg-games.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+") + "?tm_debug=1"
                 );
 
                 var buttonTorrent = createButton(

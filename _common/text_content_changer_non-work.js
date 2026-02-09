@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.0.8
+// @version             1.1.1
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -15,11 +15,14 @@
 // @match               https://*.annas-archive.org/*
 // @match               https://myaccount.cleanskyenergy.com*
 // @grant               none
+// @run-at              document-idle
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.1: document-idle + load/pageshow for cached/bfcache pages
+// 1.1.0: remove debug logs
 // 1.0.8: add igg-games url pattern
 // 1.0.7: add Citi CustomCash and BOA CustomizedCashRewards
 // 1.0.5: add RTX 2060 6GB to tianti
@@ -47,8 +50,6 @@
 
 (function () {
     "use strict";
-
-    console.log("[text_content_changer_non-work] script loaded for URL:", window.location.href);
 
     // !! 匹配url后修改文本颜色/内容
     // NOTE: 更具体的 URL 规则放前面，通用规则 (urlRegex: /.*/) 放最后
@@ -252,7 +253,7 @@
     async function initScript() {
         try {
             const utils = await waitForUtils();
-            utils.initTextContentChanger(urlPatterns, { debug: true });
+            utils.initTextContentChanger(urlPatterns);
         } catch (error) {
             console.error("Failed to initialize:", error);
         }

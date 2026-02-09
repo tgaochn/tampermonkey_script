@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.4.1
+// version: 0.2.5
 (function (window) {
     "use strict";
 
@@ -583,6 +583,7 @@
 
     // button 的 observeDOM
     utils.observeDOM = function (targetNode, onAddCallback, onRemoveCallback) {
+        if (!targetNode || !(targetNode instanceof Node)) return;
         const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         const eventListenerSupported = window.addEventListener;
 
@@ -786,7 +787,7 @@
     }
 
     // Main function to change text color/content based on patterns
-    function changeTextColor(node, currentUrlPatterns, debugLog) {
+    function changeTextColor(node, currentUrlPatterns) {
         if (!currentUrlPatterns) return;
 
         // Skip already processed nodes
@@ -802,9 +803,6 @@
                 // Check if pattern matches
                 const match = pattern.regex.exec(content);
                 if (match) {
-                    if (debugLog) {
-                        debugLog("🎨", "Matched:", pattern.regex.toString(), "in text:", JSON.stringify(content.substring(0, 80)));
-                    }
                     // Reset regex lastIndex for global patterns
                     pattern.regex.lastIndex = 0;
                     
@@ -891,7 +889,7 @@
 
             // Process child nodes
             Array.from(node.childNodes).forEach(child => {
-                changeTextColor(child, currentUrlPatterns, debugLog);
+                changeTextColor(child, currentUrlPatterns);
             });
         }
     }
@@ -899,19 +897,6 @@
     // Initialize text content changer with URL patterns
     // Automatically handles SPA navigation (URL changes without page reload)
     utils.initTextContentChanger = async function(urlPatterns, options = {}) {
-        const {
-            debug = false,  // Enable debug logging
-        } = options;
-
-        // Always log on init to verify script is running
-        console.log("[text_content_changer] init, URL:", window.location.href);
-
-        const debugLog = (emoji, message, ...args) => {
-            if (debug) {
-                console.log(`${emoji} [initTextContentChanger] ${message}`, ...args);
-            }
-        };
-
         // Support both array and object formats for backward compatibility
         const patternsArray = Array.isArray(urlPatterns) ? urlPatterns : Object.values(urlPatterns);
         
@@ -931,27 +916,18 @@
         const applyTextChanges = (url) => {
             try {
                 const observeTarget = document.body;
-                
+                if (!observeTarget) return;
+
                 // Find matching patterns for current URL
                 const matchedPatterns = patternsArray.filter((urlPattern) =>
                     isUrlMatch(urlPattern.urlRegex, url)
                 );
 
-                if (matchedPatterns.length === 0) {
-                    console.log("[text_content_changer] No URL match for:", url);
-                    debugLog("ℹ️", "No matching patterns for URL:", url);
-                    return;
-                }
+                if (matchedPatterns.length === 0) return;
 
-                console.log("[text_content_changer] URL matched, patterns:", matchedPatterns.length);
-                debugLog("✅", `Found ${matchedPatterns.length} matching pattern(s) for:`, url);
-
-                let runCount = 0;
                 const debouncedColorChange = utils.debounce(() => {
-                    runCount++;
-                    if (debug) debugLog("🔄", `Applying text changes (run #${runCount})`);
                     matchedPatterns.forEach((pattern) => {
-                        changeTextColor(observeTarget, pattern, debug ? debugLog : null);
+                        changeTextColor(observeTarget, pattern);
                     });
                 }, 300);
 
@@ -959,8 +935,13 @@
                 debouncedColorChange();
 
                 // Delayed retries for dynamically loaded content (e.g. igg-games.com loads links via JS)
-                [1000, 3000, 6000].forEach((delay) => {
+                [1000, 3000, 6000, 10000].forEach((delay) => {
                     setTimeout(debouncedColorChange, delay);
+                });
+                // Also run on load event (handles cached/bfcache page restore)
+                window.addEventListener("load", debouncedColorChange, { once: true });
+                window.addEventListener("pageshow", (e) => {
+                    if (e.persisted) debouncedColorChange(); // bfcache restore
                 });
                 
                 // Observe DOM for dynamic content
@@ -970,24 +951,26 @@
             }
         };
 
-        // Apply text changes for initial URL
-        applyTextChanges(window.location.href);
+        // Apply text changes - wait for document.body (script may run before DOM ready)
+        const runWhenReady = () => {
+            if (document.body) {
+                applyTextChanges(window.location.href);
+            } else {
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", runWhenReady, { once: true });
+                } else {
+                    setTimeout(runWhenReady, 100);
+                }
+            }
+        };
+        runWhenReady();
 
         // Set up URL change detection for SPA navigation
-        urlChangeWatcher = utils.onUrlChange((newUrl, oldUrl) => {
-            debugLog("🔄", "URL changed, re-applying text changes");
-            applyTextChanges(newUrl);
-        }, { debug });
+        urlChangeWatcher = utils.onUrlChange((newUrl) => applyTextChanges(newUrl));
 
-        debugLog("👀", "Text content changer initialized with SPA support");
-
-        // Return cleanup function
         return {
             stop: () => {
-                if (urlChangeWatcher) {
-                    urlChangeWatcher.stop();
-                }
-                debugLog("🛑", "Text content changer stopped");
+                if (urlChangeWatcher) urlChangeWatcher.stop();
             }
         };
     };
