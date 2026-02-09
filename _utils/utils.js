@@ -786,7 +786,7 @@
     }
 
     // Main function to change text color/content based on patterns
-    function changeTextColor(node, currentUrlPatterns) {
+    function changeTextColor(node, currentUrlPatterns, debugLog) {
         if (!currentUrlPatterns) return;
 
         // Skip already processed nodes
@@ -802,6 +802,9 @@
                 // Check if pattern matches
                 const match = pattern.regex.exec(content);
                 if (match) {
+                    if (debugLog) {
+                        debugLog("🎨", "Matched:", pattern.regex.toString(), "in text:", JSON.stringify(content.substring(0, 80)));
+                    }
                     // Reset regex lastIndex for global patterns
                     pattern.regex.lastIndex = 0;
                     
@@ -888,7 +891,7 @@
 
             // Process child nodes
             Array.from(node.childNodes).forEach(child => {
-                changeTextColor(child, currentUrlPatterns);
+                changeTextColor(child, currentUrlPatterns, debugLog);
             });
         }
     }
@@ -938,9 +941,12 @@
 
                 debugLog("✅", `Found ${matchedPatterns.length} matching pattern(s) for:`, url);
 
+                let runCount = 0;
                 const debouncedColorChange = utils.debounce(() => {
+                    runCount++;
+                    if (debug) debugLog("🔄", `Applying text changes (run #${runCount})`);
                     matchedPatterns.forEach((pattern) => {
-                        changeTextColor(observeTarget, pattern);
+                        changeTextColor(observeTarget, pattern, debug ? debugLog : null);
                     });
                 }, 300);
 

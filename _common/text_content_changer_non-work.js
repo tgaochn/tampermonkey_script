@@ -249,7 +249,7 @@
     async function initScript() {
         try {
             const utils = await waitForUtils();
-            utils.initTextContentChanger(urlPatterns);
+            utils.initTextContentChanger(urlPatterns, { debug: true });
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
