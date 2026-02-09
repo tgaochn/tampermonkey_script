@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.5.7
+// @version 0.5.9
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.5.9: Mapping dialogs add "填入中文名" and "填入英文名" quick-fill buttons
+// 0.5.8: Bilibili button uses mapping if exists, else Chinese name (same as gamer520)
 // 0.5.6: Fix workshop button to use actualsort=lastupdated&browsesort=lastupdated&p=1 for latest mods
 // 0.5.5: Move button container to after #game_highlights > div.leftcol > div for better positioning at the top of game info area
 // 0.5.4: Change insertion point to game_area_purchase_game_wrapper for consistent positioning; use fixed position as fallback; left-align buttons within rows
@@ -170,26 +172,139 @@
         }, 3000);
     }
 
-    // Function to show mapping input dialog
+    // Generic mapping input dialog with fill buttons for Chinese/English names
+    function showMappingInputDialog(config) {
+        const { title, placeholder, onSubmit, onSuccessMessage, onUpdateButton } = config;
+
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            min-width: 400px;
+        `;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = placeholder;
+        input.style.cssText = `
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        `;
+
+        const fillBtnStyle = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+            font-size: 13px;
+        `;
+        const fillBtnDisabledStyle = "opacity: 0.5; cursor: not-allowed;";
+
+        const btnChinese = document.createElement("button");
+        btnChinese.textContent = "填入中文名";
+        btnChinese.style.cssText = fillBtnStyle + (gameNameChinese ? "" : " " + fillBtnDisabledStyle);
+        btnChinese.disabled = !gameNameChinese;
+        btnChinese.onclick = () => {
+            if (gameNameChinese) input.value = gameNameChinese;
+        };
+
+        const btnEnglish = document.createElement("button");
+        btnEnglish.textContent = "填入英文名";
+        btnEnglish.style.cssText = fillBtnStyle + (gameNameEnglish ? "" : " " + fillBtnDisabledStyle);
+        btnEnglish.disabled = !gameNameEnglish;
+        btnEnglish.onclick = () => {
+            if (gameNameEnglish) input.value = gameNameEnglish;
+        };
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "确认";
+        confirmBtn.style.cssText = `
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        `;
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "取消";
+        cancelBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        `;
+
+        const closeDialog = () => document.body.removeChild(dialog);
+
+        confirmBtn.onclick = () => {
+            const value = input.value.trim();
+            if (value) {
+                onSubmit(value);
+                showToast(onSuccessMessage);
+                onUpdateButton();
+                closeDialog();
+            }
+        };
+
+        cancelBtn.onclick = closeDialog;
+
+        dialog.innerHTML = `<h3 style="margin-top: 0; color: #333;">${title}</h3>`;
+        dialog.appendChild(input);
+        const fillRow = document.createElement("div");
+        fillRow.style.marginBottom = "10px";
+        fillRow.appendChild(btnChinese);
+        fillRow.appendChild(btnEnglish);
+        dialog.appendChild(fillRow);
+        const btnRow = document.createElement("div");
+        btnRow.style.marginTop = "15px";
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        dialog.appendChild(btnRow);
+
+        document.body.appendChild(dialog);
+        input.focus();
+    }
+
+    // Function to show mapping input dialog for NexusMods
     function showMappingDialog() {
-        const nexusGameName = prompt("请输入NexusMods上的游戏名称用于直接访问 \n例如: hollowknightsilksong");
-        if (nexusGameName && nexusGameName.trim()) {
-            addNexusModsMapping(appid, nexusGameName.trim());
-            showToast("映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。");
-            // Update button state immediately
-            updateAddMappingButton();
-        }
+        showMappingInputDialog({
+            title: "请输入NexusMods上的游戏名称用于直接访问",
+            placeholder: "例如: hollowknightsilksong",
+            onSubmit: (value) => addNexusModsMapping(appid, value),
+            onSuccessMessage: "映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。",
+            onUpdateButton: updateAddMappingButton
+        });
     }
 
     // Function to show bilibili mapping input dialog
     function showBilibiliMappingDialog() {
-        const bilibiliGameName = prompt("请输入B站搜索用的中文游戏名称 \n例如: 空洞骑士丝之歌");
-        if (bilibiliGameName && bilibiliGameName.trim()) {
-            addBilibiliMapping(appid, bilibiliGameName.trim());
-            showToast("B站映射已添加！现在可以点击B站按钮使用中文名称搜索。");
-            // Update button state immediately
-            updateAddBilibiliMappingButton();
-        }
+        showMappingInputDialog({
+            title: "请输入B站搜索用的中文游戏名称",
+            placeholder: "例如: 空洞骑士丝之歌",
+            onSubmit: (value) => addBilibiliMapping(appid, value),
+            onSuccessMessage: "B站映射已添加！现在可以点击B站按钮使用中文名称搜索。",
+            onUpdateButton: updateAddBilibiliMappingButton
+        });
     }
 
     // Generic function to show mapping verification dialog with clickable URL
@@ -424,6 +539,10 @@
     var addMappingButton = null;
     var addBilibiliMappingButton = null;
 
+    // Game names from Steam API, used by mapping dialogs
+    var gameNameEnglish = null;
+    var gameNameChinese = null;
+
     // This will fetch the English name and create most buttons
     fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english`)
         .then(async (response) => {
@@ -441,6 +560,7 @@
 
                 // Modified game name
                 var modifiedGameName = gameName.replace(/_/g, "+");
+                gameNameEnglish = modifiedGameName.replace(/\+/g, " ");
 
                 // Create all buttons
                 var buttonSkidrow = createButton(
@@ -464,6 +584,7 @@
                 // Create nexusmods button with mapping logic
                 var buttonNexusmods = createNexusModsButton(modifiedGameName);
 
+                // Bilibili button: use English as fallback when Chinese fetch fails, replaced in second fetch
                 var bilibili = createBilibiliButton(modifiedGameName);
 
                 var FLiNG = createButton(
@@ -480,7 +601,7 @@
                 var buttonAddBilibiliMapping = createAddBilibiliMappingButton();
                 addBilibiliMappingButton = buttonAddBilibiliMapping; // Store reference for dynamic updates
 
-                // Store buttons in the desired order
+                // Store buttons in the desired order (bilibili replaced with Chinese name in second fetch)
                 allButtons = [
                     buttonSkidrow, // 2. SkidrowReloaded
                     buttonIGG, // 3. IGG
@@ -490,7 +611,7 @@
                     buttonNexusmods, // 6. NexusMods
                     buttonAddMapping, // 6.5. Add NexusMods Mapping
 
-                    bilibili, // 7. Bilibili
+                    bilibili, // 7. Bilibili (English fallback, replaced with Chinese in second fetch)
                     buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
                     FLiNG, // 8. FLiNG
                 ];
@@ -512,13 +633,17 @@
                 }
 
                 var modifiedGameName = gameName.replace(/_/g, "+");
+                gameNameChinese = modifiedGameName.replace(/\+/g, " ");
 
-                // Create gamer520 button
+                // Create gamer520 button (uses Chinese name)
                 var button520 = createButton(
                     "gamer520",
                     "#007037",
                     "https://www.gamer520.com/?s=" + encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
                 );
+
+                // Replace bilibili button with one using Chinese name (same as gamer520)
+                allButtons[6] = createBilibiliButton(modifiedGameName);
 
                 // Insert gamer520 at the desired position (before SkidrowReloaded)
                 allButtons.splice(0, 0, button520);
@@ -569,7 +694,8 @@
     }
 
     // Helper function to create bilibili button with mapping logic
-    function createBilibiliButton(modifiedGameName) {
+    // searchKeyword: Chinese name (same as gamer520), used when no mapping exists
+    function createBilibiliButton(searchKeyword) {
         var button = document.createElement("a");
         button.innerHTML = "<span>B站</span>";
         button.style.backgroundColor = "#6f4e37";
@@ -580,13 +706,13 @@
             const bilibiliGameName = mapping[appid];
 
             if (bilibiliGameName) {
-                // Use mapped Chinese name for search
+                // Use mapped name from buttonAddBilibiliMapping
                 window.open("https://search.bilibili.com/all?keyword=" + encodeURIComponent(bilibiliGameName));
             } else {
-                // Fallback to English name search
+                // Fallback to Chinese name search (same as gamer520)
                 window.open(
                     "https://search.bilibili.com/all?keyword=" +
-                        encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                        encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
                 );
             }
         };
