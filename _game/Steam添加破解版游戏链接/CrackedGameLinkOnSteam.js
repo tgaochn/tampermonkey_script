@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.0
+// @version 0.7.1
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.1: Custom name dialog adds "复制中英文名（格式：中文 (英文)）" option, default on
 // 0.7.0: Custom name dialog adds "同时设为B站搜索关键字" option, default checked
 // 0.6.2: Add "+ 中英文名" button to set custom names, stored in GM and overrides API
 // 0.6.1: Add tm_debug=1 to IGG-Games link for debugging
@@ -435,10 +436,26 @@
                 }
                 gameNameChinese = chn || gameNameChinese;
                 gameNameEnglish = eng || gameNameEnglish;
-                showToast("中英文名已设置！将优先使用自定义名称。" + (chn && chkInput.checked ? " B站搜索已同步。" : ""));
+                if (chkCopyInput.checked && (chn || eng)) {
+                    const copyText = chn && eng ? `${chn} (${eng})` : chn || eng;
+                    navigator.clipboard.writeText(copyText).then(
+                        () => {
+                            showToast("已复制: " + copyText);
+                            setTimeout(() => location.reload(), 1500);
+                        },
+                        () => {
+                            showToast("复制失败");
+                            location.reload();
+                        }
+                    );
+                } else {
+                    let toastMsg = "中英文名已设置！将优先使用自定义名称。";
+                    if (chn && chkInput.checked) toastMsg += " B站搜索已同步。";
+                    showToast(toastMsg);
+                    location.reload();
+                }
                 updateAddCustomNameButton();
                 closeDialog();
-                location.reload();
             }
         };
 
@@ -475,9 +492,32 @@
         chkBilibili.appendChild(document.createTextNode("同时设为B站搜索关键字"));
         dialog.appendChild(chkBilibili);
 
+        const chkCopy = document.createElement("label");
+        chkCopy.style.cssText = "display: flex; align-items: center; margin-top: 8px; font-size: 13px; cursor: pointer;";
+        const chkCopyInput = document.createElement("input");
+        chkCopyInput.type = "checkbox";
+        chkCopyInput.checked = true;
+        chkCopyInput.style.marginRight = "8px";
+        chkCopy.appendChild(chkCopyInput);
+        chkCopy.appendChild(document.createTextNode("复制中英文名（格式：中文 (英文)）"));
+        dialog.appendChild(chkCopy);
+
+        const defaultConfirmBtn = document.createElement("button");
+        defaultConfirmBtn.textContent = "一键使用默认并确认";
+        defaultConfirmBtn.style.cssText = "background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;";
+        defaultConfirmBtn.disabled = !gameNameChinese && !gameNameEnglish;
+        if (defaultConfirmBtn.disabled) defaultConfirmBtn.style.opacity = "0.5";
+
+        defaultConfirmBtn.onclick = () => {
+            inputChn.value = gameNameChinese || "";
+            inputEng.value = gameNameEnglish || "";
+            confirmBtn.click();
+        };
+
         const btnRow = document.createElement("div");
         btnRow.style.marginTop = "15px";
         btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(defaultConfirmBtn);
         btnRow.appendChild(cancelBtn);
         dialog.appendChild(btnRow);
 
