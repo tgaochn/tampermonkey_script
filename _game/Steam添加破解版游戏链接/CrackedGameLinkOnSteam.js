@@ -169,7 +169,7 @@
             .trim();
     }
 
-    // If we have both Chinese and English names, update #appHubAppName to "中文 (英文)" when page shows only one language
+    // If we have both Chinese and English names, update #appHubAppName to "中文 (英文)" when page shows only one language or mixed without parentheses
     function tryUpdateAppHubAppName() {
         if (!gameNameChinese || !gameNameEnglish) return;
 
@@ -182,19 +182,31 @@
 
         const hasCJK = /[\u4e00-\u9fff]/.test(cleaned);
         const hasLatin = /[a-zA-Z]/.test(cleaned);
-        const alreadyCombined = /[\u4e00-\u9fff].*\(.*[a-zA-Z].*\)/.test(cleaned) || /[a-zA-Z].*\(.*[\u4e00-\u9fff].*\)/.test(cleaned);
+        const alreadyCombined = /[\u4e00-\u9fff].*\([^)]*[a-zA-Z][^)]*\)/.test(cleaned) || /[a-zA-Z][^()]*\([^)]*[\u4e00-\u9fff]/.test(cleaned);
 
         if (alreadyCombined) return;
 
-        // Avoid duplicating English: if gameNameChinese already ends with " (gameNameEnglish)", use as-is
+        // Build "中文 (英文)": avoid duplicating English; extract pure Chinese part when gameNameChinese is mixed with English
+        let displayName;
         const suffix = " (" + gameNameEnglish + ")";
-        const displayName = gameNameChinese.endsWith(suffix) || gameNameChinese === gameNameEnglish
-            ? gameNameChinese
-            : gameNameChinese + " (" + gameNameEnglish + ")";
+        if (gameNameChinese.endsWith(suffix) || gameNameChinese === gameNameEnglish) {
+            displayName = gameNameChinese;
+        } else if (gameNameChinese.includes(gameNameEnglish)) {
+            let chinesePart = gameNameChinese.replace(gameNameEnglish, "").replace(/\s+/g, " ").trim();
+            chinesePart = chinesePart.replace(/^[\s:：\-–—]+/, "").trim();
+            displayName = chinesePart ? chinesePart + " (" + gameNameEnglish + ")" : gameNameEnglish;
+        } else {
+            // gameNameChinese may end with shortened/partial English (e.g. "卡牌探险：雨林迷踪 Untraveled Lands" vs gameNameEnglish "Untraveled Lands: Chantico")
+            const trailingLatin = gameNameChinese.match(/\s+[a-zA-Z0-9\s:\-'']+$/);
+            const chinesePart = trailingLatin ? gameNameChinese.slice(0, -trailingLatin[0].length).trim() : gameNameChinese;
+            displayName = chinesePart ? chinesePart + " (" + gameNameEnglish + ")" : gameNameEnglish;
+        }
 
         if (hasCJK && !hasLatin) {
             el.textContent = displayName;
         } else if (hasLatin && !hasCJK) {
+            el.textContent = displayName;
+        } else if (hasCJK && hasLatin) {
             el.textContent = displayName;
         }
     }
