@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.3.1
+// @version      0.4.0
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
+// @match        https://store.steampowered.com/*
 // @match        https://getadblock.com/*
 // @match        https://www.amazon.com/fmc/*
 // @match        https://www.amazon.com/gp/buy/thankyou/handlers/display.html?purchaseId=*
@@ -19,6 +20,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.4.0: add match for steam store page
 // 0.3.1: add match for monarch cash-flow page
 // 0.3.0: add scrollToKeyword action for auto-scrolling to keyword
 // 0.2.6: clean taobao item URL, keep only id and skuId params
@@ -49,6 +51,19 @@
         },
 
         // ! auto redirect pages
+        // steam store page - non-schinese page redirect to schinese page
+        {
+            pattern: /^https:\/\/store\.steampowered\.com\/.*/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const urlObj = new URL(url);
+                const l = urlObj.searchParams.get("l");
+                if (!l || l === "schinese") return url;
+                urlObj.searchParams.set("l", "schinese");
+                return urlObj.toString();
+            },
+        },
+
         // Monarch cash-flow page - set view=sankey and sankey=both
         {
             pattern: /^https:\/\/app\.monarch\.com\/cash-flow\?/,
@@ -159,7 +174,7 @@
         // Scroll to first occurrence of keyword (supports string or array of keywords)
         const scrollToKeyword = (source) => {
             console.log(`[AutoCloseAndRedirect] scrollToKeyword called from: ${source}, readyState: ${document.readyState}`);
-            
+
             const keywordConfig = matchedAction.keyword;
             if (!keywordConfig) {
                 console.log("[AutoCloseAndRedirect] No keyword specified");
@@ -218,7 +233,7 @@
         // Add delay to ensure other scripts finish executing
         const delay = matchedAction.delay || 300; // default 300ms delay
         console.log("[AutoCloseAndRedirect] Current readyState:", document.readyState, "delay:", delay);
-        
+
         if (document.readyState === "complete") {
             setTimeout(() => scrollToKeyword("immediate+delay"), delay);
         } else {
