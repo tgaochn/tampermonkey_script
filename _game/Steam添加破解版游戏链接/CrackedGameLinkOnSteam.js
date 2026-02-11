@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.1
+// @version 0.7.2
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.2: When both CN/EN names exist, replace #appHubAppName with "中文 (英文)" if page shows only one language; strip emoji/symbols
 // 0.7.1: Custom name dialog adds "复制中英文名（格式：中文 (英文)）" option, default on
 // 0.7.0: Custom name dialog adds "同时设为B站搜索关键字" option, default checked
 // 0.6.2: Add "+ 中英文名" button to set custom names, stored in GM and overrides API
@@ -157,6 +158,45 @@
             return { chinese: before, english: inside };
         }
         return { chinese: null, english: trimmed };
+    }
+
+    // Remove meaningless chars (emoji, symbols like 🀄📇) from game name
+    function cleanGameNameFromPage(text) {
+        if (!text || typeof text !== "string") return "";
+        return text
+            .replace(/[\u{1F300}-\u{1F9FF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    // If we have both Chinese and English names, update #appHubAppName to "中文 (英文)" when page shows only one language
+    function tryUpdateAppHubAppName() {
+        if (!gameNameChinese || !gameNameEnglish) return;
+
+        const el = document.getElementById("appHubAppName");
+        if (!el) return;
+
+        const raw = el.textContent || "";
+        const cleaned = cleanGameNameFromPage(raw);
+        if (!cleaned) return;
+
+        const hasCJK = /[\u4e00-\u9fff]/.test(cleaned);
+        const hasLatin = /[a-zA-Z]/.test(cleaned);
+        const alreadyCombined = /[\u4e00-\u9fff].*\(.*[a-zA-Z].*\)/.test(cleaned) || /[a-zA-Z].*\(.*[\u4e00-\u9fff].*\)/.test(cleaned);
+
+        if (alreadyCombined) return;
+
+        // Avoid duplicating English: if gameNameChinese already ends with " (gameNameEnglish)", use as-is
+        const suffix = " (" + gameNameEnglish + ")";
+        const displayName = gameNameChinese.endsWith(suffix) || gameNameChinese === gameNameEnglish
+            ? gameNameChinese
+            : gameNameChinese + " (" + gameNameEnglish + ")";
+
+        if (hasCJK && !hasLatin) {
+            el.textContent = displayName;
+        } else if (hasLatin && !hasCJK) {
+            el.textContent = displayName;
+        }
     }
 
     // Function to show toast notification (non-blocking, auto-dismiss after 3 seconds)
@@ -976,6 +1016,10 @@
 
                 // Now add all buttons in order
                 addButtonsInOrder();
+
+                // If we have both names, try to replace #appHubAppName with "中文 (英文)" when it shows only one language
+                tryUpdateAppHubAppName();
+                setTimeout(tryUpdateAppHubAppName, 800);
             }
         })
         .catch((error) => {
