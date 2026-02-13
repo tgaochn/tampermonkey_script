@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.4.0
+// @version      0.4.1
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
 // @match        https://getadblock.com/*
+// @match        https://bart.solutions/*
 // @match        https://www.amazon.com/fmc/*
 // @match        https://www.amazon.com/gp/buy/thankyou/handlers/display.html?purchaseId=*
 // @match        https://*.taobao.com/shop/*
@@ -20,6 +21,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.4.1: add match for Google Translate Plus Updated page
 // 0.4.0: add match for steam store page
 // 0.3.1: add match for monarch cash-flow page
 // 0.3.0: add scrollToKeyword action for auto-scrolling to keyword
@@ -46,6 +48,14 @@
         // AdBlock upgrade/payment pages
         {
             pattern: /^https:\/\/getadblock\.com\/(en|zh_CN)\/update\/.*/,
+            action: "close",
+            fallbackUrl: "https://www.google.com/",
+        },
+
+        // Google Translate Plus Updated
+        {
+            // https://bart.solutions/google-translate-plus-ai-updated/
+            pattern: /^https:\/\/bart\.solutions\/google-translate-plus-ai-updated\//,
             action: "close",
             fallbackUrl: "https://www.google.com/",
         },
