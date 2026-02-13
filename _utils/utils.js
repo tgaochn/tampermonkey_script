@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.3.0
+// version: 0.3.1
 (function (window) {
     "use strict";
 
@@ -1164,23 +1164,6 @@
                 matchedConfig && matchedConfig.buttonPosition ? matchedConfig.buttonPosition : config.BUTTON_POSITION;
         }
 
-        // ! add buttons in the containers
-        // Support nested array: [[btn, btn], [btn, btn]] = two rows; flat array = single row (backward compatible)
-        const isNested =
-            buttonElements.length > 0 &&
-            Array.isArray(buttonElements[0]) &&
-            buttonElements.every((item) => Array.isArray(item));
-        if (isNested) {
-            for (const row of buttonElements) {
-                const rowContainer = utils.createButtonContainer();
-                rowContainer.style.flexBasis = "100%"; // full width so rows stack vertically
-                rowContainer.append(...row);
-                btnSubContainer1.appendChild(rowContainer);
-            }
-        } else {
-            btnSubContainer1.append(...buttonElements);
-        }
-
         // Fold toggle: persist per-URL state in GM storage when available
         const foldStorageKey = "addBtn2AnyWebsite_folded_" + config.CONTAINER_ID;
         let isFolded = config.folded === true;
@@ -1192,22 +1175,24 @@
                 /* use config.folded */
             }
         }
-        const contentWrapper = document.createElement("div");
-        contentWrapper.style.flexGrow = "1";
-        btnContainer.removeChild(btnSubContainer1);
-        contentWrapper.appendChild(btnSubContainer1);
-        const headerRow = document.createElement("div");
-        headerRow.style.display = "flex";
-        headerRow.style.alignItems = "center";
-        headerRow.style.marginBottom = "2px";
+
+        // Create fold button (always visible, not inside contentWrapper)
         const foldBtn = document.createElement("button");
         foldBtn.type = "button";
         foldBtn.title = "Fold/expand button bar";
         foldBtn.style.cssText =
-            "min-width:22px;height:20px;padding:0 4px;font-size:12px;line-height:1;cursor:pointer;border-radius:3px;";
+            "min-width:22px;height:20px;padding:0 4px;font-size:12px;line-height:1;cursor:pointer;border-radius:3px;margin-right:5px;align-self:flex-start;";
+
+        // Create content wrapper for foldable content (buttons)
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.display = "flex";
+        contentWrapper.style.flexDirection = "column";
+        contentWrapper.style.flexGrow = "1";
+        contentWrapper.style.gap = "5px";
+
         function setFolded(folded) {
             isFolded = folded;
-            contentWrapper.style.display = folded ? "none" : "";
+            contentWrapper.style.display = folded ? "none" : "flex";
             foldBtn.textContent = folded ? "\u25B6" : "\u25BC"; // ▶ / ▼
             if (typeof GM_setValue !== "undefined") {
                 try {
@@ -1221,8 +1206,32 @@
         }
         setFolded(isFolded);
         foldBtn.addEventListener("click", () => setFolded(!isFolded));
-        headerRow.appendChild(foldBtn);
-        btnContainer.appendChild(headerRow);
+
+        // ! add buttons in the containers
+        // Support nested array: [[btn, btn], [btn, btn]] = two rows; flat array = single row (backward compatible)
+        const isNested =
+            buttonElements.length > 0 &&
+            Array.isArray(buttonElements[0]) &&
+            buttonElements.every((item) => Array.isArray(item));
+
+        if (isNested) {
+            // For nested arrays: each sub-array becomes a row
+            for (const row of buttonElements) {
+                const rowContainer = utils.createButtonContainer();
+                rowContainer.append(...row);
+                contentWrapper.appendChild(rowContainer);
+            }
+        } else {
+            // For flat array: single row
+            btnSubContainer1.append(...buttonElements);
+            contentWrapper.appendChild(btnSubContainer1);
+        }
+
+        // Layout: foldBtn on left, contentWrapper on right (horizontal layout)
+        btnContainer.removeChild(btnSubContainer1);
+        btnContainer.style.flexDirection = "row"; // Change to horizontal layout
+        btnContainer.style.alignItems = "flex-start";
+        btnContainer.appendChild(foldBtn);
         btnContainer.appendChild(contentWrapper);
 
         // Apply the determined button position
