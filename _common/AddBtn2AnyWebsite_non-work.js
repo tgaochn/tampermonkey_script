@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.8
+// @version      1.0.9
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.0.9: adjusted button positions for monarchmoney
 // 1.0.8: added frontier button
 // 1.0.7: added US Bank button
 // 1.0.6: added monarch cash flow button
@@ -136,10 +137,11 @@
         // ! monarchmoney: 资产管理
         {
             pattern: /^https:\/\/app\.(monarchmoney|monarch)\.com\/.*$/,
-            buttonPosition: { top: "-10px", left: "500px" }, // Custom position
+            buttonPosition: { top: "30px", left: "500px" }, // Custom position
             customButtons: (url, utils) => {
                 return [
                     utils.createButtonOpenUrl("monarch cash flow", `https://app.monarch.com/cash-flow?breakdown=category&date=${new Date().toLocaleDateString('en-CA')}&sankey=both&timeframe=month&view=sankey`),
+                    utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
                     utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),
                     utils.createButtonOpenUrl("Chase", "https://www.chase.com"),
                     utils.createButtonOpenUrl("US Bank", "https://www.usbank.com/index.html"),
@@ -147,7 +149,6 @@
                     utils.createButtonOpenUrl("Bilt(Wells Fargo)", "https://www.wellsfargo.com"),
                     utils.createButtonOpenUrl("Fidelity", "https://digital.fidelity.com/prgw/digital/login/full-page"),
                     utils.createButtonOpenUrl("Merrill Lynch", "https://www.ml.com"),
-                    utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
                 ];
             },
         },
