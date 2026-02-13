@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.3.0
+// version: 0.3.1
 (function (window) {
     "use strict";
 
@@ -1174,6 +1174,7 @@
             for (const row of buttonElements) {
                 const rowContainer = utils.createButtonContainer();
                 rowContainer.style.flexBasis = "100%"; // full width so rows stack vertically
+                rowContainer.style.marginTop = "0"; // reduce row spacing in nested layout
                 rowContainer.append(...row);
                 btnSubContainer1.appendChild(rowContainer);
             }
@@ -1192,6 +1193,7 @@
             const isFolded = savedState !== null ? savedState === "true" : !!config.FOLDED;
 
             const toggleBtn = document.createElement("button");
+            toggleBtn._isDragHandle = true; // Allow drag from this button
             toggleBtn.style.cssText = `
                 background: #607D8B;
                 color: white;
@@ -1201,6 +1203,7 @@
                 padding: 1px 4px;
                 font-size: 10px;
                 line-height: 1;
+                margin-top: 6px;
                 margin-right: 2px;
                 flex-shrink: 0;
             `;
@@ -1213,17 +1216,76 @@
 
             applyFoldState(isFolded);
 
-            toggleBtn.onclick = () => {
+            // Use click event with drag guard so dragging doesn't trigger fold
+            toggleBtn.addEventListener("click", () => {
+                if (btnContainer._wasDragged) {
+                    btnContainer._wasDragged = false;
+                    return;
+                }
                 const newFolded = btnSubContainer1.style.display !== "none";
                 applyFoldState(newFolded);
                 localStorage.setItem(storageKey, String(newFolded));
-            };
+            });
 
             btnContainer.insertBefore(toggleBtn, btnSubContainer1);
         }
 
         // Apply the determined button position
         utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
+
+        // Add drag support if enabled (only when config.DRAGGABLE is explicitly defined and truthy)
+        if (config.DRAGGABLE) {
+            const posStorageKey = `btnPos_${config.CONTAINER_ID}`;
+            const savedPos = localStorage.getItem(posStorageKey);
+
+            // Restore saved position if available (overrides configured BUTTON_POSITION)
+            if (savedPos) {
+                try {
+                    const { top, left } = JSON.parse(savedPos);
+                    btnContainer.style.top = top;
+                    btnContainer.style.left = left;
+                } catch (e) { /* ignore corrupted data */ }
+            }
+
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+            const DRAG_THRESHOLD = 3;
+
+            btnContainer.addEventListener("mousedown", (e) => {
+                // Allow drag from: empty space, or elements marked as drag handle
+                const clickedBtn = e.target.closest("button, a, input, select, textarea");
+                if (clickedBtn && !clickedBtn._isDragHandle) return;
+
+                isDragging = true;
+                btnContainer._wasDragged = false;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = parseInt(btnContainer.style.left) || 0;
+                startTop = parseInt(btnContainer.style.top) || 0;
+                e.preventDefault();
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+                    btnContainer._wasDragged = true;
+                    btnContainer.style.left = (startLeft + dx) + "px";
+                    btnContainer.style.top = (startTop + dy) + "px";
+                }
+            });
+
+            document.addEventListener("mouseup", () => {
+                if (isDragging && btnContainer._wasDragged) {
+                    localStorage.setItem(posStorageKey, JSON.stringify({
+                        top: btnContainer.style.top,
+                        left: btnContainer.style.left,
+                    }));
+                }
+                isDragging = false;
+            });
+        }
     }
 
     // Initialize AddBtn2AnyWebsite with configuration

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.1.0
+// @version      1.2.0
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.2.0: added draggable button container
 // 1.1.0: added button container fold state persistence
 // 1.0.10: added Amex button
 // 1.0.9: adjusted button positions for monarchmoney
@@ -61,6 +62,7 @@
         CONTAINER_ID: "container_id_non_work",
         BUTTON_POSITION: { top: "-10px", left: "1000px" },
         FOLDED: false, // Initial fold state for button container (runtime state persisted in localStorage)
+        DRAGGABLE: true, // Enable drag to reposition button container (position persisted in localStorage)
         REQUIRED_UTILS: [
             "observeDOM",
             "shouldRunScript",
