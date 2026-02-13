@@ -14,8 +14,6 @@
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
-// @grant        GM_getValue
-// @grant        GM_setValue
 
 // ==/UserScript==
 // 1.0.10: added Amex button
@@ -61,7 +59,6 @@
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_non_work",
         BUTTON_POSITION: { top: "-10px", left: "1000px" },
-        folded: false, // default fold state; per-URL state is persisted in GM storage
         REQUIRED_UTILS: [
             "observeDOM",
             "shouldRunScript",
@@ -141,10 +138,14 @@
         // ! monarchmoney: 资产管理 (two rows via nested array)
         {
             pattern: /^https:\/\/app\.(monarchmoney|monarch)\.com\/.*$/,
-            buttonPosition: { top: "-20px", left: "850px" }, // Custom position
+            buttonPosition: { top: "30px", left: "500px" }, // Custom position
             customButtons: (url, utils) => {
                 const cashFlowUrl = `https://app.monarch.com/cash-flow?breakdown=category&date=${new Date().toLocaleDateString('en-CA')}&sankey=both&timeframe=month&view=sankey`;
                 return [
+                    [
+                        utils.createButtonOpenUrl("monarch cash flow", cashFlowUrl),
+                        utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
+                    ],
                     [
                         utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),
                         utils.createButtonOpenUrl("Chase", "https://www.chase.com"),
@@ -155,10 +156,6 @@
                         utils.createButtonOpenUrl("OnePay", "https://web.onepay.com/"),
                         utils.createButtonOpenUrl("Fidelity", "https://digital.fidelity.com/prgw/digital/login/full-page"),
                         utils.createButtonOpenUrl("Merrill Lynch", "https://www.ml.com"),
-                    ],
-                    [
-                        utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
-                        utils.createButtonOpenUrl("monarch cash flow", cashFlowUrl),
                     ],
                 ];
             },
