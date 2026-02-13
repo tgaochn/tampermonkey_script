@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.2
+// @version             1.1.3
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -20,6 +20,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.3: add Capital One, Chase United Gateway, Chase Freedom Flex
 // 1.1.2: remove igg-games url pattern
 // 1.1.1: document-idle + load/pageshow for cached/bfcache pages
 // 1.1.0: remove debug logs
@@ -93,6 +94,21 @@
                 {
                     regex: /(ending in 8057)/g,
                     replacement: "$1 (Amazon 5%)",
+                },
+                // Capital One
+                {
+                    regex: /(ending in 7181)/g,
+                    replacement: "$1 (CapitalOne)",
+                },
+                // Chase United Gateway
+                {
+                    regex: /(ending in 9702)/g,
+                    replacement: "$1 (Chase United Gateway)",
+                },
+                // Chase Freedom Flex
+                {
+                    regex: /(ending in 2573)/g,
+                    replacement: "$1 (Chase Freedom Flex)",
                 },
             ],
         },

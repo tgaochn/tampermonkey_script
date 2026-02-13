@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.0.7
+// @version      1.0.8
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.0.8: added frontier button
 // 1.0.7: added US Bank button
 // 1.0.6: added monarch cash flow button
 // 1.0.5: adjusted button positions for monarchmoney
@@ -146,6 +147,7 @@
                     utils.createButtonOpenUrl("Bilt(Wells Fargo)", "https://www.wellsfargo.com"),
                     utils.createButtonOpenUrl("Fidelity", "https://digital.fidelity.com/prgw/digital/login/full-page"),
                     utils.createButtonOpenUrl("Merrill Lynch", "https://www.ml.com"),
+                    utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
                 ];
             },
         },
