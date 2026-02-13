@@ -1,10 +1,10 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.5
+// version: 0.2.6
 (function (window) {
     "use strict";
 
-    console.log("Utils script starting to load - v0.2.3");
+    console.log("Utils script starting to load");
     const utils = {};
     console.log("utils object created");
 
@@ -1165,7 +1165,21 @@
         }
 
         // ! add buttons in the containers
-        btnSubContainer1.append(...buttonElements);
+        // Support nested array: [[btn, btn], [btn, btn]] = two rows; flat array = single row (backward compatible)
+        const isNested =
+            buttonElements.length > 0 &&
+            Array.isArray(buttonElements[0]) &&
+            buttonElements.every((item) => Array.isArray(item));
+        if (isNested) {
+            for (const row of buttonElements) {
+                const rowContainer = utils.createButtonContainer();
+                rowContainer.style.flexBasis = "100%"; // full width so rows stack vertically
+                rowContainer.append(...row);
+                btnSubContainer1.appendChild(rowContainer);
+            }
+        } else {
+            btnSubContainer1.append(...buttonElements);
+        }
 
         // Apply the determined button position
         utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
