@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.6
+// version: 0.3.0
 (function (window) {
     "use strict";
 
@@ -1180,6 +1180,50 @@
         } else {
             btnSubContainer1.append(...buttonElements);
         }
+
+        // Fold toggle: persist per-URL state in GM storage when available
+        const foldStorageKey = "addBtn2AnyWebsite_folded_" + config.CONTAINER_ID;
+        let isFolded = config.folded === true;
+        if (typeof GM_getValue !== "undefined" && typeof GM_setValue !== "undefined") {
+            try {
+                const stored = JSON.parse(GM_getValue(foldStorageKey, "{}"));
+                isFolded = curURL in stored ? stored[curURL] : config.folded;
+            } catch (e) {
+                /* use config.folded */
+            }
+        }
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.flexGrow = "1";
+        btnContainer.removeChild(btnSubContainer1);
+        contentWrapper.appendChild(btnSubContainer1);
+        const headerRow = document.createElement("div");
+        headerRow.style.display = "flex";
+        headerRow.style.alignItems = "center";
+        headerRow.style.marginBottom = "2px";
+        const foldBtn = document.createElement("button");
+        foldBtn.type = "button";
+        foldBtn.title = "Fold/expand button bar";
+        foldBtn.style.cssText =
+            "min-width:22px;height:20px;padding:0 4px;font-size:12px;line-height:1;cursor:pointer;border-radius:3px;";
+        function setFolded(folded) {
+            isFolded = folded;
+            contentWrapper.style.display = folded ? "none" : "";
+            foldBtn.textContent = folded ? "\u25B6" : "\u25BC"; // ▶ / ▼
+            if (typeof GM_setValue !== "undefined") {
+                try {
+                    const stored = JSON.parse(GM_getValue(foldStorageKey, "{}"));
+                    stored[curURL] = folded;
+                    GM_setValue(foldStorageKey, JSON.stringify(stored));
+                } catch (e) {
+                    /* ignore */
+                }
+            }
+        }
+        setFolded(isFolded);
+        foldBtn.addEventListener("click", () => setFolded(!isFolded));
+        headerRow.appendChild(foldBtn);
+        btnContainer.appendChild(headerRow);
+        btnContainer.appendChild(contentWrapper);
 
         // Apply the determined button position
         utils.addFixedPosContainerToPage(btnContainer, buttonPosition);
