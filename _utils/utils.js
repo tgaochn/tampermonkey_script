@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.2.6
+// version: 0.3.0
 (function (window) {
     "use strict";
 
@@ -1179,6 +1179,47 @@
             }
         } else {
             btnSubContainer1.append(...buttonElements);
+        }
+
+        // Add fold/collapse toggle button if enabled (only when config.FOLDED is explicitly defined)
+        if (config.FOLDED !== undefined) {
+            // Place toggle button to the left of the button container
+            btnContainer.style.flexDirection = "row";
+            btnContainer.style.alignItems = "flex-start";
+
+            const storageKey = `btnFolded_${config.CONTAINER_ID}`;
+            const savedState = localStorage.getItem(storageKey);
+            const isFolded = savedState !== null ? savedState === "true" : !!config.FOLDED;
+
+            const toggleBtn = document.createElement("button");
+            toggleBtn.style.cssText = `
+                background: #607D8B;
+                color: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                cursor: pointer;
+                padding: 1px 4px;
+                font-size: 10px;
+                line-height: 1;
+                margin-right: 2px;
+                flex-shrink: 0;
+            `;
+
+            const applyFoldState = (folded) => {
+                btnSubContainer1.style.display = folded ? "none" : "flex";
+                toggleBtn.textContent = folded ? "▶" : "▼";
+                toggleBtn.title = folded ? "Show buttons" : "Hide buttons";
+            };
+
+            applyFoldState(isFolded);
+
+            toggleBtn.onclick = () => {
+                const newFolded = btnSubContainer1.style.display !== "none";
+                applyFoldState(newFolded);
+                localStorage.setItem(storageKey, String(newFolded));
+            };
+
+            btnContainer.insertBefore(toggleBtn, btnSubContainer1);
         }
 
         // Apply the determined button position
