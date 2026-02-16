@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.2
+// @version 0.7.3
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.3: Fix parseGameName to handle full-width parentheses（）; clean up residual empty parens after stripping English name
 // 0.7.2: When both CN/EN names exist, replace #appHubAppName with "中文 (英文)" if page shows only one language; strip emoji/symbols
 // 0.7.1: Custom name dialog adds "复制中英文名（格式：中文 (英文)）" option, default on
 // 0.7.0: Custom name dialog adds "同时设为B站搜索关键字" option, default checked
@@ -143,10 +144,11 @@
         saveCustomNameMapping(mapping);
     }
 
-    // Parse game name: "Chinese(English)" -> { chinese, english }; if both parts are English, treat as single name
+    // Parse game name: "Chinese(English)" or "Chinese（English）" -> { chinese, english }; if both parts are English, treat as single name
     function parseGameName(name) {
         const trimmed = name.trim();
-        const match = trimmed.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+        // Match both half-width () and full-width （） parentheses
+        const match = trimmed.match(/^(.+?)\s*[（(]([^)）]+)[)）]\s*$/);
         if (!match) {
             return { chinese: null, english: trimmed };
         }
@@ -193,6 +195,8 @@
             displayName = gameNameChinese;
         } else if (gameNameChinese.includes(gameNameEnglish)) {
             let chinesePart = gameNameChinese.replace(gameNameEnglish, "").replace(/\s+/g, " ").trim();
+            // Remove residual empty parentheses (both half-width and full-width)
+            chinesePart = chinesePart.replace(/[（(]\s*[)）]/g, "").trim();
             chinesePart = chinesePart.replace(/^[\s:：\-–—]+/, "").trim();
             displayName = chinesePart ? chinesePart + " (" + gameNameEnglish + ")" : gameNameEnglish;
         } else {
