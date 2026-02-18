@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.3
+// @version 0.7.5
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.5: Refactor parseGameName to data-driven pattern array (NAME_SPLIT_PATTERNS) for extensibility; share separator chars constant
+// 0.7.4: Fix parseGameName to handle "Chinese / English" slash separator; strip trailing separators (/ - – —) after removing English name
 // 0.7.3: Fix parseGameName to handle full-width parentheses（）; clean up residual empty parens after stripping English name
 // 0.7.2: When both CN/EN names exist, replace #appHubAppName with "中文 (英文)" if page shows only one language; strip emoji/symbols
 // 0.7.1: Custom name dialog adds "复制中英文名（格式：中文 (英文)）" option, default on
@@ -144,20 +146,31 @@
         saveCustomNameMapping(mapping);
     }
 
-    // Parse game name: "Chinese(English)" or "Chinese（English）" -> { chinese, english }; if both parts are English, treat as single name
+    // Separator chars used between Chinese/English parts (for cleanup and splitting)
+    const NAME_SEP_CHARS = ":：\\/\\-–—\\|";
+    const NAME_SEP_TRIM = new RegExp(`[\\s${NAME_SEP_CHARS}]+`, "g");
+    const NAME_SEP_TRIM_START = new RegExp(`^[\\s${NAME_SEP_CHARS}]+`);
+    const NAME_SEP_TRIM_END = new RegExp(`[\\s${NAME_SEP_CHARS}]+$`);
+
+    // Patterns to split "Chinese + English" game names, tried in order.
+    // Each regex must capture: group 1 = Chinese part, group 2 = English part.
+    // To add new formats, simply append a new regex to this array.
+    const NAME_SPLIT_PATTERNS = [
+        /^(.+?)\s*[（(]([^)）]+)[)）]\s*$/,       // Chinese(English) or Chinese（English）
+        /^(.+?)\s*\/\s*([a-zA-Z].*)$/,            // Chinese / English
+    ];
+
+    // Parse game name into { chinese, english }; only splits when the first part contains CJK
     function parseGameName(name) {
         const trimmed = name.trim();
-        // Match both half-width () and full-width （） parentheses
-        const match = trimmed.match(/^(.+?)\s*[（(]([^)）]+)[)）]\s*$/);
-        if (!match) {
-            return { chinese: null, english: trimmed };
-        }
-        const before = match[1].trim();
-        const inside = match[2].trim();
-        // Only split when "before" contains Chinese (CJK characters)
-        const hasChinese = /[\u4e00-\u9fff]/.test(before);
-        if (hasChinese) {
-            return { chinese: before, english: inside };
+        for (const pattern of NAME_SPLIT_PATTERNS) {
+            const match = trimmed.match(pattern);
+            if (!match) continue;
+            const before = match[1].trim();
+            const after = match[2].trim();
+            if (/[\u4e00-\u9fff]/.test(before)) {
+                return { chinese: before, english: after };
+            }
         }
         return { chinese: null, english: trimmed };
     }
@@ -197,7 +210,8 @@
             let chinesePart = gameNameChinese.replace(gameNameEnglish, "").replace(/\s+/g, " ").trim();
             // Remove residual empty parentheses (both half-width and full-width)
             chinesePart = chinesePart.replace(/[（(]\s*[)）]/g, "").trim();
-            chinesePart = chinesePart.replace(/^[\s:：\-–—]+/, "").trim();
+            // Strip leading/trailing separators (reuse shared separator chars)
+            chinesePart = chinesePart.replace(NAME_SEP_TRIM_START, "").replace(NAME_SEP_TRIM_END, "").trim();
             displayName = chinesePart ? chinesePart + " (" + gameNameEnglish + ")" : gameNameEnglish;
         } else {
             // gameNameChinese may end with shortened/partial English (e.g. "卡牌探险：雨林迷踪 Untraveled Lands" vs gameNameEnglish "Untraveled Lands: Chantico")
