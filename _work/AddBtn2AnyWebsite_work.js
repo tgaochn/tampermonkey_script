@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.14
+// @version      1.0.15
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.15: bug fixed
 // 1.0.14: add teststats URL modification buttons (migrated from url_formatter)
 // 1.0.13: added jump button for sagemaker studio, fix bug
 // 1.0.9: added jump button for sagemaker studio
@@ -149,34 +150,6 @@
     // !! Jump button mappings for specific URL patterns
     // When a URL matches a pattern here, these jump buttons will be added to the default buttons
     const jumpButtonMappings = [
-        // ! indeed websites: jump to related indeed pages
-        {
-            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))(-v2)?\.sandbox\.indeed\.net.*$/,
-            jumpButtons: (url, utils, textColor, testNameParam) => {
-                // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
-                // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
-
-                if (!testNameParam) {
-                    return []; // Return empty array if no test name available
-                }
-
-                return [
-                    utils.createButtonOpenUrl(
-                        "Butterfly Proctor",
-                        `${BASE_URLS.BUTTERFLY_PROCTOR}/${testNameParam}`
-                    ),
-                    utils.createButtonOpenUrl(
-                        "proctor",
-                        `${BASE_URLS.PROCTOR}/${testNameParam}`
-                    ),
-                    utils.createButtonOpenUrl(
-                        "testStats",
-                        `${BASE_URLS.TESTSTATS}/${testNameParam}`
-                    ),
-                ];
-            },
-        },
-
         // ! teststats analyze: URL modification buttons (Clean & Reorder, Force Recalculation)
         {
             pattern: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
@@ -216,6 +189,34 @@
                     utils.createButtonFromCallback('Force Recalculation', () => {
                         window.location.href = forceRecalUrl;
                     }),
+                ];
+            },
+        },
+
+        // ! indeed websites: jump to related indeed pages
+        {
+            pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))(-v2)?\.sandbox\.indeed\.net.*$/,
+            jumpButtons: (url, utils, textColor, testNameParam) => {
+                // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
+                // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
+
+                if (!testNameParam) {
+                    return []; // Return empty array if no test name available
+                }
+
+                return [
+                    utils.createButtonOpenUrl(
+                        "Butterfly Proctor",
+                        `${BASE_URLS.BUTTERFLY_PROCTOR}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "proctor",
+                        `${BASE_URLS.PROCTOR}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "testStats",
+                        `${BASE_URLS.TESTSTATS}/${testNameParam}`
+                    ),
                 ];
             },
         },
@@ -309,7 +310,7 @@
             title: "Butterfly traffic",
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
-            buttonPosition: {top: "-10px", left: "1050px"}, // Custom position to avoid blocking content
+            buttonPosition: { top: "-10px", left: "1050px" }, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from butterfly proctor URL
                 const testName = extractTestNameFromButterflyProctor(url);
@@ -337,7 +338,7 @@
             dynamicTitle: true, // Enable dynamic title generation for this pattern
             showBothTitles: true, // Show both fixed and dynamic title buttons
             textColor: "#000000", // black color for proctor
-            buttonPosition: {top: "-10px", left: "600px"}, // Custom position to avoid blocking content
+            buttonPosition: { top: "-10px", left: "600px" }, // Custom position to avoid blocking content
             customParser: (url) => {
                 // Extract model name from proctor URL
                 const testName = extractTestNameFromPath(url);
