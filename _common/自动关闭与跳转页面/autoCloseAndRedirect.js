@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.4.1
+// @version      0.5.0
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -14,6 +14,7 @@
 // @match        https://*.annas-archive.org/*
 // @match        https://www.1lou.info/*
 // @match        https://app.monarch.com/*
+// @match        https://*.console.aws.amazon.com/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -21,6 +22,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.0: add AWS us-east-1 to us-east-2 redirect (migrated from url_formatter)
 // 0.4.1: add match for Google Translate Plus Updated page
 // 0.4.0: add match for steam store page
 // 0.3.1: add match for monarch cash-flow page
@@ -61,6 +63,13 @@
         },
 
         // ! auto redirect pages
+        // AWS console - redirect us-east-1 to us-east-2
+        {
+            pattern: /^https:\/\/us-east-1\.console\.aws\.amazon\.com\/console\/home\?region=us-east-1(#)?$/,
+            action: "redirect",
+            targetUrl: "https://us-east-2.console.aws.amazon.com/console/home?region=us-east-2#",
+        },
+
         // steam store page - non-schinese page redirect to schinese page
         {
             pattern: /^https:\/\/store\.steampowered\.com\/.*/,

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.13
+// @version      1.0.14
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.14: add teststats URL modification buttons (migrated from url_formatter)
 // 1.0.13: added jump button for sagemaker studio, fix bug
 // 1.0.9: added jump button for sagemaker studio
 // 1.0.8: adjusted button positions for proctor-v2
@@ -68,6 +69,7 @@
             "createButtonCopyHypertext",
             "createButtonOpenUrl",
             "addFixedPosContainerToPage",
+            "createButtonFromCallback",
             "initAddBtn2AnyWebsite",
         ],
         DEFAULT_TITLE: "link",
@@ -175,6 +177,48 @@
             },
         },
 
+        // ! teststats analyze: URL modification buttons (Clean & Reorder, Force Recalculation)
+        {
+            pattern: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
+            jumpButtons: (url, utils) => {
+                const cleanUrl = (() => {
+                    const urlObj = new URL(url);
+                    const allParams = new Map();
+                    for (const [key, value] of urlObj.searchParams) {
+                        allParams.set(key, value);
+                    }
+                    allParams.delete('dateRangeTo');
+                    allParams.delete('cacheTimeoutOverrideMs');
+                    urlObj.search = '';
+                    const priorityParams = ['allocationId', 'dateRangeFrom'];
+                    for (const param of priorityParams) {
+                        if (allParams.has(param)) {
+                            urlObj.searchParams.append(param, allParams.get(param));
+                            allParams.delete(param);
+                        }
+                    }
+                    for (const [key, value] of allParams) {
+                        urlObj.searchParams.append(key, value);
+                    }
+                    return decodeURIComponent(urlObj.toString());
+                })();
+
+                const forceRecalUrl = (() => {
+                    const urlObj = new URL(url);
+                    urlObj.searchParams.set('cacheTimeoutOverrideMs', '0');
+                    return decodeURIComponent(urlObj.toString());
+                })();
+
+                return [
+                    utils.createButtonFromCallback('Clean & Reorder', () => {
+                        window.location.href = cleanUrl;
+                    }),
+                    utils.createButtonFromCallback('Force Recalculation', () => {
+                        window.location.href = forceRecalUrl;
+                    }),
+                ];
+            },
+        },
     ];
 
     // !! Path segment mapping rules for easy understanding
