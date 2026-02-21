@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.1
+// @version      0.5.2
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -23,6 +23,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.2: bug fixed
 // 0.5.1: add butterfly portfolio pageSize=50 redirect
 // 0.5.0: add AWS us-east-1 to us-east-2 redirect (migrated from url_formatter)
 // 0.4.1: add match for Google Translate Plus Updated page
@@ -199,10 +200,46 @@
         // Skip redirect if target is same as current (avoid infinite loop)
         if (targetUrl === currentUrl) {
             console.log("[AutoCloseAndRedirect] Skipping redirect, URL already clean");
+        } else {
+            console.log("[AutoCloseAndRedirect] Redirecting to:", targetUrl);
+            window.location.href = targetUrl;
             return;
         }
-        console.log("[AutoCloseAndRedirect] Redirecting to:", targetUrl);
-        window.location.href = targetUrl;
+
+        // For getTargetUrl rules: intercept SPA navigation (pushState/replaceState)
+        // so in-page link clicks also get the URL params applied
+        if (matchedAction.getTargetUrl) {
+            let lastRedirectTime = 0;
+            const REDIRECT_COOLDOWN_MS = 500;
+
+            const checkAndRedirect = () => {
+                const url = window.location.href;
+                if (!matchedAction.pattern.test(url)) return;
+                const target = matchedAction.getTargetUrl(url);
+                if (target !== url) {
+                    const now = Date.now();
+                    if (now - lastRedirectTime < REDIRECT_COOLDOWN_MS) return;
+                    lastRedirectTime = now;
+                    console.log("[AutoCloseAndRedirect] SPA nav detected, redirecting to:", target);
+                    window.location.href = target;
+                }
+            };
+
+            window.addEventListener("popstate", checkAndRedirect);
+
+            const originalPushState = history.pushState;
+            const originalReplaceState = history.replaceState;
+            history.pushState = function (...args) {
+                originalPushState.apply(this, args);
+                setTimeout(checkAndRedirect, 0);
+            };
+            history.replaceState = function (...args) {
+                originalReplaceState.apply(this, args);
+                setTimeout(checkAndRedirect, 0);
+            };
+        } else {
+            return;
+        }
     } else if (matchedAction.action === "scrollToKeyword") {
         // Scroll to first occurrence of keyword (supports string or array of keywords)
         const scrollToKeyword = (source) => {
