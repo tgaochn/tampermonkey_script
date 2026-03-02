@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.6
+// @version             1.0.7
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.7: add textColor for all card patterns   
 // 1.0.6: add cloudops portal url pattern
 // 1.0.5: use utils.initTextContentChanger with built-in SPA support (URL change detection)
 // 1.0.4: add color highlighting for AWS account descriptions
@@ -153,13 +154,15 @@
         // ! Group 1 - ranking targets
         {
             regex: /^IDX P\(AS \| seen\)$/,
-            textColor: "rgb(0,0,128)", // Dark blue
-            backColor: "rgb(255,192,255)",
+            textColor: "rgb(153,0,0)", // Dark red
+            // textColor: "rgb(0,0,128)", // Dark blue
+            // backColor: "rgb(255,192,255)",
         },
         {
             regex: /^IDX Spon P\(click \| seen\)$/,
-            textColor: "rgb(0,0,128)", // Dark blue
-            backColor: "rgb(255,192,255)",
+            textColor: "rgb(153,0,0)", // Dark red
+            // textColor: "rgb(0,0,128)", // Dark blue
+            // backColor: "rgb(255,192,255)",
         },
         {
             regex: /^Online Ranker Apply Model$/,
@@ -175,23 +178,25 @@
         // ! Group 2 - bidding targets
         {
             regex: /^IDX Spon P\(AC \| clicked\)$/,
-            textColor: "rgb(0,0,128)", // Dark blue
-            backColor: "rgb(144,238,144)",
+            textColor: "rgb(153,0,0)", // Dark red
+            // textColor: "rgb(0,0,128)", // Dark blue
+            // backColor: "rgb(144,238,144)",
         },
         {
             regex: /^IDX Spon P\(AS \| clicked\)$/,
-            textColor: "rgb(0,0,128)", // Dark blue
-            backColor: "rgb(144,238,144)",
+            textColor: "rgb(153,0,0)", // Dark red
+            // textColor: "rgb(0,0,128)", // Dark blue
+            // backColor: "rgb(144,238,144)",
         },
         {
             regex: /^Online Ranker Spon P\(AC \| clicked\)$/,
             textColor: "rgb(153,0,0)", // Dark red
-            backColor: "rgb(144,238,144)",
+            backColor: "rgb(255,192,255)",
         },
         {
             regex: /^Online Ranker Spon P\(AS \| Clicked\)$/,
             textColor: "rgb(153,0,0)", // Dark red
-            backColor: "rgb(144,238,144)",
+            backColor: "rgb(255,192,255)",
         },
 
         // ! Group 3 - PO targets
@@ -216,7 +221,57 @@
             backColor: "rgb(255, 243, 205)",
         },
 
+        // ! Group 4 - LLM targets
+        {
+            regex: /^Online Ranker empRelevance$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^Online Ranker overallMatchRelevance$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^Online Ranker qualificationRelevance$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^j2qRelevance$/,
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        
         // !! allocation color
+        // RJP related
+        {
+            regex: /^(non-)?RJP Surfaces (US|ROW)$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        {
+            regex: /^Rest of (non-)?RJP Surfaces (US|ROW)$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        {
+            regex: /^Rest of RJP Surfaces ROW$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        {
+            regex: /^((RJP HP)|(SERP)|(Glassdoor SERP)|(Other RJP Surfaces)|(Rest of (non-)?RJP Surfaces)) non-JP (w\/ IS)?$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        // Online Ranker Qualified New (BP)
+        {
+            regex: /^((RJP HP Global)|(SERP Global)|(Rest of (non-)?RJP Surfaces)) (w\/ IS)?$/,
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(255,228,181)",
+        },
+        
         // HP US
         {
             regex: /^((RJP HP)|(HP)|(RJP)) US w\/\s*IS$/,
@@ -240,19 +295,6 @@
             textColor: "rgb(0,0,0)",
             backColor: "rgb(255,225,225)",
         },
-
-        // // HP JP
-        // we don't own JP models
-        // {
-        //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS$/,
-        //     textColor: "rgb(0,0,0)",
-        //     backColor: "rgb(255,208,161)",
-        // },
-        // {
-        //     regex: /^((RJP HP)|(HP)|(RJP)) JP w\/\s*IS Shadow Traffic$/,
-        //     textColor: "rgb(0,0,0)",
-        //     backColor: "rgb(255,225,225)",
-        // },
 
         // SERP US
         {
@@ -278,18 +320,6 @@
             backColor: "rgb(255,225,225)",
         },
 
-        // // SERP JP
-        // we don't own JP models
-        // {
-        //     regex: /^SERP JP w\/\s*IS$/,
-        //     textColor: "rgb(0,0,0)",
-        //     backColor: "rgb(255,162,173)",
-        // },
-        // {
-        //     regex: /^SERP JP w\/\s*IS Shadow Traffic$/,
-        //     textColor: "rgb(0,0,0)",
-        //     backColor: "rgb(255,225,225)",
-        // },
     ];
 
     // !! 匹配url后修改文本颜色/内容
