@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.2
+// @version      0.5.3
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -23,6 +23,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.3: add igg-games scroll to "DOWNLOAD LINKS" section
 // 0.5.2: bug fixed
 // 0.5.1: add butterfly portfolio pageSize=50 redirect
 // 0.5.0: add AWS us-east-1 to us-east-2 redirect (migrated from url_formatter)
@@ -178,6 +179,13 @@
             pattern: /^https:\/\/www\.1lou\.info\/thread-\d+\.htm/,
             action: "scrollToKeyword",
             keyword: ["上传的附件", ".torr", "最新回复"],
+        },
+
+        // igg-games - scroll to "DOWNLOAD LINKS" section
+        {
+            pattern: /^https:\/\/igg-games\.com\/.*/,
+            action: "scrollToKeyword",
+            keyword: ["DOWNLOAD LINKS", "Link MegaUp"],
         },
     ];
 
