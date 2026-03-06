@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.16
+// @version      1.0.17
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.17: bug fixed
 // 1.0.16: support SPA navigation - buttons now update when URL changes without page reload
 // 1.0.15: bug fixed
 // 1.0.14: add teststats URL modification buttons (migrated from url_formatter)
@@ -163,6 +164,9 @@
                     }
                     allParams.delete('dateRangeTo');
                     allParams.delete('cacheTimeoutOverrideMs');
+                    for (const [key, value] of allParams) {
+                        if (value === '') allParams.delete(key);
+                    }
                     urlObj.search = '';
                     const priorityParams = ['allocationId', 'dateRangeFrom'];
                     for (const param of priorityParams) {
