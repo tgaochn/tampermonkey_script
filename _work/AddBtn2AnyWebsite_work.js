@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.15
+// @version      1.0.16
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.16: support SPA navigation - buttons now update when URL changes without page reload
 // 1.0.15: bug fixed
 // 1.0.14: add teststats URL modification buttons (migrated from url_formatter)
 // 1.0.13: added jump button for sagemaker studio, fix bug
@@ -217,6 +218,14 @@
                         "testStats",
                         `${BASE_URLS.TESTSTATS}/${testNameParam}`
                     ),
+                    utils.createButtonOpenUrl(
+                        "PreApply Shadow",
+                        `${BASE_URLS.PREAPPLY_SHADOW}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "PostApply Shadow",
+                        `${BASE_URLS.POSTAPPLY_SHADOW}/${testNameParam}`
+                    ),
                 ];
             },
         },
@@ -259,6 +268,8 @@
         BUTTERFLY_PROCTOR: "https://butterfly.sandbox.indeed.net/proctor/jobsearch",
         PROCTOR: "https://proctor.sandbox.indeed.net/proctor/toggles/view",
         TESTSTATS: "https://teststats.sandbox.indeed.net/analyze",
+        PREAPPLY_SHADOW: "https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_preapply_shadow_tst",
+        POSTAPPLY_SHADOW: "https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_postapply_shadow_tst",
     };
 
     const inclusionPatterns = [];

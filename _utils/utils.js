@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.3.1
+// version: 0.3.2
 (function (window) {
     "use strict";
 
@@ -1307,7 +1307,11 @@
 
             const targetElementId = CONFIG.CONTAINER_ID;
 
-            // Helper function to create buttons if container doesn't exist
+            const removeExistingContainer = () => {
+                const existing = document.getElementById(targetElementId);
+                if (existing) existing.remove();
+            };
+
             const createButtonsIfNeeded = () => {
                 if (!document.getElementById(targetElementId)) {
                     addBtn2AnyWebsiteMain(CONFIG, customButtonMappings, url2title, pathSegmentMappings, jumpButtonMappings);
@@ -1324,6 +1328,16 @@
             // Some websites (e.g., AWS console) re-render after initial load, removing the button container
             const checkInterval = CONFIG.PERIODIC_CHECK_INTERVAL || 2000;
             setInterval(createButtonsIfNeeded, checkInterval);
+
+            // Detect SPA navigation: remove old buttons and recreate with new URL
+            utils.onUrlChange((newUrl) => {
+                if (!utils.shouldRunScript(inclusionPatterns || [], exclusionPatterns || [], newUrl)) {
+                    removeExistingContainer();
+                    return;
+                }
+                removeExistingContainer();
+                setTimeout(createButtonsIfNeeded, 300);
+            });
         } catch (error) {
             console.error("Failed to initialize AddBtn2AnyWebsite:", error);
         }
