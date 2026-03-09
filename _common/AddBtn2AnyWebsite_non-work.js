@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.2.0
+// @version      1.2.1
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.2.1: added amazon gift card button
 // 1.2.0: added draggable button container
 // 1.1.0: added button container fold state persistence
 // 1.0.10: added Amex button
@@ -149,6 +150,7 @@
                     [
                         utils.createButtonOpenUrl("monarch cash flow", cashFlowUrl),
                         utils.createButtonOpenUrl("frontier 网费报销", "https://frontier.com/pages/login?redirect=%2Faccount%2Fdashboard"),
+                        utils.createButtonOpenUrl("amazon 礼品卡", "https://www.amazon.com/dp/B0CHTVMXZJ?th=1"),
                     ],
                     [
                         utils.createButtonOpenUrl("BOA", "https://www.bankofamerica.com"),

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.5
+// @version             1.1.6
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -20,6 +20,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.6: add Chase Freedom Unlimited
 // 1.1.5: add textColor for all card patterns   
 // 1.1.4: add Capital One, Chase United Gateway, Chase Freedom Flex, DiscoverIT, AmEx BCE
 // 1.1.2: remove igg-games url pattern
@@ -124,6 +125,13 @@
                 {
                     regex: /(ending in 2573)/g,
                     replacement: "$1 (Chase Freedom Flex)",
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",                    
+                },
+                // Chase Freedom Unlimited
+                {
+                    regex: /(ending in 2654)/g,
+                    replacement: "$1 (Chase Freedom Unlimited)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",                    
                 },
