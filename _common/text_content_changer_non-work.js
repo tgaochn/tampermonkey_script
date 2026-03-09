@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.7
+// @version             1.1.8
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -20,6 +20,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.8: add AmEx BCE Tian
 // 1.1.7: add AmEx BCE Xuan
 // 1.1.6: add Chase Freedom Unlimited
 // 1.1.5: add textColor for all card patterns   
@@ -145,8 +146,8 @@
                 },
                 // AmEx BCE
                 {
-                    regex: /(ending in (1006|1010))/g,
-                    replacement: "$1 (AmEx BCE)",
+                    regex: /(ending in 1006)/g,
+                    replacement: "$1 (AmEx BCE Tian)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
