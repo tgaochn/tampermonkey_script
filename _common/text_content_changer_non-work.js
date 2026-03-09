@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.6
+// @version             1.1.7
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -20,6 +20,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.7: add AmEx BCE Xuan
 // 1.1.6: add Chase Freedom Unlimited
 // 1.1.5: add textColor for all card patterns   
 // 1.1.4: add Capital One, Chase United Gateway, Chase Freedom Flex, DiscoverIT, AmEx BCE
@@ -77,77 +78,84 @@
                     regex: /(ending in 9991)/g,
                     replacement: "$1 (Citi)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // BOA CustomizedCashRewards, 3% online
                 {
                     regex: /(ending in 2623)/g,
                     replacement: "$1 (BOA 3%)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // BOA 1.5%
                 {
                     regex: /(ending in 8923)/g,
                     replacement: "$1 (BOA 1.5%)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Bilt
                 {
                     regex: /(ending in 6537)/g,
                     replacement: "$1 (Bilt)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Amazon
                 {
                     regex: /(ending in 8057)/g,
                     replacement: "$1 (Amazon 5%)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Capital One
                 {
                     regex: /(ending in 7181)/g,
                     replacement: "$1 (CapitalOne)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Chase United Gateway
                 {
                     regex: /(ending in 9702)/g,
                     replacement: "$1 (Chase United Gateway)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Chase Freedom Flex
                 {
                     regex: /(ending in 2573)/g,
                     replacement: "$1 (Chase Freedom Flex)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // Chase Freedom Unlimited
                 {
                     regex: /(ending in 2654)/g,
                     replacement: "$1 (Chase Freedom Unlimited)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // DiscoverIT
                 {
                     regex: /(ending in 8646)/g,
                     replacement: "$1 (DiscoverIT)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
                 },
                 // AmEx BCE
                 {
                     regex: /(ending in (1006|1010))/g,
                     replacement: "$1 (AmEx BCE)",
                     textColor: "rgb(0,0,0)",
-                    backColor: "rgb(255,192,255)",                    
+                    backColor: "rgb(255,192,255)",
+                },
+                // AmEx BCE
+                {
+                    regex: /(ending in 1002)/g,
+                    replacement: "$1 (AmEx BCE Xuan)",
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
                 },
             ],
         },
