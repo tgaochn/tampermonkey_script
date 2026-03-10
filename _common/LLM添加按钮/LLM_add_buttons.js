@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 添加按钮
 // @namespace   https://claude.ai/
-// @version     1.2.0
+// @version     1.2.1
 // @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.2.1: fix input box collapsing issue on Gemini by using a wrapper container
 // LLM_add_buttons 1.2.0: lazy storage creation - only create external storage when user edits config, otherwise use built-in defaults for easier updates
 // LLM_add_buttons 1.1.8: update prompt
 // LLM_add_buttons 1.1.7: update prompt
@@ -109,7 +110,7 @@ If the response includes a code block, the code and the comments should be in En
 
         md: `
 Your response should be in the format of raw markdown code so I can copy the content into my markdown editor.
-Don't use unnecessary bold in md ("**text**" or "*text*").
+Don't use unnecessary bold in md ("text" or "*text*").
 Don't render the markdown code.
 `,
 
@@ -263,8 +264,6 @@ Translate the following Chinese text into English in different tones:
 区分场景: 此协议不适用于创意写作 (如写故事) 或日常情感闲聊.
 `,
         },
-
-
     };
     const myPromptJson3_default = {
         what_mle: {
@@ -376,7 +375,6 @@ Full conversation:
     }
 
     // Load Prompts: use external storage if customized, otherwise use built-in defaults
-    // This allows script updates to propagate default prompts while preserving user customizations
     let myPromptJson1 = isStorageCustomized(PROMPT_STORAGE_KEYS[0])
         ? GM_getValue(PROMPT_STORAGE_KEYS[0])
         : myPromptJson1_default;
@@ -465,7 +463,7 @@ To reset to default, you can save an empty JSON object like {}
                 else if (groupIndex === 3) myPromptJson4 = GM_getValue(PROMPT_STORAGE_KEYS[3], myPromptJson4_default);
 
                 alert(`Prompts for Group ${groupIndex + 1} updated! Reloading page to apply changes.`);
-                location.reload(); // Reload to re-draw buttons with new prompts
+                location.reload();
             }
         } catch (e) {
             console.error("Error during prompt editing or parsing:", e);
@@ -478,7 +476,7 @@ To reset to default, you can save an empty JSON object like {}
     // Main function for the menu command
     async function showEditPromptsDialog(utils) {
         const dialogId = "editPromptGroupDialog";
-        if (document.getElementById(dialogId)) return; // Prevent multiple dialogs
+        if (document.getElementById(dialogId)) return;
 
         const container = document.createElement("div");
         container.id = dialogId;
@@ -492,7 +490,7 @@ To reset to default, you can save an empty JSON object like {}
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            zIndex: "10001", // Ensure it's above most things
+            zIndex: "10001",
             textAlign: "center",
         });
 
@@ -523,7 +521,7 @@ To reset to default, you can save an empty JSON object like {}
             display: "block",
             margin: "20px auto 0",
             padding: "8px 15px",
-            backgroundColor: "#f0f0f0", // Different color for close
+            backgroundColor: "#f0f0f0",
             color: "#333",
         });
         closeBtn.textContent = "Cancel";
@@ -531,7 +529,6 @@ To reset to default, you can save an empty JSON object like {}
         container.appendChild(closeBtn);
 
         document.body.appendChild(container);
-        // Close on escape key
         const escapeListener = (event) => {
             if (event.key === "Escape") {
                 container.remove();
@@ -551,7 +548,7 @@ To reset to default, you can save an empty JSON object like {}
                     showEditPromptsDialog(utils).catch(console.error);
                 },
                 "p"
-            ); // Access key 'p'
+            );
 
             await checkAndAddButtons(utils);
             utils.monitorUrlChanges((newUrl, oldUrl) => {
@@ -586,10 +583,6 @@ To reset to default, you can save an empty JSON object like {}
                 return;
             }
 
-            btnContainer.style.display = "flex";
-            btnContainer.style.flexDirection = "column";
-            btnContainer.style.alignItems = "flex-start";
-
             const inputBoxElement = document.querySelector(currentConfig.inputBoxSelector);
             if (!inputBoxElement) {
                 console.warn("Input box element not found using selector:", currentConfig.inputBoxSelector);
@@ -621,10 +614,20 @@ To reset to default, you can save an empty JSON object like {}
 
             btnSubContainer1.id = addedContainerId;
 
-            btnContainer.appendChild(btnSubContainer1);
-            btnContainer.appendChild(btnSubContainer2);
-            btnContainer.appendChild(btnSubContainer3);
-            btnContainer.appendChild(btnSubContainer4);
+            // Create a wrapper container for all buttons to avoid breaking the original input box layout
+            const buttonWrapper = document.createElement("div");
+            buttonWrapper.style.display = "flex";
+            buttonWrapper.style.flexDirection = "column";
+            buttonWrapper.style.alignItems = "flex-start";
+            buttonWrapper.style.gap = "5px";
+            buttonWrapper.style.marginTop = "10px";
+
+            buttonWrapper.appendChild(btnSubContainer1);
+            buttonWrapper.appendChild(btnSubContainer2);
+            buttonWrapper.appendChild(btnSubContainer3);
+            buttonWrapper.appendChild(btnSubContainer4);
+
+            btnContainer.appendChild(buttonWrapper);
 
             console.log("Buttons added successfully for", currentConfig.hostnames[0]);
             isButtonsAdded = true;
