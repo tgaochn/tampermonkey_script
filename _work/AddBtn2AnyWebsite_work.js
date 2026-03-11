@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.17
+// @version      1.0.18
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.18: fix bug for preapply/postapply shadow buttons
 // 1.0.17: bug fixed
 // 1.0.16: support SPA navigation - buttons now update when URL changes without page reload
 // 1.0.15: bug fixed
@@ -224,11 +225,11 @@
                     ),
                     utils.createButtonOpenUrl(
                         "PreApply Shadow",
-                        `${BASE_URLS.PREAPPLY_SHADOW}/${testNameParam}`
+                        `${BASE_URLS.PREAPPLY_SHADOW}`
                     ),
                     utils.createButtonOpenUrl(
                         "PostApply Shadow",
-                        `${BASE_URLS.POSTAPPLY_SHADOW}/${testNameParam}`
+                        `${BASE_URLS.POSTAPPLY_SHADOW}`
                     ),
                 ];
             },
