@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.8
+// @version             1.0.9
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.9: add # of JSwAS pattern
 // 1.0.8: add testStats patterns
 // 1.0.7: add textColor for all card patterns   
 // 1.0.6: add cloudops portal url pattern
@@ -47,7 +48,7 @@
     // ! 高亮 testStats 关键 metrics
     const testStatsPatterns = [
         {
-            regex: /^((JSwAS)|(Sponsored Apply Starts)|(Organic Apply Starts)|(Impressions at Max Bid)|(Max-bid seen))$/,
+            regex: /^((JSwAS)|(Sponsored Apply Starts)|(Organic Apply Starts)|(Impressions at Max Bid)|(Max-bid seen)|(# of JSwAS))$/,
             textColor: "rgb(153,0,0)", // Dark red
             backColor: "rgb(144,238,144)",
         },

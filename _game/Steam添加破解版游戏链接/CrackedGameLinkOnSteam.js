@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.5
+// @version 0.7.6
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.6: Add Google search buttons for Chinese and English game names
 // 0.7.5: Refactor parseGameName to data-driven pattern array (NAME_SPLIT_PATTERNS) for extensibility; share separator chars constant
 // 0.7.4: Fix parseGameName to handle "Chinese / English" slash separator; strip trailing separators (/ - – —) after removing English name
 // 0.7.3: Fix parseGameName to handle full-width parentheses（）; clean up residual empty parens after stripping English name
@@ -974,6 +975,19 @@
                     "https://flingtrainer.com/?s=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
                 );
 
+                // Google search buttons (Chinese button uses English as fallback, replaced in second fetch)
+                var googleSearchChn = createButton(
+                    "Google搜中文名",
+                    "#34A853",
+                    "https://www.google.com/search?q=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
+                );
+
+                var googleSearchEng = createButton(
+                    "Google搜英文名",
+                    "#34A853",
+                    "https://www.google.com/search?q=" + encodeURIComponent(finalGameNameInEng).replace(/%2B/g, "+")
+                );
+
                 // Create add mapping button with dynamic state
                 var buttonAddMapping = createAddMappingButton();
                 addMappingButton = buttonAddMapping; // Store reference for dynamic updates
@@ -996,10 +1010,13 @@
                     buttonNexusmods, // 6. NexusMods
                     buttonAddMapping, // 6.5. Add NexusMods Mapping
 
+                    buttonAddCustomName, // 7.6. Add custom Chinese/English names
                     bilibili, // 7. Bilibili (English fallback, replaced with Chinese in second fetch)
                     buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
-                    buttonAddCustomName, // 7.6. Add custom Chinese/English names
-                    FLiNG, // 8. FLiNG
+                    googleSearchChn, // 9. Google search Chinese name
+                    googleSearchEng, // 10. Google search English name
+
+                    FLiNG, // 11. FLiNG
                 ];
 
                 // We'll wait for the second fetch before adding buttons
@@ -1039,7 +1056,14 @@
                 );
 
                 // Replace bilibili button with one using Chinese name (same as gamer520)
-                allButtons[6] = createBilibiliButton(finalGameNameInChn);
+                allButtons[7] = createBilibiliButton(finalGameNameInChn);
+
+                // Replace Google Chinese search button with one using Chinese name
+                allButtons[9] = createButton(
+                    "Google搜中文名",
+                    "#34A853",
+                    "https://www.google.com/search?q=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
+                );
 
                 // Insert gamer520 at the desired position (before SkidrowReloaded)
                 allButtons.splice(0, 0, button520);
@@ -1075,7 +1099,8 @@
             } else {
                 // Fallback to Google search
                 window.open(
-                    "https://www.google.com/search?q=nexusmods+mods+download+" +
+                    // "https://www.google.com/search?q=nexusmods+mods+download+" +
+                    "https://www.nexusmods.com/games?keyword=" +
                         encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
                 );
             }
@@ -1240,7 +1265,7 @@
             });
         } else {
             button.innerHTML = "<span>+ 中英文名</span>";
-            button.style.backgroundColor = "#6f4e37";
+            button.style.backgroundColor = "#4285F4";
             const showDialog = () => showCustomNameDialog();
             button.onclick = showDialog;
             button.addEventListener("mousedown", (e) => {
