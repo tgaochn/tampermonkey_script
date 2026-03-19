@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.3
+// @version      0.5.4
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -16,6 +16,7 @@
 // @match        https://app.monarch.com/*
 // @match        https://*.console.aws.amazon.com/*
 // @match        https://butterfly.sandbox.indeed.net/portfolio/*
+// @match        https://www.shortkeys.app/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -23,6 +24,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.4: add shortkeys app close page
 // 0.5.3: add igg-games scroll to "DOWNLOAD LINKS" section
 // 0.5.2: bug fixed
 // 0.5.1: add butterfly portfolio pageSize=50 redirect
@@ -62,6 +64,14 @@
         {
             // https://bart.solutions/google-translate-plus-ai-updated/
             pattern: /^https:\/\/bart\.solutions\/google-translate-plus-ai-updated\//,
+            action: "close",
+            fallbackUrl: "https://www.google.com/",
+        },
+
+        // ShortKeys app
+        {
+            // https://www.shortkeys.app/welcome/
+            pattern: /^https:\/\/www\.shortkeys\.app\/welcome\//,
             action: "close",
             fallbackUrl: "https://www.google.com/",
         },
