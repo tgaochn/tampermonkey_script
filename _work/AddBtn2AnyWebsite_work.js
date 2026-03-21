@@ -64,6 +64,8 @@
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_work",
         BUTTON_POSITION: { top: "-10px", left: "1200px" },
+        FOLDED: false, // Initial fold state (runtime state persisted in localStorage)
+        DRAGGABLE: true, // Enable drag to reposition (position persisted in localStorage)
         PERIODIC_CHECK_INTERVAL: 2000, // Interval to check if button container still exists (ms)
         REQUIRED_UTILS: [
             "observeDOM",
