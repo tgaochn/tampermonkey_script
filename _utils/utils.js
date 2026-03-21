@@ -1042,7 +1042,7 @@
         let dynamicTitle = config.DEFAULT_TITLE;
         let testName = null; // Store the original segment for jump buttons
 
-        if (matchedConfig.dynamicTitle) {
+        if (matchedConfig.showDynamicTitle) {
             // Get the full result from custom parser or default logic
             let fullResult = null;
             if (matchedConfig.customParser && typeof matchedConfig.customParser === "function") {
@@ -1074,34 +1074,32 @@
             : testName ? `{${testName.substring(0, config.MAX_DISPLAY_LENGTH / 2)}...}` : null;
 
         // ! Add title-based buttons
-        if (matchedConfig.showBothTitles) {
-            // Add href section
-            buttonElements.push(utils.createTextNode("\thref: ", textColor));
+        // Three independent toggles: showFixedTitle (default true), showRawSegment (default false), showDynamicTitle (default false)
+        const showFixedTitle = matchedConfig.showFixedTitle ?? true;
+        const showRawSegment = matchedConfig.showRawSegment ?? false;
+
+        // href section
+        buttonElements.push(utils.createTextNode("\thref: ", textColor));
+        if (showFixedTitle) {
             buttonElements.push(utils.createButtonCopyHypertext(`${fixedTitle}`, fixedTitle, url));
-            if (testName) {
-                buttonElements.push(utils.createButtonCopyHypertext(`${rawDisplayTitle}`, testName, url));
-            }
-            if (dynamicTitle !== fixedTitle) {
-                buttonElements.push(utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url));
-            }
-            
-            // Add md section
-            buttonElements.push(utils.createTextNode("\tmd: ", textColor));
+        }
+        if (showRawSegment && testName) {
+            buttonElements.push(utils.createButtonCopyHypertext(`${rawDisplayTitle}`, testName, url));
+        }
+        if (matchedConfig.showDynamicTitle && (!showFixedTitle || dynamicTitle !== fixedTitle)) {
+            buttonElements.push(utils.createButtonCopyHypertext(`${dynamicDisplayTitle}`, dynamicTitle, url));
+        }
+
+        // md section
+        buttonElements.push(utils.createTextNode("\tmd: ", textColor));
+        if (showFixedTitle) {
             buttonElements.push(utils.createButtonCopyText(`[${fixedTitle}](url)`, `[${fixedTitle}](${url})`));
-            if (testName) {
-                buttonElements.push(utils.createButtonCopyText(`[${rawDisplayTitle}](url)`, `[${testName}](${url})`));
-            }
-            if (dynamicTitle !== fixedTitle) {
-                buttonElements.push(utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`));
-            }
-        } else {
-            // Show single set of buttons with the determined title
-            buttonElements.push(
-                utils.createTextNode("\thref: ", textColor),
-                utils.createButtonCopyHypertext(`${pageTitle}`, pageTitle, url),
-                utils.createTextNode("\tmd: ", textColor),
-                utils.createButtonCopyText(`[${pageTitle}](url)`, `[${pageTitle}](${url})`)
-            );
+        }
+        if (showRawSegment && testName) {
+            buttonElements.push(utils.createButtonCopyText(`[${rawDisplayTitle}](url)`, `[${testName}](${url})`));
+        }
+        if (matchedConfig.showDynamicTitle && (!showFixedTitle || dynamicTitle !== fixedTitle)) {
+            buttonElements.push(utils.createButtonCopyText(`[${dynamicDisplayTitle}](url)`, `[${dynamicTitle}](${url})`));
         }
 
         // ! add jump button

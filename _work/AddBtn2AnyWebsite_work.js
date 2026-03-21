@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.19
+// @version      1.1.0
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,7 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
-// 1.0.19: added jump button for DNH doc and DNH tool
+// 1.1.0: added jump button for DNH doc and DNH tool; support showFixedTitle, showRawSegment, showDynamicTitle for all url2title patterns
 // 1.0.18: fix bug for preapply/postapply shadow buttons
 // 1.0.17: bug fixed
 // 1.0.16: support SPA navigation - buttons now update when URL changes without page reload
@@ -204,7 +204,7 @@
         {
             pattern: /^https:\/\/((proctor)|(teststats)|(butterfly))(-v2)?\.sandbox\.indeed\.net.*$/,
             jumpButtons: (url, utils, textColor, testNameParam) => {
-                // testNameParam is passed from customParser's rawSegment, or dynamicTitle as fallback
+                // testNameParam is passed from customParser's rawSegment, or dynamic title as fallback
                 // It should contain the raw test name (e.g., idxbutterflylightweightapplymodeltst)
 
                 if (!testNameParam) {
@@ -305,8 +305,8 @@
         {
             pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?ruleSet.*$/,
             title: "RuleSet",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
+            showFixedTitle: true,
+            showDynamicTitle: true,
             customParser: (url) => {
                 // Extract rule name from butterfly ruleSet URL
                 try {
@@ -329,26 +329,28 @@
             },
         },
 
-        // // butterfly proctor
-        // {
-        //     pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
-        //     title: "Butterfly traffic",
-        //     dynamicTitle: true, // Enable dynamic title generation for this pattern
-        //     showBothTitles: true, // Show both fixed and dynamic title buttons
-        //     buttonPosition: { top: "-10px", left: "1050px" }, // Custom position to avoid blocking content
-        //     customParser: (url) => {
-        //         // Extract model name from butterfly proctor URL
-        //         const testName = extractTestNameFromButterflyProctor(url);
-        //         return createParserResult(testName);
-        //     },
-        // },
+        // butterfly proctor
+        {
+            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
+            title: "Butterfly traffic",
+            showFixedTitle: false,
+            showRawSegment: true,
+            showDynamicTitle: true,
+            buttonPosition: { top: "-10px", left: "1050px" }, // Custom position to avoid blocking content
+            customParser: (url) => {
+                // Extract model name from butterfly proctor URL
+                const testName = extractTestNameFromButterflyProctor(url);
+                return createParserResult(testName);
+            },
+        },
 
         // testStats
         {
             pattern: /^https:\/\/teststats\.sandbox\.indeed\.net.*$/,
             title: "testStats",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
+            showFixedTitle: true,
+            showRawSegment: true,
+            showDynamicTitle: true,
             customParser: (url) => {
                 // Extract model name from teststats URL
                 const testName = extractTestNameFromPath(url);
@@ -360,8 +362,9 @@
         {
             pattern: /^https:\/\/proctor(-v2)?\.sandbox\.indeed\.net.*$/,
             title: "proctor",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
+            showFixedTitle: true,
+            showRawSegment: true,
+            showDynamicTitle: true,
             textColor: "#000000", // black color for proctor
             buttonPosition: { top: "-10px", left: "600px" }, // Custom position to avoid blocking content
             customParser: (url) => {
@@ -375,8 +378,8 @@
         {
             pattern: /^https:\/\/indeed\.atlassian\.net\/wiki.*$/,
             title: "wiki",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
+            showFixedTitle: true,
+            showDynamicTitle: true,
             // Note: buttonPosition is defined in customButtonMappings for wiki
             customParser: (url) => {
                 // Extract page title from wiki page DOM
