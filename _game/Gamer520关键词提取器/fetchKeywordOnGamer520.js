@@ -29,7 +29,7 @@
     // Configuration for different websites and their keyword patterns
     const SITE_CONFIGS = [
         {
-            urlPattern: /^https?:\/\/.*\.game.*520\.(com|net)\/.*/,
+            urlPattern: /^https?:\/\/.*game.*520\.(com|net)\/.*/,
             keywordPatterns: [
                 {
                     regex: /解压密码\s*[:：]\s*([^\s\n]+)/g,
