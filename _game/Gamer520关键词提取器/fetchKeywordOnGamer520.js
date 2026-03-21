@@ -1,16 +1,20 @@
 // ==UserScript==
 // @name         Gamer520 关键词提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.4
 // @description  提取该网页的指定关键词
-// @match        http*://*.game*520.net/*
-// @match        http*://*.game*520.com/*
+// @match        http*://*.gamer520.net/*
+// @match        http*://*.game520.net/*
+// @match        http*://*.gamer520.com/*
+// @match        http*://*.game520.com/*
 // @match        http*://*.xxxxx520.cam/*
+// @match        http*://*.gamers520.com/*
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // ==/UserScript==
+// 0.1.4: add gamers520.com pattern
 // 0.1.3: add game520.com pattern
 // 0.1.2: add game520.net pattern
 // 0.1.0: init
