@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.0.18
+// @version      1.0.19
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.0.19: added jump button for DNH doc and DNH tool
 // 1.0.18: fix bug for preapply/postapply shadow buttons
 // 1.0.17: bug fixed
 // 1.0.16: support SPA navigation - buttons now update when URL changes without page reload
@@ -212,7 +213,7 @@
 
                 return [
                     utils.createButtonOpenUrl(
-                        "Butterfly Proctor",
+                        "BF Proctor",
                         `${BASE_URLS.BUTTERFLY_PROCTOR}/${testNameParam}`
                     ),
                     utils.createButtonOpenUrl(
@@ -230,6 +231,14 @@
                     utils.createButtonOpenUrl(
                         "PostApply Shadow",
                         `${BASE_URLS.POSTAPPLY_SHADOW}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "DNH doc",
+                        `https://docs.google.com/document/d/1pe1N4ahQFlOpISk42MqVRwrozKwXKvmChk92ycIOfEo/edit?tab=t.0#heading=h.aau7sivwwngd`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "DNH tool",
+                        `https://me-core-metrics.sandbox.indeed.net/`
                     ),
                 ];
             },
@@ -320,19 +329,19 @@
             },
         },
 
-        // butterfly proctor
-        {
-            pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
-            title: "Butterfly traffic",
-            dynamicTitle: true, // Enable dynamic title generation for this pattern
-            showBothTitles: true, // Show both fixed and dynamic title buttons
-            buttonPosition: { top: "-10px", left: "1050px" }, // Custom position to avoid blocking content
-            customParser: (url) => {
-                // Extract model name from butterfly proctor URL
-                const testName = extractTestNameFromButterflyProctor(url);
-                return createParserResult(testName);
-            },
-        },
+        // // butterfly proctor
+        // {
+        //     pattern: /^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?proctor.*$/,
+        //     title: "Butterfly traffic",
+        //     dynamicTitle: true, // Enable dynamic title generation for this pattern
+        //     showBothTitles: true, // Show both fixed and dynamic title buttons
+        //     buttonPosition: { top: "-10px", left: "1050px" }, // Custom position to avoid blocking content
+        //     customParser: (url) => {
+        //         // Extract model name from butterfly proctor URL
+        //         const testName = extractTestNameFromButterflyProctor(url);
+        //         return createParserResult(testName);
+        //     },
+        // },
 
         // testStats
         {
