@@ -196,6 +196,15 @@
                     utils.createButtonFromCallback('Force Recalculation', () => {
                         window.location.href = forceRecalUrl;
                     }),
+                    utils.createButtonOpenUrl(
+                        "DNH doc",
+                        `https://docs.google.com/document/d/1pe1N4ahQFlOpISk42MqVRwrozKwXKvmChk92ycIOfEo/edit?tab=t.0#heading=h.aau7sivwwngd`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "DNH tool",
+                        `https://me-core-metrics.sandbox.indeed.net/`
+                    ),
+
                 ];
             },
         },
