@@ -2,7 +2,7 @@
 // @name         jira_add_buttons
 // @description  Add buttons in JIRA
 // @author       gtfish
-// @version      1.0.3
+// @version      1.0.4
 // @match        http*://indeed.atlassian.net/browse/*
 // @grant        GM_addStyle
 // @require     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
@@ -11,6 +11,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/JiraTicketAddBtn/JiraTicketAddBtn.js
 
 // ==/UserScript==
+// 1.0.4: add copy buttons (ID, MD, Link) for each child work item ticket
 // 1.0.3: add debouncing for MutationObserver; adaptive periodic check frequency; improved logging with emoji
 // 1.0.2: add periodic check to recreate button container if it disappears; add detailed debug logging
 // 1.0.1: refactor with generic waitForResource function to reduce code duplication
@@ -131,6 +132,7 @@
             }
         }
         
+        addChildTicketButtons();
         setTimeout(periodicCheck, checkInterval);
     }
     
@@ -211,6 +213,7 @@
                 } else {
                     processChanges(false);
                 }
+                addChildTicketButtons();
             }, CONFIG.DEBOUNCE_DELAY);
         };
 
@@ -363,6 +366,71 @@
             } else {
                 console.error("❌ Could not find ticket ID element to attach buttons");
             }
+        }
+
+        // Add buttons for child work item tickets (with delays for dynamic loading)
+        addChildTicketButtons();
+        setTimeout(addChildTicketButtons, 2000);
+        setTimeout(addChildTicketButtons, 5000);
+    }
+
+    function addChildTicketButtons() {
+        const MARKER = "data-child-btns-added";
+        const BASE_URL = "https://indeed.atlassian.net/browse/";
+        const rows = document.querySelectorAll('tr[data-testid="native-issue-table.ui.issue-row"]');
+        let addedCount = 0;
+
+        rows.forEach((row) => {
+            if (row.hasAttribute(MARKER)) return;
+
+            const keyLink = row.querySelector(
+                'a[data-testid="native-issue-table.common.ui.issue-cells.issue-key.issue-key-cell"]'
+            );
+            if (!keyLink) return;
+
+            const ticketId = keyLink.textContent.trim();
+            const ticketUrl = BASE_URL + ticketId;
+
+            const btnContainer = document.createElement("span");
+            btnContainer.style.cssText = "display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle;";
+
+            const createSmallBtn = (text, onClick) => {
+                const btn = document.createElement("button");
+                btn.textContent = text;
+                btn.style.cssText =
+                    "background:#607D8B;color:white;border:none;border-radius:3px;" +
+                    "cursor:pointer;padding:0 3px;font-size:10px;line-height:1.4;";
+                btn.onmouseenter = () => { btn.style.background = "#455A64"; };
+                btn.onmouseleave = () => { btn.style.background = "#607D8B"; };
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClick();
+                };
+                return btn;
+            };
+
+            btnContainer.appendChild(
+                createSmallBtn("ID", () => navigator.clipboard.writeText(ticketId))
+            );
+            btnContainer.appendChild(
+                createSmallBtn("MD", () => navigator.clipboard.writeText(`[${ticketId}](${ticketUrl})`))
+            );
+            btnContainer.appendChild(
+                createSmallBtn("href", () => utils.copyHypertext(ticketId, ticketUrl))
+            );
+
+            const mergedCell = row.querySelector('[data-vc="merged-cell"]');
+            if (mergedCell) {
+                mergedCell.insertBefore(btnContainer, mergedCell.firstChild);
+            }
+
+            row.setAttribute(MARKER, "true");
+            addedCount++;
+        });
+
+        if (addedCount > 0) {
+            debugLog("🏷️", `Added buttons to ${addedCount} child work item rows`);
         }
     }
 })();
