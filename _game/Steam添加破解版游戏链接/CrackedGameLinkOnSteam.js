@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.6
+// @version 0.7.7
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.7: Add 3DM forum mod buttons (visit + URL mapping) next to nexusmods
 // 0.7.6: Add Google search buttons for Chinese and English game names
 // 0.7.5: Refactor parseGameName to data-driven pattern array (NAME_SPLIT_PATTERNS) for extensibility; share separator chars constant
 // 0.7.4: Fix parseGameName to handle "Chinese / English" slash separator; strip trailing separators (/ - – —) after removing English name
@@ -123,6 +124,28 @@
         const mapping = getBilibiliMapping();
         delete mapping[steamId];
         saveBilibiliMapping(mapping);
+    }
+
+    // 3DM forum mapping storage functions using GM_getValue/GM_setValue
+    function get3DMMapping() {
+        const stored = GM_getValue("3dm_mapping", "{}");
+        return JSON.parse(stored);
+    }
+
+    function save3DMMapping(mapping) {
+        GM_setValue("3dm_mapping", JSON.stringify(mapping));
+    }
+
+    function add3DMMapping(steamId, url) {
+        const mapping = get3DMMapping();
+        mapping[steamId] = url;
+        save3DMMapping(mapping);
+    }
+
+    function remove3DMMapping(steamId) {
+        const mapping = get3DMMapping();
+        delete mapping[steamId];
+        save3DMMapping(mapping);
     }
 
     // Custom name (Chinese/English) storage, overrides API when set
@@ -434,6 +457,17 @@
             onSubmit: (value) => addBilibiliMapping(appid, value),
             onSuccessMessage: "B站映射已添加！现在可以点击B站按钮使用中文名称搜索。",
             onUpdateButton: updateAddBilibiliMappingButton
+        });
+    }
+
+    // Function to show 3DM mapping input dialog
+    function show3DMMappingDialog() {
+        showMappingInputDialog({
+            title: "请输入3DM论坛的Mod页面URL",
+            placeholder: "例如: https://bbs.3dmgame.com/forum-xxx-1.html",
+            onSubmit: (value) => add3DMMapping(appid, value),
+            onSuccessMessage: "3DM映射已添加！现在可以点击3DM按钮直接访问该页面。",
+            onUpdateButton: updateAdd3DMMappingButton
         });
     }
 
@@ -764,6 +798,23 @@
         });
     }
 
+    // Function to show 3DM mapping verification dialog
+    function show3DMMappingVerificationDialog(url3dm) {
+        showMappingVerificationDialog({
+            title: "3DM论坛 映射信息",
+            nameLabel: "URL",
+            nameValue: url3dm,
+            urlLabel: "完整URL",
+            url: url3dm,
+            clearButtonId: "clear3DMMapping",
+            closeButtonId: "close3DMDialog",
+            onClear: () => {
+                remove3DMMapping(appid);
+                updateAdd3DMMappingButton();
+            },
+        });
+    }
+
     // Function to update add mapping button state dynamically
     function updateAddMappingButton() {
         if (!addMappingButton) return;
@@ -889,6 +940,47 @@
         }
     }
 
+    // Function to update add 3DM mapping button state dynamically
+    function updateAdd3DMMappingButton() {
+        if (!add3DMMappingButton) return;
+
+        const mapping = get3DMMapping();
+        const url3dm = mapping[appid];
+
+        const newButton = add3DMMappingButton.cloneNode(true);
+        add3DMMappingButton.parentNode.replaceChild(newButton, add3DMMappingButton);
+        add3DMMappingButton = newButton;
+
+        if (url3dm) {
+            add3DMMappingButton.innerHTML = "<span>✓ 3DM</span>";
+            add3DMMappingButton.style.backgroundColor = "#666666";
+            add3DMMappingButton.style.cursor = "default";
+            const showDialog = function () {
+                show3DMMappingVerificationDialog(url3dm);
+            };
+            add3DMMappingButton.onclick = showDialog;
+            add3DMMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
+        } else {
+            add3DMMappingButton.innerHTML = "<span>+ 3DM</span>";
+            add3DMMappingButton.style.backgroundColor = "#902600";
+            const showDialog = function () {
+                show3DMMappingDialog();
+            };
+            add3DMMappingButton.onclick = showDialog;
+            add3DMMappingButton.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
+        }
+    }
+
     // Create workshop button (doesn't need game name)
     var buttonWorkshop = document.createElement("a");
     buttonWorkshop.innerHTML = "<span>mods - workshop</span>";
@@ -914,6 +1006,7 @@
     // Global reference to add mapping button for dynamic updates
     var addMappingButton = null;
     var addBilibiliMappingButton = null;
+    var add3DMMappingButton = null;
     var addCustomNameButton = null;
 
     // Game names from Steam API, used by mapping dialogs
@@ -992,6 +1085,11 @@
                 var buttonAddMapping = createAddMappingButton();
                 addMappingButton = buttonAddMapping; // Store reference for dynamic updates
 
+                // Create 3DM buttons (uses Chinese name, English as fallback)
+                var button3DM = create3DMButton(finalGameNameInEng);
+                var buttonAdd3DMMapping = createAdd3DMMappingButton();
+                add3DMMappingButton = buttonAdd3DMMapping;
+
                 // Create add bilibili mapping button with dynamic state
                 var buttonAddBilibiliMapping = createAddBilibiliMappingButton();
                 addBilibiliMappingButton = buttonAddBilibiliMapping;
@@ -1000,23 +1098,25 @@
                 var buttonAddCustomName = createAddCustomNameButton();
                 addCustomNameButton = buttonAddCustomName;
 
-                // Store buttons in the desired order (bilibili replaced with Chinese name in second fetch)
+                // Store buttons in the desired order (bilibili/3DM replaced with Chinese name in second fetch)
                 allButtons = [
-                    buttonSkidrow, // 2. SkidrowReloaded
-                    buttonIGG, // 3. IGG
-                    buttonTorrent, // 4. x1337x
+                    buttonSkidrow, // SkidrowReloaded
+                    buttonIGG, // IGG
+                    buttonTorrent, // x1337x
 
-                    buttonWorkshop, // 5. Workshop
-                    buttonNexusmods, // 6. NexusMods
-                    buttonAddMapping, // 6.5. Add NexusMods Mapping
+                    buttonWorkshop, // Workshop
+                    buttonNexusmods, // NexusMods
+                    buttonAddMapping, // + NexusMods Mapping
+                    button3DM, // 3DM forum (English fallback, replaced with Chinese in second fetch)
+                    buttonAdd3DMMapping, // + 3DM Mapping
 
-                    buttonAddCustomName, // 7.6. Add custom Chinese/English names
-                    bilibili, // 7. Bilibili (English fallback, replaced with Chinese in second fetch)
-                    buttonAddBilibiliMapping, // 7.5. Add Bilibili Mapping
-                    googleSearchChn, // 9. Google search Chinese name
-                    googleSearchEng, // 10. Google search English name
+                    buttonAddCustomName, // Add custom Chinese/English names
+                    bilibili, // Bilibili (English fallback, replaced with Chinese in second fetch)
+                    buttonAddBilibiliMapping, // Add Bilibili Mapping
+                    googleSearchChn, // Google search Chinese name
+                    googleSearchEng, // Google search English name
 
-                    FLiNG, // 11. FLiNG
+                    FLiNG, // FLiNG
                 ];
 
                 // We'll wait for the second fetch before adding buttons
@@ -1055,11 +1155,14 @@
                     "https://www.gamer520.com/?s=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
                 );
 
+                // Replace 3DM button with one using Chinese name
+                allButtons[6] = create3DMButton(finalGameNameInChn);
+
                 // Replace bilibili button with one using Chinese name (same as gamer520)
-                allButtons[7] = createBilibiliButton(finalGameNameInChn);
+                allButtons[9] = createBilibiliButton(finalGameNameInChn);
 
                 // Replace Google Chinese search button with one using Chinese name
-                allButtons[9] = createButton(
+                allButtons[11] = createButton(
                     "Google搜中文名",
                     "#34A853",
                     "https://www.google.com/search?q=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
@@ -1192,6 +1295,77 @@
             button.addEventListener("mousedown", function (e) {
                 if (e.button === 1) {
                     // Middle mouse button
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
+        }
+
+        return button;
+    }
+
+    // Helper function to create 3DM button with mapping logic
+    function create3DMButton(searchKeyword) {
+        var button = document.createElement("a");
+        button.innerHTML = "<span>mods - 3DM</span>";
+        button.style.backgroundColor = "#902600";
+        applyButtonStyles(button);
+
+        const open3DMLink = function () {
+            const mapping = get3DMMapping();
+            const url3dm = mapping[appid];
+
+            if (url3dm) {
+                window.open(url3dm);
+            } else {
+                window.open(
+                    "https://bbs.3dmgame.com/search.php?mod=forum&searchid=2978&orderby=lastpost&ascdesc=desc&searchsubmit=yes&kw=" +
+                        encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
+                );
+            }
+        };
+
+        button.onclick = open3DMLink;
+        button.addEventListener("mousedown", function (e) {
+            if (e.button === 1) {
+                e.preventDefault();
+                open3DMLink();
+            }
+        });
+        return button;
+    }
+
+    // Helper function to create add 3DM mapping button with dynamic state
+    function createAdd3DMMappingButton() {
+        var button = document.createElement("a");
+        applyButtonStyles(button);
+
+        const mapping = get3DMMapping();
+        const url3dm = mapping[appid];
+
+        if (url3dm) {
+            button.innerHTML = "<span>✓ 3DM</span>";
+            button.style.backgroundColor = "#666666";
+            button.style.cursor = "default";
+            const showDialog = function () {
+                show3DMMappingVerificationDialog(url3dm);
+            };
+            button.onclick = showDialog;
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
+                    e.preventDefault();
+                    showDialog();
+                }
+            });
+        } else {
+            button.innerHTML = "<span>+ 3DM</span>";
+            button.style.backgroundColor = "#902600";
+            const showDialog = function () {
+                show3DMMappingDialog();
+            };
+            button.onclick = showDialog;
+            button.addEventListener("mousedown", function (e) {
+                if (e.button === 1) {
                     e.preventDefault();
                     showDialog();
                 }
@@ -1343,8 +1517,8 @@
             if (i < 4) {
                 // First 4 buttons: game download sites
                 row1.appendChild(allButtons[i]);
-            } else if (i < 7) {
-                // Next 3 buttons: mod related
+            } else if (i < 9) {
+                // Next 5 buttons: mod related (workshop, nexusmods, + nexusmods, 3DM, + 3DM)
                 row2.appendChild(allButtons[i]);
             } else {
                 // Remaining buttons: video and trainer sites
