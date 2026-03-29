@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.4
+// @version      0.5.5
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -16,6 +16,7 @@
 // @match        https://app.monarch.com/*
 // @match        https://*.console.aws.amazon.com/*
 // @match        https://butterfly.sandbox.indeed.net/portfolio/*
+// @match        https://indeed-pte.slack.com/archives/*
 // @match        https://www.shortkeys.app/*
 // @grant        window.close
 // @license      GNU General Public License v3.0
@@ -24,6 +25,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.5: add slack redirect to webapp
 // 0.5.4: add shortkeys app close page
 // 0.5.3: add igg-games scroll to "DOWNLOAD LINKS" section
 // 0.5.2: bug fixed
@@ -77,6 +79,16 @@
         },
 
         // ! auto redirect pages
+        // slack - redirect to webapp
+        {
+            pattern: /^https:\/\/indeed-pte.slack\.com\/archives\/.*/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const channelId = new URL(url).pathname.split('/')[2];
+                return `https://app.slack.com/client/EJYQ8J5SL/${channelId}`;
+            },
+        },
+
         // AWS console - redirect us-east-1 to us-east-2
         {
             pattern: /^https:\/\/us-east-1\.console\.aws\.amazon\.com\/console\/home\?region=us-east-1(#)?$/,
