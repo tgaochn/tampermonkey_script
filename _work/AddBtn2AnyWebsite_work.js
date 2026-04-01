@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.1.0
+// @version      1.1.1
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.1.1: bug fixed
 // 1.1.0: added jump button for DNH doc and DNH tool; support showFixedTitle, showRawSegment, showDynamicTitle for all url2title patterns
 // 1.0.18: fix bug for preapply/postapply shadow buttons
 // 1.0.17: bug fixed
@@ -159,7 +160,7 @@
         // ! teststats analyze: URL modification buttons (Clean & Reorder, Force Recalculation)
         {
             pattern: /^https:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
-            jumpButtons: (url, utils) => {
+            jumpButtons: (url, utils, textColor, testNameParam) => {
                 const cleanUrl = (() => {
                     const urlObj = new URL(url);
                     const allParams = new Map();
@@ -199,13 +200,33 @@
                         window.location.href = forceRecalUrl;
                     }),
                     utils.createButtonOpenUrl(
+                        "BF Proctor",
+                        `${BASE_URLS.BUTTERFLY_PROCTOR}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "proctor",
+                        `${BASE_URLS.PROCTOR}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "testStats",
+                        `${BASE_URLS.TESTSTATS}/${testNameParam}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "PreApply Shadow",
+                        `${BASE_URLS.PREAPPLY_SHADOW}`
+                    ),
+                    utils.createButtonOpenUrl(
+                        "PostApply Shadow",
+                        `${BASE_URLS.POSTAPPLY_SHADOW}`
+                    ),
+                    utils.createButtonOpenUrl(
                         "DNH doc",
                         `https://docs.google.com/document/d/1pe1N4ahQFlOpISk42MqVRwrozKwXKvmChk92ycIOfEo/edit?tab=t.0#heading=h.aau7sivwwngd`
                     ),
                     utils.createButtonOpenUrl(
                         "DNH tool",
                         `https://me-core-metrics.sandbox.indeed.net/`
-                    ),
+                    ),                    
 
                 ];
             },
