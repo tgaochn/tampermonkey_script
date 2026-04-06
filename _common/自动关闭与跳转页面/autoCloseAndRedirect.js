@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.5
+// @version      0.5.6
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -18,6 +18,7 @@
 // @match        https://butterfly.sandbox.indeed.net/portfolio/*
 // @match        https://indeed-pte.slack.com/archives/*
 // @match        https://www.shortkeys.app/*
+// @match        https://steamcommunity.com/profiles/76561198273583466/myworkshopfiles*
 // @grant        window.close
 // @license      GNU General Public License v3.0
 // @run-at       document-start
@@ -25,6 +26,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.6: add steam community myworkshopfiles redirect to myworkshopfiles page
 // 0.5.5: add slack redirect to webapp
 // 0.5.4: add shortkeys app close page
 // 0.5.3: add igg-games scroll to "DOWNLOAD LINKS" section
@@ -79,6 +81,17 @@
         },
 
         // ! auto redirect pages
+        // steam community - redirect to myworkshopfiles page
+        {
+            pattern: /^https:\/\/steamcommunity\.com\/profiles\/76561198273583466\/myworkshopfiles*/,
+            action: "redirect",
+            getTargetUrl: (url) => {
+                const u = new URL(url);
+                u.searchParams.set('numperpage', '30');
+                return u.toString();
+            },
+        },
+
         // slack - redirect to webapp
         {
             pattern: /^https:\/\/indeed-pte.slack\.com\/archives\/.*/,
