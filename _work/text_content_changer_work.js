@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.9
+// @version             1.0.10
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -8,12 +8,14 @@
 // @match               https://proctor.sandbox.indeed.net/proctor/*
 // @match               https://butterfly.sandbox.indeed.net/*
 // @match               https://cloudops-prod.indeed.tech/*
+// @match               https://www.myworkday.com/indeed/*
 // @grant               none
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.10: add workday url pattern
 // 1.0.9: add # of JSwAS pattern
 // 1.0.8: add testStats patterns
 // 1.0.7: add textColor for all card patterns   
@@ -45,6 +47,15 @@
     "use strict";
 
     // !! 文本替换
+    // ! workday 文本替换
+    const workdayPatterns = [
+        {
+            regex: /^(Expense Date)$/,
+            replacement: "$1 (Trans Date)",
+        },
+    ];
+
+
     // ! 高亮 testStats 关键 metrics
     const testStatsPatterns = [
         {
@@ -335,6 +346,12 @@
 
     // !! 匹配url后修改文本颜色/内容
     const urlPatterns = {
+        workday: {
+            // https://www.myworkday.com/indeed
+            urlRegex: /^https?:\/\/www\.myworkday\.com\/indeed\/.*/,
+            textPatterns: [...workdayPatterns],
+        },
+
         testStats: {
             // https://teststats.sandbox.indeed.net/analyze/idxsjbutterflyctrmodeltst?from=proctor_tst_view
             urlRegex: /^https?:\/\/teststats\.sandbox\.indeed\.net\/analyze\/.*/,
