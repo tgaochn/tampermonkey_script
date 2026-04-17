@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gamer520 关键词提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.2.0
 // @description  提取该网页的指定关键词
 // @match        http*://*.gamer520.net/*
 // @match        http*://*.game520.net/*
@@ -9,17 +9,19 @@
 // @match        http*://*.game520.com/*
 // @match        http*://*.xxxxx520.cam/*
 // @match        http*://*.gamers520.com/*
+// @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @grant        none
 // @license      GPL-3.0 License
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // ==/UserScript==
+// 0.2.0: added collapsible/draggable button container via utils.js
 // 0.1.4: add gamers520.com pattern
 // 0.1.3: add game520.com pattern
 // 0.1.2: add game520.net pattern
 // 0.1.0: init
 
-(function () {
+(async function () {
     "use strict";
 
     /* !! -------------------------------------------------------------------------- */
@@ -33,13 +35,8 @@
             keywordPatterns: [
                 {
                     regex: /解压密码\s*[:：]\s*([^\s\n]+)/g,
-                    captureGroup: 1, // which group in the regex to extract
+                    captureGroup: 1,
                 },
-                // Add more keyword patterns for this site here if needed
-                // {
-                //     regex: /密码\s*[:：]\s*([^\s\n]+)/g,
-                //     captureGroup: 1,
-                // },
             ],
             buttonText: "提取解压密码",
         },
@@ -53,26 +50,27 @@
             ],
             buttonText: "提取解压密码",
         },
-        // Add more site configurations here
     ];
 
-    // Button position configuration
-    const BUTTON_CONFIG = {
-        position: "fixed",
-        top: "20px",
-        left: "1000px",
-        zIndex: "9999",
+    const CONFIG = {
+        UTILS_TIMEOUT: 10000,
+        CONTAINER_ID: "container_id_gamer520",
+        BUTTON_POSITION: { top: "20px", left: "1000px" },
+        FOLDED: false,
+        DRAGGABLE: true,
+        REQUIRED_UTILS: [
+            "observeDOM",
+            "shouldRunScript",
+            "createButtonContainer",
+            "createButtonFromCallback",
+            "addFixedPosContainerToPage",
+            "initAddBtn2AnyWebsite",
+        ],
     };
 
     /* !! -------------------------------------------------------------------------- */
-    /*                               !! Main Logic                                   */
+    /*                               !! Helper Functions                              */
     /* !! -------------------------------------------------------------------------- */
-
-    // Get current site configuration based on URL
-    function getCurrentSiteConfig() {
-        const currentUrl = window.location.href;
-        return SITE_CONFIGS.find((config) => config.urlPattern.test(currentUrl));
-    }
 
     // Extract matching content from page based on keyword patterns
     function extractMatchingContent(keywordPatterns) {
@@ -88,11 +86,8 @@
             const node = walker.currentNode;
             const text = node.textContent.trim();
 
-            // Try each keyword pattern
             keywordPatterns.forEach(({ regex, captureGroup }) => {
-                // Reset regex lastIndex for global patterns
                 regex.lastIndex = 0;
-
                 let match;
                 while ((match = regex.exec(text)) !== null) {
                     const capturedText = match[captureGroup];
@@ -106,9 +101,7 @@
         // Also check in full body text
         const allText = document.body.innerText || document.body.textContent || "";
         keywordPatterns.forEach(({ regex, captureGroup }) => {
-            // Reset regex lastIndex for global patterns
             regex.lastIndex = 0;
-
             let match;
             while ((match = regex.exec(allText)) !== null) {
                 const capturedText = match[captureGroup];
@@ -118,53 +111,42 @@
             }
         });
 
-        // Remove duplicates and return
         return [...new Set(matchingContents)];
     }
 
     // Show tip message that disappears after 3 seconds
     function showTip(message, isSuccess = true) {
-        // Remove existing tip if any
         const existingTip = document.getElementById("extractContentTip");
         if (existingTip) {
             existingTip.remove();
         }
 
-        // Create tip element
         const tip = document.createElement("div");
         tip.id = "extractContentTip";
         tip.textContent = message;
-        tip.style.position = "fixed";
-        tip.style.top = "50%";
-        tip.style.left = "50%";
-        tip.style.transform = "translate(-50%, -50%)";
-        tip.style.zIndex = "10000";
-        tip.style.padding = "20px 30px";
-        tip.style.borderRadius = "8px";
-        tip.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
-        tip.style.fontFamily = "Arial, sans-serif";
-        tip.style.fontSize = "16px";
-        tip.style.fontWeight = "bold";
-        tip.style.textAlign = "center";
-        tip.style.minWidth = "200px";
-        tip.style.maxWidth = "500px";
-        tip.style.wordWrap = "break-word";
-        tip.style.whiteSpace = "pre-line";
-        tip.style.transition = "opacity 0.3s ease";
+        tip.style.cssText = `
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 200px;
+            max-width: 500px;
+            word-wrap: break-word;
+            white-space: pre-line;
+            transition: opacity 0.3s ease;
+            background-color: ${isSuccess ? "#4caf50" : "#f44336"};
+            color: #fff;
+        `;
 
-        // Set background and text color based on success/failure
-        if (isSuccess) {
-            tip.style.backgroundColor = "#4caf50";
-            tip.style.color = "#fff";
-        } else {
-            tip.style.backgroundColor = "#f44336";
-            tip.style.color = "#fff";
-        }
-
-        // Add tip to page
         document.body.appendChild(tip);
 
-        // Remove tip after 3 seconds with fade out effect
         setTimeout(() => {
             tip.style.opacity = "0";
             setTimeout(() => {
@@ -175,74 +157,87 @@
         }, 3000);
     }
 
-    // Initialize the script
-    function init() {
-        // Get configuration for current site
-        const siteConfig = getCurrentSiteConfig();
+    /* !! -------------------------------------------------------------------------- */
+    /*                               !! Main Logic                                   */
+    /* !! -------------------------------------------------------------------------- */
 
-        if (!siteConfig) {
-            console.log("No configuration found for current URL:", window.location.href);
-            return;
-        }
+    // Build customButtonMappings from SITE_CONFIGS
+    const customButtonMappings = SITE_CONFIGS.map((siteConfig) => ({
+        pattern: siteConfig.urlPattern,
+        customButtons: (url, utils) => {
+            return [
+                utils.createButtonFromCallback(siteConfig.buttonText, () => {
+                    const matchingContents = extractMatchingContent(siteConfig.keywordPatterns);
+                    if (matchingContents.length === 0) {
+                        showTip("没找到", false);
+                    } else {
+                        const contentText = matchingContents.join(", ");
+                        navigator.clipboard
+                            .writeText(contentText)
+                            .then(() => {
+                                showTip(`已找到以下匹配内容; 内容已复制到剪切板:\n${contentText}`, true);
+                            })
+                            .catch((err) => {
+                                console.error("Failed to copy to clipboard:", err);
+                                showTip(`已找到以下匹配内容; 复制到剪切板失败:\n${contentText}`, false);
+                            });
+                    }
+                }),
+            ];
+        },
+    }));
 
-        // Create extract button
-        var button = document.createElement("button");
-        button.innerHTML = siteConfig.buttonText;
-        button.style.position = BUTTON_CONFIG.position;
-        button.style.top = BUTTON_CONFIG.top;
-        button.style.left = BUTTON_CONFIG.left;
-        button.style.zIndex = BUTTON_CONFIG.zIndex;
-        button.style.padding = "10px 16px";
-        button.style.borderRadius = "25px";
-        button.style.border = "none";
-        button.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
-        button.style.backgroundColor = "#007bff";
-        button.style.color = "#fff";
-        button.style.fontFamily = "Arial, sans-serif";
-        button.style.fontSize = "14px";
-        button.style.fontWeight = "bold";
-        button.style.cursor = "pointer";
-        button.style.transition = "all 0.3s ease";
+    const inclusionPatterns = [];
+    const exclusionPatterns = [];
+    const url2title = [];
 
-        // Button hover effect
-        button.addEventListener("mouseenter", function () {
-            this.style.backgroundColor = "#0056b3";
-            this.style.transform = "translateY(-2px)";
-        });
+    // Wait for utils to load
+    function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
+        console.log("Starting to wait for utils...");
+        const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
-        button.addEventListener("mouseleave", function () {
-            this.style.backgroundColor = "#007bff";
-            this.style.transform = "translateY(0)";
-        });
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
 
-        // Extract button click event
-        button.addEventListener("click", function () {
-            var matchingContents = extractMatchingContent(siteConfig.keywordPatterns);
-
-            if (matchingContents.length === 0) {
-                showTip("没找到", false);
-            } else {
-                // Show all found content, separated by comma
-                const contentText = matchingContents.join(", ");
-
-                // Copy content to clipboard
-                navigator.clipboard
-                    .writeText(contentText)
-                    .then(function () {
-                        showTip(`已找到以下匹配内容; 内容已复制到剪切板:\n${contentText}`, true);
-                    })
-                    .catch(function (err) {
-                        // Fallback if clipboard API fails
-                        console.error("Failed to copy to clipboard:", err);
-                        showTip(`已找到以下匹配内容; 复制到剪切板失败:\n${contentText}`, false);
-                    });
+            function checkUtils() {
+                if (
+                    window.utils &&
+                    requiredFunctions.every((func) => typeof window.utils[func] === "function")
+                ) {
+                    resolve(window.utils);
+                } else if (Date.now() - startTime >= timeout) {
+                    const missingFunctions = requiredFunctions.filter(
+                        (func) => !window.utils || typeof window.utils[func] !== "function"
+                    );
+                    reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
+                } else {
+                    setTimeout(checkUtils, 100);
+                }
             }
-        });
 
-        // Add button to page
-        document.body.appendChild(button);
+            checkUtils();
+        });
     }
 
-    // Run initialization
-    init();
+    async function initScript() {
+        try {
+            const utils = await waitForUtils();
+
+            const scriptConfig = {
+                CONFIG,
+                customButtonMappings,
+                url2title,
+                pathSegmentMappings: null,
+                jumpButtonMappings: null,
+                inclusionPatterns,
+                exclusionPatterns,
+            };
+
+            utils.initAddBtn2AnyWebsite(scriptConfig);
+        } catch (error) {
+            console.error("Failed to initialize:", error);
+        }
+    }
+
+    initScript();
 })();
