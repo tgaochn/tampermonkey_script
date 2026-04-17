@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             0.6.4
+// @version             1.0.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.0.0: add copy buttons (ID/MD/href/diff) before model links on proctor overview pages
 // 0.6.4: remove US Apply, US CTR, US dislike buttons
 // 0.6.3: added new url pattern for butterfly
 // 0.6.2: extract CONFIG constants for better maintainability
@@ -43,6 +44,7 @@
     const CONFIG = {
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id",
+        PROCTOR_BTN_MARKER: "data-butterfly-btn-added",
         REQUIRED_UTILS: [
             "observeDOM",
             "shouldRunScript",
@@ -52,10 +54,13 @@
             "createButtonCopyHypertext",
             "createButtonFromCallback",
             "createButtonOpenUrl",
+            "copyHypertext",
         ],
     };
 
-    const inclusionPatterns = [/^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model.*$/];
+    const modelPagePatterns = [/^https:\/\/butterfly\.sandbox\.indeed\.net\/(#\/)?model.*$/];
+    const proctorPagePatterns = [/^https:\/\/butterfly\.sandbox\.indeed\.net\/proctor\/.*$/];
+    const inclusionPatterns = [...modelPagePatterns, ...proctorPagePatterns];
 
     const exclusionPatterns = [];
 
@@ -97,6 +102,14 @@
         });
     }
 
+    function isModelPage() {
+        return modelPagePatterns.some((p) => p.test(window.location.href));
+    }
+
+    function isProctorPage() {
+        return proctorPagePatterns.some((p) => p.test(window.location.href));
+    }
+
     async function initScript() {
         try {
             const utils = await waitForUtils();
@@ -106,14 +119,22 @@
             }
 
             const observeTarget = document.body;
-            const targetElementId = CONFIG.CONTAINER_ID;
 
-            // Check if the target element exists, if not, add the buttons
-            utils.observeDOM(observeTarget, () => {
-                if (!document.getElementById(targetElementId)) {
-                    main(utils);
-                }
-            });
+            if (isModelPage()) {
+                const targetElementId = CONFIG.CONTAINER_ID;
+                utils.observeDOM(observeTarget, () => {
+                    if (!document.getElementById(targetElementId)) {
+                        main(utils);
+                    }
+                });
+            } else if (isProctorPage()) {
+                const selector = `.proctor-test-definition-view--allocation-table a[href^="/model/"]:not([${CONFIG.PROCTOR_BTN_MARKER}])`;
+                utils.observeDOM(observeTarget, () => {
+                    if (document.querySelectorAll(selector).length > 0) {
+                        mainProctor(utils);
+                    }
+                });
+            }
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
@@ -197,6 +218,36 @@
         newRow.appendChild(cell11);
         newRow.appendChild(cell12);
         table.appendChild(newRow);
+    }
+
+    function mainProctor(utils) {
+        const BASE_URL = "https://butterfly.sandbox.indeed.net";
+        const MARKER = CONFIG.PROCTOR_BTN_MARKER;
+
+        const modelLinks = document.querySelectorAll(
+            `.proctor-test-definition-view--allocation-table a[href^="/model/"]:not([${MARKER}])`
+        );
+
+        const SM = "sm";
+
+        modelLinks.forEach((link) => {
+            const modelId = link.textContent.trim();
+            const modelUrl = BASE_URL + link.getAttribute("href");
+            const diffUrl = modelUrl + "PUBLISHED/config?view=diff";
+
+            const btnContainer = document.createElement("span");
+            btnContainer.style.cssText = "display:inline-flex;gap:2px;margin-right:4px;vertical-align:middle;";
+
+            btnContainer.append(
+                utils.createButtonCopyText("ID", modelId, SM),
+                utils.createButtonCopyText("MD", `[${modelId}](${modelUrl})`, SM),
+                utils.createButtonCopyHypertext("href", modelId, modelUrl, SM),
+                utils.createButtonOpenUrl("diff", diffUrl, SM),
+            );
+
+            link.parentNode.insertBefore(btnContainer, link);
+            link.setAttribute(MARKER, "true");
+        });
     }
 
     initScript();

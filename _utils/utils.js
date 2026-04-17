@@ -1,6 +1,6 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.3.3
+// version: 0.3.4
 (function (window) {
     "use strict";
 
@@ -51,16 +51,52 @@
     /* !! -------------------------------------------------------------------------- */
     /*                            !! Exposed functions - buttons related             */
     /* !! -------------------------------------------------------------------------- */
-    utils.setBtnStyle = function (btn) {
-        btn.style.backgroundColor = "#009688";
-        btn.style.color = "white";
-        btn.style.padding = "5px 5px";
-        btn.style.fontSize = "14px";
-        btn.style.border = "1px solid #ccc";
-        btn.style.borderRadius = "4px";
-        btn.style.cursor = "pointer";
-        btn.style.outline = "none";
-        btn.style.boxSizing = "border-box";
+    // size: "normal" (default) or "sm" (compact inline buttons)
+    utils.setBtnStyle = function (btn, size = "normal") {
+        const FLASH_MS = 1000;
+        let normalBg, hoverBg, clickedBg, setBg;
+
+        if (size === "sm") {
+            normalBg = "#607D8B";
+            hoverBg = "#455A64";
+            clickedBg = "#90A4AE";
+            const smStyles = {
+                "background": normalBg,
+                "color": "white",
+                "border": "none",
+                "border-radius": "3px",
+                "cursor": "pointer",
+                "padding": "0 3px",
+                "font-size": "10px",
+                "line-height": "1.4",
+            };
+            Object.entries(smStyles).forEach(([prop, val]) => {
+                btn.style.setProperty(prop, val, "important");
+            });
+            setBg = (val) => btn.style.setProperty("background", val, "important");
+        } else {
+            normalBg = "#009688";
+            hoverBg = "#00796B";
+            clickedBg = "#4DB6AC";
+            btn.style.backgroundColor = normalBg;
+            btn.style.color = "white";
+            btn.style.padding = "0 5px";
+            btn.style.fontSize = "14px";
+            btn.style.border = "1px solid #ccc";
+            btn.style.borderRadius = "4px";
+            btn.style.cursor = "pointer";
+            btn.style.outline = "none";
+            btn.style.boxSizing = "border-box";
+            setBg = (val) => { btn.style.backgroundColor = val; };
+        }
+
+        btn.addEventListener("mouseenter", () => { if (!btn.dataset.flashing) setBg(hoverBg); });
+        btn.addEventListener("mouseleave", () => { if (!btn.dataset.flashing) setBg(normalBg); });
+        btn.addEventListener("click", () => {
+            btn.dataset.flashing = "1";
+            setBg(clickedBg);
+            setTimeout(() => { delete btn.dataset.flashing; setBg(normalBg); }, FLASH_MS);
+        });
 
         return btn;
     };
@@ -92,11 +128,19 @@
     };
 
     // ! create buttons
-    utils.createButtonFromCallback = function (btnText, callbackFunc) {
+    utils.createButtonFromCallback = function (btnText, callbackFunc, size = "normal") {
         let button = document.createElement("button");
-        button = utils.setBtnStyle(button);
+        button = utils.setBtnStyle(button, size);
         button.innerHTML = btnText;
-        button.onclick = callbackFunc;
+        if (size === "sm") {
+            button.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                callbackFunc();
+            };
+        } else {
+            button.onclick = callbackFunc;
+        }
         return button;
     };
 
@@ -199,22 +243,22 @@
         return span;
     };
 
-    utils.createButtonCopyText = function (btnText, copyText) {
+    utils.createButtonCopyText = function (btnText, copyText, size = "normal") {
         return utils.createButtonFromCallback(btnText, () => {
             navigator.clipboard.writeText(copyText);
-        });
+        }, size);
     };
 
-    utils.createButtonCopyHypertext = function (btnText, pageTitle, curURL) {
+    utils.createButtonCopyHypertext = function (btnText, pageTitle, curURL, size = "normal") {
         return utils.createButtonFromCallback(btnText, () => {
             utils.copyHypertext(pageTitle, curURL);
-        });
+        }, size);
     };
 
-    utils.createButtonOpenUrl = function (btnText, targetUrl) {
+    utils.createButtonOpenUrl = function (btnText, targetUrl, size = "normal") {
         return utils.createButtonFromCallback(btnText, () => {
             window.open(targetUrl);
-        });
+        }, size);
     };
 
     // ! create button containers
