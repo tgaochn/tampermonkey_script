@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 添加按钮
 // @namespace   https://claude.ai/
-// @version     1.2.1
+// @version     1.3.0
 // @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.3.0: add btnContainerParentLevels to support Claude
 // LLM_add_buttons 1.2.1: fix input box collapsing issue on Gemini by using a wrapper container
 // LLM_add_buttons 1.2.0: lazy storage creation - only create external storage when user edits config, otherwise use built-in defaults for easier updates
 // LLM_add_buttons 1.1.8: update prompt
@@ -77,6 +78,7 @@
             btnContainerSelectors: ["div[aria-label='Write your prompt to Claude']"],
             hostnames: ["claude.ai"],
             inputProcessor: "claude",
+            btnContainerParentLevels: 2,
         },
         gemini: {
             inputBoxSelector: "rich-textarea[enterkeyhint='send'] div.ql-editor",
@@ -627,7 +629,15 @@ To reset to default, you can save an empty JSON object like {}
             buttonWrapper.appendChild(btnSubContainer3);
             buttonWrapper.appendChild(btnSubContainer4);
 
-            btnContainer.appendChild(buttonWrapper);
+            if (currentConfig.btnContainerParentLevels) {
+                let insertionTarget = btnContainer;
+                for (let i = 0; i < currentConfig.btnContainerParentLevels; i++) {
+                    if (insertionTarget.parentElement) insertionTarget = insertionTarget.parentElement;
+                }
+                insertionTarget.insertAdjacentElement('afterend', buttonWrapper);
+            } else {
+                btnContainer.appendChild(buttonWrapper);
+            }
 
             console.log("Buttons added successfully for", currentConfig.hostnames[0]);
             isButtonsAdded = true;
