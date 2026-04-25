@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.2.0
+// @version             0.3.0
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.3.0: 支持中键/Ctrl+点击类别在新标签页打开详情
 // 0.2.0: 每个类别前添加多选框, 标题显示选中金额/总金额/百分比
 // 0.1.0: init, 在 Expenses 标题旁显示总金额
 
@@ -21,6 +22,21 @@
 
     let isUpdating = false;
     let debounceTimer = null;
+
+    // ! 拦截 history.pushState, 支持中键/Ctrl+点击在新标签页打开
+    let openInNewTab = false;
+    const originalPushState = history.pushState.bind(history);
+    history.pushState = function (...args) {
+        if (openInNewTab) {
+            openInNewTab = false;
+            const url = args[2];
+            if (url) {
+                window.open(new URL(url, location.origin).href, "_blank");
+            }
+            return;
+        }
+        return originalPushState(...args);
+    };
 
     const CHECKBOX_STYLE = `
         width: 16px;
@@ -167,6 +183,38 @@
                 // 阻止点击事件冒泡, 防止触发类别详情导航
                 cb.addEventListener("click", (e) => e.stopPropagation());
                 cb.addEventListener("change", () => updateTitle(card));
+
+                // Ctrl+点击: 拦截 pushState, 在新标签页打开
+                item.addEventListener("click", (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        openInNewTab = true;
+                    }
+                }, true); // capture phase, 在 React handler 之前设置标志
+
+                // 中键按下: 阻止默认的自动滚动行为
+                item.addEventListener("mousedown", (e) => {
+                    if (e.button === 1) {
+                        e.preventDefault();
+                    }
+                });
+
+                // 中键释放: 模拟带 ctrl 的点击, 通过 pushState 拦截在新标签页打开
+                item.addEventListener("mouseup", (e) => {
+                    if (e.button === 1) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openInNewTab = true;
+                        // 安全重置, 防止标志残留
+                        setTimeout(() => (openInNewTab = false), 500);
+                        const clickEvent = new MouseEvent("click", {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            ctrlKey: true,
+                        });
+                        item.dispatchEvent(clickEvent);
+                    }
+                });
 
                 // 创建 wrapper, 将 checkbox 和原始 item 并排放置
                 const wrapper = document.createElement("div");
