@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.3.0
+// @version             0.3.1
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.3.1: Income 部分也支持多选框/总金额/中键Ctrl+点击
 // 0.3.0: 支持中键/Ctrl+点击类别在新标签页打开详情
 // 0.2.0: 每个类别前添加多选框, 标题显示选中金额/总金额/百分比
 // 0.1.0: init, 在 Expenses 标题旁显示总金额
@@ -38,15 +39,21 @@
         return originalPushState(...args);
     };
 
-    const CHECKBOX_STYLE = `
+    const SUPPORTED_SECTIONS = ["Expenses", "Income"];
+
+    const CHECKBOX_BASE_STYLE = `
         width: 16px;
         height: 16px;
         cursor: pointer;
         flex-shrink: 0;
-        accent-color: #e74c3c;
         position: relative;
         z-index: 10;
     `;
+
+    const ACCENT_COLORS = {
+        Expenses: "#e74c3c",
+        Income: "#27ae60",
+    };
 
     const WRAPPER_STYLE = `
         display: flex;
@@ -82,6 +89,7 @@
         const title = card.querySelector('[class*="CardHeader__Title"]');
         if (!title) return;
 
+        const sectionName = card.dataset.monarchSection || "Expenses";
         const items = card.querySelectorAll('[class*="BreakdownItem__Container"]');
         let total = 0;
         let selected = 0;
@@ -103,10 +111,10 @@
             const allChecked = checkedCount === items.length;
             const noneChecked = checkedCount === 0;
             if (allChecked || noneChecked) {
-                newText = `Expenses (${formatMoney(total)})`;
+                newText = `${sectionName} (${formatMoney(total)})`;
             } else {
                 const pct = ((selected / total) * 100).toFixed(1);
-                newText = `Expenses (${formatMoney(selected)} / ${formatMoney(total)} = ${pct}%)`;
+                newText = `${sectionName} (${formatMoney(selected)} / ${formatMoney(total)} = ${pct}%)`;
             }
             if (title.textContent.trim() !== newText) {
                 isUpdating = true;
@@ -123,10 +131,14 @@
         const titleElements = document.querySelectorAll('[class*="CardHeader__Title"]');
         for (const title of titleElements) {
             const text = title.textContent.trim();
-            if (!text.startsWith("Expenses")) continue;
+            const sectionName = SUPPORTED_SECTIONS.find((s) => text.startsWith(s));
+            if (!sectionName) continue;
 
             const card = title.closest('[class*="Card__CardRoot"]');
             if (!card) continue;
+
+            card.dataset.monarchSection = sectionName;
+            const accentColor = ACCENT_COLORS[sectionName] || "#e74c3c";
 
             // 在标题前添加 全选/清空 按钮
             if (!card.querySelector(".monarch-adv-select-all")) {
@@ -179,7 +191,7 @@
                 cb.type = "checkbox";
                 cb.className = "monarch-adv-checkbox";
                 cb.checked = true; // 默认全部选中
-                cb.style.cssText = CHECKBOX_STYLE;
+                cb.style.cssText = CHECKBOX_BASE_STYLE + `accent-color: ${accentColor};`;
                 // 阻止点击事件冒泡, 防止触发类别详情导航
                 cb.addEventListener("click", (e) => e.stopPropagation());
                 cb.addEventListener("change", () => updateTitle(card));
