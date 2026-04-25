@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.3.1
+// @version             0.3.2
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.3.2: Sankey Diagram 节点支持中键/Ctrl+点击在新标签页打开
 // 0.3.1: Income 部分也支持多选框/总金额/中键Ctrl+点击
 // 0.3.0: 支持中键/Ctrl+点击类别在新标签页打开详情
 // 0.2.0: 每个类别前添加多选框, 标题显示选中金额/总金额/百分比
@@ -71,6 +72,43 @@
         color: #555;
         margin-right: 4px;
     `;
+
+    // ! 为元素添加中键/Ctrl+点击在新标签页打开的功能
+    function addNewTabClickHandlers(el) {
+        if (el.dataset.monarchNewTab) return;
+        el.dataset.monarchNewTab = "1";
+
+        // Ctrl+点击: 拦截 pushState, 在新标签页打开
+        el.addEventListener("click", (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                openInNewTab = true;
+            }
+        }, true);
+
+        // 中键按下: 阻止默认的自动滚动行为
+        el.addEventListener("mousedown", (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+            }
+        });
+
+        // 中键释放: 模拟带 ctrl 的点击, 通过 pushState 拦截在新标签页打开
+        el.addEventListener("mouseup", (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+                e.stopPropagation();
+                openInNewTab = true;
+                setTimeout(() => (openInNewTab = false), 500);
+                const clickEvent = new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    ctrlKey: true,
+                });
+                el.dispatchEvent(clickEvent);
+            }
+        });
+    }
 
     function formatMoney(amount) {
         return "$" + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -196,37 +234,7 @@
                 cb.addEventListener("click", (e) => e.stopPropagation());
                 cb.addEventListener("change", () => updateTitle(card));
 
-                // Ctrl+点击: 拦截 pushState, 在新标签页打开
-                item.addEventListener("click", (e) => {
-                    if (e.ctrlKey || e.metaKey) {
-                        openInNewTab = true;
-                    }
-                }, true); // capture phase, 在 React handler 之前设置标志
-
-                // 中键按下: 阻止默认的自动滚动行为
-                item.addEventListener("mousedown", (e) => {
-                    if (e.button === 1) {
-                        e.preventDefault();
-                    }
-                });
-
-                // 中键释放: 模拟带 ctrl 的点击, 通过 pushState 拦截在新标签页打开
-                item.addEventListener("mouseup", (e) => {
-                    if (e.button === 1) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        openInNewTab = true;
-                        // 安全重置, 防止标志残留
-                        setTimeout(() => (openInNewTab = false), 500);
-                        const clickEvent = new MouseEvent("click", {
-                            bubbles: true,
-                            cancelable: true,
-                            view: window,
-                            ctrlKey: true,
-                        });
-                        item.dispatchEvent(clickEvent);
-                    }
-                });
+                addNewTabClickHandlers(item);
 
                 // 创建 wrapper, 将 checkbox 和原始 item 并排放置
                 const wrapper = document.createElement("div");
@@ -242,15 +250,25 @@
         }
     }
 
-    function debouncedAddExpenseTotal() {
+    // ! Sankey Diagram 节点: 添加中键/Ctrl+点击在新标签页打开
+    function addSankeyNewTabSupport() {
+        const sankeyNodes = document.querySelectorAll('g.node.is-clickable');
+        sankeyNodes.forEach((node) => addNewTabClickHandlers(node));
+    }
+
+    function debouncedUpdate() {
         if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(addExpenseTotal, 300);
+        debounceTimer = setTimeout(() => {
+            addExpenseTotal();
+            addSankeyNewTabSupport();
+        }, 300);
     }
 
     function initScript() {
         addExpenseTotal();
+        addSankeyNewTabSupport();
 
-        const observer = new MutationObserver(debouncedAddExpenseTotal);
+        const observer = new MutationObserver(debouncedUpdate);
         observer.observe(document.body, {
             childList: true,
             subtree: true,
