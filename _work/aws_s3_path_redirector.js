@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.2.3
+// @version      0.3.0
 // @description  Convert S3 path to AWS S3 Console URL and redirect
 // @author       gtfish
 // @match        https://*.console.aws.amazon.com/s3/*
@@ -12,6 +12,7 @@
 
 
 // ==/UserScript==
+// 0.3.0: support additional S3-compatible protocols (s3a://, s3n://) and AWS S3 HTTPS URLs (virtual-hosted/path-style) and S3 ARN
 // 0.2.3: improve parsing logic for S3 path
 // 0.2.2: update match to https://*.console.aws.amazon.com/s3/*
 // 0.2.1: add Parse button to show parsed URL, Copy URL also shows parsed URL
@@ -32,61 +33,96 @@
         },
     };
 
+    // Supported S3-compatible protocol prefixes (treated as equivalent to s3://)
+    // s3a:// and s3n:// are Hadoop S3 connectors widely used by Spark/EMR/Hive
+    const S3_PROTOCOL_PREFIXES = ["s3://", "s3a://", "s3n://"];
+
+    // Extract bucket and key from an input string in various S3 address formats
+    // Returns { bucket, key } where key may be empty, or null if not recognized
+    function extractBucketAndKey(input) {
+        // Protocol-style: s3://bucket/key, s3a://bucket/key, s3n://bucket/key
+        for (const prefix of S3_PROTOCOL_PREFIXES) {
+            if (input.toLowerCase().startsWith(prefix)) {
+                const rest = input.substring(prefix.length);
+                const slashIndex = rest.indexOf("/");
+                if (slashIndex === -1) return { bucket: rest, key: "" };
+                return { bucket: rest.substring(0, slashIndex), key: rest.substring(slashIndex + 1) };
+            }
+        }
+
+        // ARN: arn:aws:s3:::bucket/key
+        const arnPrefix = "arn:aws:s3:::";
+        if (input.toLowerCase().startsWith(arnPrefix)) {
+            const rest = input.substring(arnPrefix.length);
+            const slashIndex = rest.indexOf("/");
+            if (slashIndex === -1) return { bucket: rest, key: "" };
+            return { bucket: rest.substring(0, slashIndex), key: rest.substring(slashIndex + 1) };
+        }
+
+        // HTTPS URLs pointing to AWS S3
+        if (/^https?:\/\//i.test(input)) {
+            let url;
+            try {
+                url = new URL(input);
+            } catch (_) {
+                return null;
+            }
+            const host = url.hostname.toLowerCase();
+            const pathname = url.pathname.replace(/^\/+/, "");
+
+            // Virtual-hosted style: bucket.s3.amazonaws.com or bucket.s3.<region>.amazonaws.com
+            // Also handles bucket.s3-<region>.amazonaws.com (legacy)
+            const virtualHosted = host.match(/^(.+?)\.s3[.\-][^/]*amazonaws\.com$/);
+            if (virtualHosted) {
+                return { bucket: virtualHosted[1], key: decodeURIComponent(pathname) };
+            }
+
+            // Path style: s3.amazonaws.com/bucket/key or s3.<region>.amazonaws.com/bucket/key
+            // Also handles s3-<region>.amazonaws.com (legacy)
+            if (/^s3[.\-][^/]*amazonaws\.com$/.test(host) || host === "s3.amazonaws.com") {
+                if (!pathname) return null;
+                const slashIndex = pathname.indexOf("/");
+                if (slashIndex === -1) return { bucket: pathname, key: "" };
+                return {
+                    bucket: pathname.substring(0, slashIndex),
+                    key: decodeURIComponent(pathname.substring(slashIndex + 1)),
+                };
+            }
+        }
+
+        return null;
+    }
+
     // Parse S3 path and extract bucket and prefix
     function parseS3Path(s3Path) {
-        // Remove leading/trailing whitespace
         const trimmedPath = s3Path.trim();
-
-        // Check if it's a valid S3 path
-        if (!trimmedPath.startsWith("s3://")) {
+        const extracted = extractBucketAndKey(trimmedPath);
+        if (!extracted || !extracted.bucket) {
             return null;
         }
 
-        // Remove s3:// prefix
-        const pathWithoutPrefix = trimmedPath.substring(5);
+        const bucket = extracted.bucket;
+        let prefix = extracted.key;
 
-        // Split into bucket and path parts
-        const firstSlashIndex = pathWithoutPrefix.indexOf("/");
-        if (firstSlashIndex === -1) {
-            // Only bucket name, no path
-            return {
-                bucket: pathWithoutPrefix,
-                prefix: "",
-            };
-        }
-
-        const bucket = pathWithoutPrefix.substring(0, firstSlashIndex);
-        let prefix = pathWithoutPrefix.substring(firstSlashIndex + 1);
-
-        // If path ends with /, it's a directory - keep as is
-        if (prefix.endsWith("/")) {
+        // No key, or already a directory path
+        if (prefix === "" || prefix.endsWith("/")) {
             return { bucket, prefix };
         }
 
-        // Path doesn't end with /
-        // Check if the last part looks like a file (has extension)
+        // Determine whether the last segment is a file or a directory without trailing /
         const lastSlashIndex = prefix.lastIndexOf("/");
         const lastPart = lastSlashIndex !== -1 ? prefix.substring(lastSlashIndex + 1) : prefix;
 
-        // Determine if it's a file by checking for extension pattern
         // File criteria: contains "." where the part after last "." is 1-10 chars (extension)
         // and the "." is not at the start (hidden files like .gitignore are files too)
         const dotIndex = lastPart.lastIndexOf(".");
         const hasExtension = dotIndex > 0 && (lastPart.length - dotIndex - 1) >= 1 && (lastPart.length - dotIndex - 1) <= 10;
-        // Also consider hidden files like .gitignore as files (dot at start, no other dot)
         const isHiddenFile = lastPart.startsWith(".") && lastPart.length > 1 && !lastPart.substring(1).includes("/");
         const isLikelyFile = hasExtension || isHiddenFile;
 
         if (isLikelyFile) {
-            // It's a file, navigate to its parent directory
-            if (lastSlashIndex !== -1) {
-                prefix = prefix.substring(0, lastSlashIndex + 1);
-            } else {
-                // File in root, prefix is empty
-                prefix = "";
-            }
+            prefix = lastSlashIndex !== -1 ? prefix.substring(0, lastSlashIndex + 1) : "";
         } else {
-            // It's likely a directory without trailing /, add the trailing /
             prefix = prefix + "/";
         }
 
@@ -142,7 +178,7 @@
 
             // Add description
             const descElement = document.createElement("p");
-            descElement.textContent = "Enter S3 path (e.g., s3://bucket-name/path/to/file)";
+            descElement.textContent = "Enter S3 path (s3://, s3a://, s3n://, AWS S3 HTTPS URL, or arn:aws:s3:::...)";
             descElement.style.marginBottom = "15px";
             descElement.style.color = "#666";
             descElement.style.fontSize = "14px";
@@ -224,7 +260,7 @@
 
                 const parsed = parseS3Path(s3Path);
                 if (!parsed) {
-                    errorMsg.textContent = "Invalid S3 path format. Expected format: s3://bucket-name/path";
+                    errorMsg.textContent = "Invalid S3 path. Supported: s3://, s3a://, s3n://, https://...amazonaws.com/..., arn:aws:s3:::...";
                     errorMsg.style.display = "block";
                     parsedUrlDisplay.style.display = "none";
                     return null;
