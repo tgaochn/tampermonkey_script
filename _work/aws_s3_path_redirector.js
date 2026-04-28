@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.3.0
-// @description  Convert S3 path to AWS S3 Console URL and redirect
+// @version      0.4.0
+// @description  Convert S3 path to AWS S3 Console URL and redirect; auto-linkify S3 paths on supported pages
 // @author       gtfish
 // @match        https://*.console.aws.amazon.com/s3/*
+// @match        https://*.console.aws.amazon.com/sagemaker/*
 // @grant        none
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/aws_s3_path_redirector.js
@@ -12,6 +13,7 @@
 
 
 // ==/UserScript==
+// 0.4.0: auto-linkify plain-text S3 paths (s3://, s3a://, s3n://, ARN) into clickable AWS S3 console links on supported pages (SageMaker, S3); add @match for SageMaker
 // 0.3.0: support additional S3-compatible protocols (s3a://, s3n://) and AWS S3 HTTPS URLs (virtual-hosted/path-style) and S3 ARN
 // 0.2.3: improve parsing logic for S3 path
 // 0.2.2: update match to https://*.console.aws.amazon.com/s3/*
@@ -31,6 +33,17 @@
             top: "10px",
             right: "1600px",
         },
+        // Pages that show the floating "Parse S3 Path" button
+        BUTTON_URL_PATTERNS: [
+            /^https:\/\/[^/]*\.console\.aws\.amazon\.com\/s3\//i,
+        ],
+        // Pages where plain-text S3 paths are auto-linkified
+        // Add more patterns here to enable linkification on additional pages
+        LINKIFY_URL_PATTERNS: [
+            /^https:\/\/[^/]*\.console\.aws\.amazon\.com\/sagemaker\//i,
+            /^https:\/\/[^/]*\.console\.aws\.amazon\.com\/s3\//i,
+        ],
+        LINKIFY_DEBOUNCE_MS: 200,
     };
 
     // Supported S3-compatible protocol prefixes (treated as equivalent to s3://)
@@ -457,13 +470,196 @@
         return button;
     }
 
+    // ========================================================================
+    // Linkifier: detect plain-text S3 paths in the page and replace them with
+    // clickable links pointing to the AWS S3 console.
+    // ========================================================================
+
+    const LINKIFIED_CLASS = "tm-s3-linkified";
+    // Match s3://, s3a://, s3n:// followed by bucket and optional key, or an S3 ARN.
+    // The character class for the key excludes whitespace and common delimiters
+    // so the match doesn't bleed into surrounding punctuation.
+    const S3_TEXT_REGEX = /(s3[an]?:\/\/[a-zA-Z0-9][a-zA-Z0-9.\-]*[a-zA-Z0-9](?:\/[^\s<>"'`)\]}]*)?|arn:aws:s3:::[a-zA-Z0-9][a-zA-Z0-9.\-]*[a-zA-Z0-9](?:\/[^\s<>"'`)\]}]*)?)/gi;
+    // Quick prefilter — cheap test to skip text nodes with no possible match
+    const S3_PREFILTER_REGEX = /s3[an]?:\/\/|arn:aws:s3:::/i;
+    // Trim trailing punctuation that's almost certainly not part of the URI
+    const TRAILING_PUNCT_REGEX = /[.,;:!?]+$/;
+    // Skip text nodes inside these ancestors
+    const LINKIFY_SKIP_TAGS = new Set([
+        "SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT", "SELECT",
+        "OPTION", "CODE", "PRE", "A", "BUTTON",
+    ]);
+
+    function findS3Matches(text) {
+        S3_TEXT_REGEX.lastIndex = 0;
+        const matches = [];
+        let m;
+        while ((m = S3_TEXT_REGEX.exec(text)) !== null) {
+            let matched = m[0];
+            const punct = matched.match(TRAILING_PUNCT_REGEX);
+            if (punct) matched = matched.substring(0, matched.length - punct[0].length);
+            if (matched.length === 0) continue;
+            matches.push({ start: m.index, length: matched.length, text: matched });
+        }
+        return matches;
+    }
+
+    function buildLinkElement(matchText) {
+        const parsed = parseS3Path(matchText);
+        if (!parsed || !parsed.bucket) return null;
+        const url = buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
+        const link = document.createElement("a");
+        link.href = url;
+        link.textContent = matchText;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.className = LINKIFIED_CLASS;
+        link.title = url;
+        link.style.color = "#0972d3";
+        link.style.textDecoration = "underline";
+        link.style.cursor = "pointer";
+        return link;
+    }
+
+    function linkifyTextNode(textNode) {
+        const text = textNode.nodeValue;
+        if (!text || !S3_PREFILTER_REGEX.test(text)) return;
+        const matches = findS3Matches(text);
+        if (matches.length === 0) return;
+
+        const fragment = document.createDocumentFragment();
+        let cursor = 0;
+        let didLinkify = false;
+
+        for (const match of matches) {
+            if (match.start > cursor) {
+                fragment.appendChild(document.createTextNode(text.substring(cursor, match.start)));
+            }
+            const link = buildLinkElement(match.text);
+            if (link) {
+                fragment.appendChild(link);
+                didLinkify = true;
+            } else {
+                fragment.appendChild(document.createTextNode(match.text));
+            }
+            cursor = match.start + match.length;
+        }
+
+        if (cursor < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(cursor)));
+        }
+
+        if (didLinkify && textNode.parentNode) {
+            textNode.parentNode.replaceChild(fragment, textNode);
+        }
+    }
+
+    function linkifyRoot(root) {
+        if (!root) return;
+        if (root.nodeType === Node.TEXT_NODE) {
+            const parent = root.parentNode;
+            if (parent && !LINKIFY_SKIP_TAGS.has(parent.tagName)) {
+                linkifyTextNode(root);
+            }
+            return;
+        }
+        if (root.nodeType !== Node.ELEMENT_NODE) return;
+        if (LINKIFY_SKIP_TAGS.has(root.tagName)) return;
+
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode: (node) => {
+                const parent = node.parentNode;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                if (LINKIFY_SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                if (parent.classList && parent.classList.contains(LINKIFIED_CLASS)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                if (!node.nodeValue || !S3_PREFILTER_REGEX.test(node.nodeValue)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            },
+        });
+
+        const textNodes = [];
+        let n;
+        while ((n = walker.nextNode())) textNodes.push(n);
+        for (const textNode of textNodes) linkifyTextNode(textNode);
+    }
+
+    function startLinkifier() {
+        let pendingRoots = new Set();
+        let debounceTimer = null;
+
+        const flush = () => {
+            debounceTimer = null;
+            const roots = pendingRoots;
+            pendingRoots = new Set();
+            for (const root of roots) {
+                if (!root.isConnected) continue;
+                try { linkifyRoot(root); } catch (e) { console.error("linkify error:", e); }
+            }
+        };
+
+        const schedule = (root) => {
+            if (!root) return;
+            pendingRoots.add(root);
+            if (debounceTimer === null) {
+                debounceTimer = setTimeout(flush, CONFIG.LINKIFY_DEBOUNCE_MS);
+            }
+        };
+
+        // Initial pass on existing page content
+        schedule(document.body);
+
+        // Watch for SPA-driven DOM changes
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === "childList") {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.classList && node.classList.contains(LINKIFIED_CLASS)) continue;
+                            schedule(node);
+                        } else if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+                            if (node.parentNode.classList && node.parentNode.classList.contains(LINKIFIED_CLASS)) continue;
+                            schedule(node.parentNode);
+                        }
+                    }
+                } else if (mutation.type === "characterData") {
+                    const target = mutation.target;
+                    if (target && target.parentNode) {
+                        if (target.parentNode.classList && target.parentNode.classList.contains(LINKIFIED_CLASS)) continue;
+                        schedule(target.parentNode);
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
+    }
+
+    function urlMatchesAnyPattern(url, patterns) {
+        return patterns.some((p) => p.test(url));
+    }
+
     // Initialize script
     async function initScript() {
         try {
             await waitForUtils();
-            // Add floating button to page
-            const button = createFloatingButton();
-            document.body.appendChild(button);
+            const currentUrl = window.location.href;
+
+            if (urlMatchesAnyPattern(currentUrl, CONFIG.BUTTON_URL_PATTERNS)) {
+                const button = createFloatingButton();
+                document.body.appendChild(button);
+            }
+
+            if (urlMatchesAnyPattern(currentUrl, CONFIG.LINKIFY_URL_PATTERNS)) {
+                startLinkifier();
+            }
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
