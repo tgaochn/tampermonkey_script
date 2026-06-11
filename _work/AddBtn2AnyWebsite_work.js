@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.1.2
+// @version      1.1.3
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.1.3: add AWS console jump button
 // 1.1.2: add preapply/postapply shadow url pattern
 // 1.1.1: bug fixed
 // 1.1.0: added jump button for DNH doc and DNH tool; support showFixedTitle, showRawSegment, showDynamicTitle for all url2title patterns
@@ -99,9 +100,21 @@
             customButtons: (url, utils) => {
                 console.log("[AWS Debug] customButtons called with URL:", url);
                 return [
+                    // utils.createButtonOpenUrl(
+                        // "Sagemaker Studio Trigger",
+                        // "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
+                    // ),
                     utils.createButtonOpenUrl(
-                        "Sagemaker Studio Trigger",
-                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
+                        "SM jobs (regular)",
+                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs"
+                    ),
+                    utils.createButtonOpenUrl(
+                        "SM jobs (model training)",
+                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/jobs"
+                    ),
+                    utils.createButtonOpenUrl(
+                        "SM job logs (cloudwatch)",
+                        "https://us-east-2.console.aws.amazon.com/cloudwatch/home?region=us-east-2#logsV2:log-groups"
                     ),
                 ];
             },
