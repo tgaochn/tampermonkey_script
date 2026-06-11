@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.11
+// @version             1.0.12
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -15,6 +15,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.12: add backColor for indeed-empaq-loom-prod
 // 1.0.11: add preapply/postapply shadow url pattern
 // 1.0.10: add workday url pattern
 // 1.0.9: add # of JSwAS pattern
@@ -189,7 +190,7 @@
             regex: /^indeed-empaq-loom-prod$/,
             replacement: "$& (employer)",
             textColor: "rgb(0,0,0)",
-            backColor: "rgb(49, 49, 36)", // Light yellow
+            backColor: "rgb(255,255,153)", // Light yellow
         },
         {
             regex: /^indeed-rjp-datasci-prod$/,
