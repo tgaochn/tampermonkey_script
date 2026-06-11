@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.1.1
+// @version      1.1.2
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.1.2: add preapply/postapply shadow url pattern
 // 1.1.1: bug fixed
 // 1.1.0: added jump button for DNH doc and DNH tool; support showFixedTitle, showRawSegment, showDynamicTitle for all url2title patterns
 // 1.0.18: fix bug for preapply/postapply shadow buttons
@@ -258,11 +259,11 @@
                     ),
                     utils.createButtonOpenUrl(
                         "PreApply Shadow",
-                        `${BASE_URLS.PREAPPLY_SHADOW}`
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_preapply_shadow_tst`
                     ),
                     utils.createButtonOpenUrl(
                         "PostApply Shadow",
-                        `${BASE_URLS.POSTAPPLY_SHADOW}`
+                        `https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_postapply_shadow_tst`
                     ),
                     utils.createButtonOpenUrl(
                         "DNH doc",

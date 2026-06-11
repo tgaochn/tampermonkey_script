@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_work
-// @version             1.0.10
+// @version             1.0.11
 // @description         Change text color/content for specific patterns using regex on work-related URLs
 // @author              gtfish
 // @license             MIT
@@ -15,6 +15,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/text_content_changer_work.js
 
 // ==/UserScript==
+// 1.0.11: add preapply/postapply shadow url pattern
 // 1.0.10: add workday url pattern
 // 1.0.9: add # of JSwAS pattern
 // 1.0.8: add testStats patterns
@@ -91,6 +92,27 @@
             regex: /^((idxbutterflyqualifiedmodeltst)|(isbpbutterflyqualifiedmodeltst)\d*)$/,
             replacement: "$1 (PoPerHasOutcome, eQualified)",
         },
+        {
+            regex: /^(isbutterflyj2qrelevancemodeltst\d*)$/,
+            replacement: "$1 (j2q)",
+        },
+        {
+            regex: /^(isbutterflyoverallmatchrelevanceoptmodeltst\d*)$/,
+            replacement: "$1 (j2p_overall_match)",
+        },
+        {
+            regex: /^(isbutterflyqualificationrelevanceoptmodeltst\d*)$/,
+            replacement: "$1 (j2p_qualification)",
+        },
+        {
+            regex: /^(isbutterflyemprelevancealtmodeltst\d*)$/,
+            replacement: "$1 (ERv3)",
+        },
+        {
+            regex: /^(isbutterflyemprelevancemodeltst\d*)$/,
+            replacement: "$1 (ERv2)",
+        },
+
     ];
 
     // ! 转换显示的时区, 从UTC+00:00转换到本地时区
@@ -158,14 +180,20 @@
     // ! AWS账户说明映射
     const awsAccountDesc = [
         {
+            regex: /^indeed-online-rankers-loom-corpqa$/,
+            replacement: "$& (online-rankers)",
+            textColor: "rgb(0,0,0)",
+            backColor: "rgb(153, 255, 163)", 
+        },
+        {
             regex: /^indeed-empaq-loom-prod$/,
             replacement: "$& (employer)",
             textColor: "rgb(0,0,0)",
-            backColor: "rgb(255,255,153)", // Light yellow
+            backColor: "rgb(49, 49, 36)", // Light yellow
         },
         {
             regex: /^indeed-rjp-datasci-prod$/,
-            replacement: "$& (online-rankers)",
+            replacement: "$& (online-rankers_old)",
             textColor: "rgb(0,0,0)",
             backColor: "rgb(255,255,153)", // Light yellow
         },
@@ -246,6 +274,13 @@
         // ! Group 4 - LLM targets
         {
             regex: /^Online Ranker empRelevance$/,
+            replacement: "$& (ERv2)",
+            textColor: "rgb(153,0,0)", // Dark red
+            backColor: "rgb(144,238,144)",
+        },
+        {
+            regex: /^Online Ranker empRelevance Alt$/,
+            replacement: "$& (ERv3)",
             textColor: "rgb(153,0,0)", // Dark red
             backColor: "rgb(144,238,144)",
         },

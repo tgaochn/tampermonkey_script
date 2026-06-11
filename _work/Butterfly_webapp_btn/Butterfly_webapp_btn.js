@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.0.0
+// @version             1.0.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.0.1: add preapply/postapply shadow url pattern
 // 1.0.0: add copy buttons (ID/MD/href/diff) before model links on proctor overview pages
 // 0.6.4: remove US Apply, US CTR, US dislike buttons
 // 0.6.3: added new url pattern for butterfly
@@ -196,9 +197,21 @@
 
             utils.createTextNode("\tlinks: "),
             utils.createButtonOpenUrl(
-                "IS promotion wiki",
-                "https://wiki.indeed.com/pages/viewpage.action?pageId=640792440"
+                "PreApply Shadow",
+                `https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_preapply_shadow_tst`
             ),
+            utils.createButtonOpenUrl(
+                "PostApply Shadow",
+                `https://proctor.sandbox.indeed.net/proctor/toggles/view/onlineranking_postapply_shadow_tst`
+            ),
+            utils.createButtonOpenUrl(
+                "DNH doc",
+                `https://docs.google.com/document/d/1pe1N4ahQFlOpISk42MqVRwrozKwXKvmChk92ycIOfEo/edit?tab=t.0#heading=h.aau7sivwwngd`
+            ),
+            utils.createButtonOpenUrl(
+                "DNH tool",
+                `https://me-core-metrics.sandbox.indeed.net/`
+            ),            
 
         );
 
