@@ -95,7 +95,7 @@
     const customButtonMappings = [
         // ! aws console - only show jump button
         {
-            pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2.*$/,
+            pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/((console)|(sagemaker)|(cloudwatch))\/home\?region=us-east-2.*$/,
             buttonPosition: { top: "60px", left: "500px" },
             customButtons: (url, utils) => {
                 console.log("[AWS Debug] customButtons called with URL:", url);
