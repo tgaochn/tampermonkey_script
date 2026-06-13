@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.3.2
+// @version             0.4.0
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.4.0: 修复切换月份时偶发的 React removeChild 报错 (不再移动/改写 React 管理的 DOM 节点)
 // 0.3.2: Sankey Diagram 节点支持中键/Ctrl+点击在新标签页打开
 // 0.3.1: Income 部分也支持多选框/总金额/中键Ctrl+点击
 // 0.3.0: 支持中键/Ctrl+点击类别在新标签页打开详情
@@ -22,7 +23,6 @@
 (function () {
     "use strict";
 
-    let isUpdating = false;
     let debounceTimer = null;
 
     // ! 拦截 history.pushState, 支持中键/Ctrl+点击在新标签页打开
@@ -47,7 +47,11 @@
         height: 16px;
         cursor: pointer;
         flex-shrink: 0;
-        position: relative;
+        margin: 0;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
         z-index: 10;
     `;
 
@@ -55,12 +59,6 @@
         Expenses: "#e74c3c",
         Income: "#27ae60",
     };
-
-    const WRAPPER_STYLE = `
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    `;
 
     const BTN_STYLE = `
         cursor: pointer;
@@ -123,11 +121,11 @@
     }
 
     // ! 更新标题显示: 选中金额 / 总金额 (百分比)
+    // 不改写 React 管理的标题文本, 而是在标题内追加我们自己的 span, 避免触发 React 的 removeChild 报错
     function updateTitle(card) {
         const title = card.querySelector('[class*="CardHeader__Title"]');
         if (!title) return;
 
-        const sectionName = card.dataset.monarchSection || "Expenses";
         const items = card.querySelectorAll('[class*="BreakdownItem__Container"]');
         let total = 0;
         let selected = 0;
@@ -136,8 +134,7 @@
         items.forEach((item) => {
             const amount = getAmountFromItem(item);
             total += amount;
-            const wrapper = item.closest(".monarch-adv-wrapper");
-            const cb = wrapper ? wrapper.querySelector(".monarch-adv-checkbox") : null;
+            const cb = item.querySelector(".monarch-adv-checkbox");
             if (cb && cb.checked) {
                 selected += amount;
                 checkedCount++;
@@ -145,27 +142,30 @@
         });
 
         if (total > 0) {
-            let newText;
+            let suffix;
             const allChecked = checkedCount === items.length;
             const noneChecked = checkedCount === 0;
             if (allChecked || noneChecked) {
-                newText = `${sectionName} (${formatMoney(total)})`;
+                suffix = ` (${formatMoney(total)})`;
             } else {
                 const pct = ((selected / total) * 100).toFixed(1);
-                newText = `${sectionName} (${formatMoney(selected)} / ${formatMoney(total)} = ${pct}%)`;
+                suffix = ` (${formatMoney(selected)} / ${formatMoney(total)} = ${pct}%)`;
             }
-            if (title.textContent.trim() !== newText) {
-                isUpdating = true;
-                title.textContent = newText;
-                isUpdating = false;
+
+            let span = title.querySelector(".monarch-adv-total");
+            if (!span) {
+                span = document.createElement("span");
+                span.className = "monarch-adv-total";
+                title.appendChild(span);
+            }
+            if (span.textContent !== suffix) {
+                span.textContent = suffix;
             }
         }
     }
 
     // ! 在每个分类行前添加多选框, 并计算总金额
     function addExpenseTotal() {
-        if (isUpdating) return;
-
         const titleElements = document.querySelectorAll('[class*="CardHeader__Title"]');
         for (const title of titleElements) {
             const text = title.textContent.trim();
@@ -175,7 +175,6 @@
             const card = title.closest('[class*="Card__CardRoot"]');
             if (!card) continue;
 
-            card.dataset.monarchSection = sectionName;
             const accentColor = ACCENT_COLORS[sectionName] || "#e74c3c";
 
             // 在标题前添加 全选/清空 按钮
@@ -219,11 +218,16 @@
                 title.parentNode.insertBefore(btnContainer, title);
             }
 
-            // 为每个分类行添加 checkbox (放在整个 Container 外面, 避免触发详情链接)
+            // 为每个分类行添加 checkbox
+            // 注意: 不再创建 wrapper 把 item 搬家 (那会改变 React 管理节点的父子关系,
+            // 切换月份 React 重渲染时会抛 removeChild NotFoundError 导致整页崩溃)。
+            // 改为把 checkbox 作为 item 的子节点用绝对定位放在左侧, item 被卸载时 checkbox 随之消失, React 无感。
             const items = card.querySelectorAll('[class*="BreakdownItem__Container"]');
             items.forEach((item) => {
-                // 已经被包裹过则跳过
-                if (item.parentElement && item.parentElement.classList.contains("monarch-adv-wrapper")) return;
+                addNewTabClickHandlers(item);
+
+                // 已经添加过则跳过
+                if (item.querySelector(":scope > .monarch-adv-checkbox")) return;
 
                 const cb = document.createElement("input");
                 cb.type = "checkbox";
@@ -234,16 +238,10 @@
                 cb.addEventListener("click", (e) => e.stopPropagation());
                 cb.addEventListener("change", () => updateTitle(card));
 
-                addNewTabClickHandlers(item);
-
-                // 创建 wrapper, 将 checkbox 和原始 item 并排放置
-                const wrapper = document.createElement("div");
-                wrapper.className = "monarch-adv-wrapper";
-                wrapper.style.cssText = WRAPPER_STYLE;
-
-                item.parentNode.insertBefore(wrapper, item);
-                wrapper.appendChild(cb);
-                wrapper.appendChild(item);
+                // 给 item 留出左侧空间并作为定位上下文, checkbox 绝对定位在最左
+                item.style.position = "relative";
+                item.style.paddingLeft = "24px";
+                item.insertBefore(cb, item.firstChild);
             });
 
             updateTitle(card);
