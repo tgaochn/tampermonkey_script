@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.2.1
+// @version      1.2.2
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://app.monarchmoney.com/*
@@ -16,6 +16,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.2.2: changed cash flow view to breakdown
 // 1.2.1: added amazon gift card button
 // 1.2.0: added draggable button container
 // 1.1.0: added button container fold state persistence
@@ -145,7 +146,7 @@
             pattern: /^https:\/\/app\.(monarchmoney|monarch)\.com\/.*$/,
             buttonPosition: { top: "30px", left: "500px" }, // Custom position
             customButtons: (url, utils) => {
-                const cashFlowUrl = `https://app.monarch.com/cash-flow?breakdown=category&date=${new Date().toLocaleDateString('en-CA')}&sankey=both&timeframe=month&view=sankey`;
+                const cashFlowUrl = `https://app.monarch.com/cash-flow?breakdown=category&date=${new Date().toLocaleDateString('en-CA')}&sankey=both&timeframe=month&view=breakdown`;
                 return [
                     [
                         utils.createButtonOpenUrl("monarch cash flow", cashFlowUrl),
