@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.7
+// @version 0.7.8
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -1319,7 +1319,7 @@
                 window.open(url3dm);
             } else {
                 window.open(
-                    "https://bbs.3dmgame.com/search.php?mod=forum&searchid=2978&orderby=lastpost&ascdesc=desc&searchsubmit=yes&kw=" +
+                    "https://www.google.com/search?q=3dm论坛+" +
                         encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
                 );
             }
