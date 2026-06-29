@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.6
+// @version      0.5.7
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        https://store.steampowered.com/*
@@ -26,6 +26,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.7: fix adblock close page not working in some cases
 // 0.5.6: add steam community myworkshopfiles redirect to myworkshopfiles page
 // 0.5.5: add slack redirect to webapp
 // 0.5.4: add shortkeys app close page
@@ -44,8 +45,8 @@
 // 0.2.2: add match for amazon subscribe success page
 // 0.2.0: refactored to be a generic script with configurable patterns
 // 0.1.2: renamed script
-// 0.1.1: add match for getadblock.com
-// 0.1.0: initial version, 关闭 AdBlock 的升级和付费推广页面
+// 0.1.1: add match for get.com
+// 0.1.0: initial version, 关闭  的升级和付费推广页面
 
 (function () {
     "use strict";
@@ -57,9 +58,9 @@
     //         keyword: string or array of strings (finds earliest match in document)
     const pageActions = [
         // ! auto close pages
-        // AdBlock upgrade/payment pages
+        //  upgrade/payment pages
         {
-            pattern: /^https:\/\/getadblock\.com\/(en|zh_CN)\/update\/.*/,
+            pattern: /^https:\/\/getadblock\.com\/(en|zh_CN)\/(update|whats-new)\/.*/,
             action: "close",
             fallbackUrl: "https://www.google.com/",
         },
