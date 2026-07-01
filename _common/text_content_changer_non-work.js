@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.8
+// @version             1.1.9
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -8,18 +8,22 @@
 // @match               https://igg-games.com/*
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
+// @match               https://www.amazon.com/cpe/yourpayments*
+// @match               https://www.samsclub.com/account/*
+// @match               https://www.paypal.com/myaccount/*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
 // @match               https://onlinebanking.usbank.com/*
 // @match               https://health.aetna.com/*
 // @match               https://*.annas-archive.org/*
 // @match               https://myaccount.cleanskyenergy.com*
-// @grant               none
+// @grant               GM_addStyle
 // @run-at              document-idle
 // @require             https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL           https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.9: add GM_addStyle and several matched URLs
 // 1.1.8: add AmEx BCE Tian
 // 1.1.7: add AmEx BCE Xuan
 // 1.1.6: add Chase Freedom Unlimited
@@ -70,90 +74,93 @@
         // ! 银行卡加注释
         {
             urlRegex: [
-                /^https:\/\/www\.amazon\.com\/checkout/,
+                /^https:\/\/www\.amazon\.com\/checkout.*/,
+                /^https:\/\/www\.amazon\.com\/cpe\/yourpayments.*/,
+                /^https:\/\/www\.samsclub\.com\/account\/.*/,
+                /^https:\/\/www\.paypal\.com\/myaccount\/.*/,
                 /^https:\/\/myaccount\.cleanskyenergy\.com.*/,
             ],
             textPatterns: [
                 // Citi CustomCash
                 {
-                    regex: /(ending in 9991)/g,
+                    regex: /((e|E)nding in (•••• )?9991)/g,
                     replacement: "$1 (Citi)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // BOA CustomizedCashRewards, 3% online
                 {
-                    regex: /(ending in 2623)/g,
+                    regex: /((e|E)nding in (•••• )?2623)/g,
                     replacement: "$1 (BOA 3%)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // BOA 1.5%
                 {
-                    regex: /(ending in 8923)/g,
+                    regex: /((e|E)nding in (•••• )?8923)/g,
                     replacement: "$1 (BOA 1.5%)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Bilt
                 {
-                    regex: /(ending in 6537)/g,
+                    regex: /((e|E)nding in (•••• )?6537)/g,
                     replacement: "$1 (Bilt)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Amazon
                 {
-                    regex: /(ending in 8057)/g,
+                    regex: /((e|E)nding in (•••• )?8057)/g,
                     replacement: "$1 (Amazon 5%)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Capital One
                 {
-                    regex: /(ending in 7181)/g,
+                    regex: /((e|E)nding in (•••• )?7181)/g,
                     replacement: "$1 (CapitalOne)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Chase United Gateway
                 {
-                    regex: /(ending in 9702)/g,
+                    regex: /((e|E)nding in (•••• )?9702)/g,
                     replacement: "$1 (Chase United Gateway)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Chase Freedom Flex
                 {
-                    regex: /(ending in 2573)/g,
+                    regex: /((e|E)nding in (•••• )?2573)/g,
                     replacement: "$1 (Chase Freedom Flex)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // Chase Freedom Unlimited
                 {
-                    regex: /(ending in 2654)/g,
+                    regex: /((e|E)nding in (•••• )?2654)/g,
                     replacement: "$1 (Chase Freedom Unlimited)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // DiscoverIT
                 {
-                    regex: /(ending in 8646)/g,
+                    regex: /((e|E)nding in (•••• )?8646)/g,
                     replacement: "$1 (DiscoverIT)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // AmEx BCE
                 {
-                    regex: /(ending in 1006)/g,
+                    regex: /((e|E)nding in (•••• )?1006)/g,
                     replacement: "$1 (AmEx BCE Tian)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
                 // AmEx BCE
                 {
-                    regex: /(ending in 1002)/g,
+                    regex: /((e|E)nding in (•••• )?1002)/g,
                     replacement: "$1 (AmEx BCE Xuan)",
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
