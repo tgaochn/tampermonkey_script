@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         匹配网页自动关闭/跳转/滚动
 // @namespace    AutoCloseAndRedirect
-// @version      0.5.9
+// @version      0.5.10
 // @description  自动关闭/跳转/滚动指定页面 (通用脚本)
 // @author       gtfish
 // @match        http://localhost/*
@@ -15,6 +15,7 @@
 // @match        https://item.taobao.com/*
 // @match        https://*.annas-archive.org/*
 // @match        https://www.1lou.info/*
+// @match        https://www.1lou.xyz/*
 // @match        https://app.monarch.com/*
 // @match        https://*.console.aws.amazon.com/*
 // @match        https://butterfly.sandbox.indeed.net/portfolio/*
@@ -28,6 +29,7 @@
 // @downloadURL  https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%AD%E4%B8%8E%E8%B7%B3%E8%BD%AC%E9%A1%B5%E9%9D%A2/autoCloseAndRedirect.js
 
 // ==/UserScript==
+// 0.5.10: add 1lou.xyz match
 // 0.5.9: add localhost
 // 0.5.8: fix localhost:8400 close not working (pattern required https but URL is http)
 // 0.5.7: fix adblock close page not working in some cases
@@ -224,7 +226,7 @@
         // ! auto scroll to keyword
         // bt之家 (1lou) - scroll to "最新回复" section
         {
-            pattern: /^https:\/\/www\.1lou\.info\/thread-\d+\.htm/,
+            pattern: /^https:\/\/www\.1lou\.(?:info|xyz)\/thread-\d+\.htm/,
             action: "scrollToKeyword",
             keyword: ["上传的附件", ".torr", "最新回复"],
         },
