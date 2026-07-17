@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.2.3
+// @version      1.2.4
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
+// @match        https://visa.careerengine.us*
 // @match        https://app.monarchmoney.com/*
 // @match        https://app.monarch.com/*
 // @match        https://allocommunications.smarthub.coop/*
@@ -16,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.2.4: added visa.careerengine.us button
 // 1.2.3: added HSA button
 // 1.2.2: changed cash flow view to breakdown
 // 1.2.1: added amazon gift card button
@@ -84,6 +86,16 @@
     // !! custom button config for specific URL patterns
     // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
     const customButtonMappings = [
+        // ! visa.careerengine.us: 显示我的 DP
+        // https://visa.careerengine.us
+        {
+            pattern: /^https:\/\/visa\.careerengine\.us.*$/,
+            buttonPosition: { top: "100px", left: "0px" }, // Custom position
+            customButtons: (url, utils) => {
+                return [utils.createButtonOpenUrl("EB1a PD: 2023-09-25", "https://my.uscis.gov/account/applicant")];
+            },
+        },
+
         // ! amazon: 订单页面 -> 联系客服
         // https://www.amazon.com/gp/css/order-history
         {
