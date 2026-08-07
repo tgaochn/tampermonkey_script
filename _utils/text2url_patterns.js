@@ -29,6 +29,13 @@
             urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
         },
 
+        // ! BF2 default model names
+        // relevant-jobs-multi-b734f31
+        {
+            regex: /^((relevant-jobs-multi)-[a-zA-Z0-9]{7})$/g,
+            urlTemplate: "https://butterfly.sandbox.indeed.net/model/$1/PUBLISHED/config",
+        },        
+
         // ! Latest MTM models
         // preapply_online_us
         {
