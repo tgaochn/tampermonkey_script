@@ -1,5 +1,6 @@
 // text2url_patterns.js
-// version: 0.1.2
+// version: 0.1.3
+// 0.1.3: add new url pattern for BF2 default model names (relevant-jobs-multi)
 // Shared text-to-URL conversion patterns for tampermonkey scripts
 // 0.1.2: add new url pattern for latest MTM models (preapply_online, postapply_online, LLM, LLM_relevance)
 // 0.1.0: initial version - extracted from JiraTicketAddBtn.js and model_text2link.js
