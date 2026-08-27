@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.4.0
+// @version      0.5.0
 // @description  Convert S3 path to AWS S3 Console URL and redirect; auto-linkify S3 paths on supported pages
 // @author       gtfish
 // @match        https://*.console.aws.amazon.com/s3/*
@@ -13,6 +13,7 @@
 
 
 // ==/UserScript==
+// 0.5.0: make "Parse S3 Path" button draggable (position persisted via localStorage); default position centered
 // 0.4.0: auto-linkify plain-text S3 paths (s3://, s3a://, s3n://, ARN) into clickable AWS S3 console links on supported pages (SageMaker, S3); add @match for SageMaker
 // 0.3.0: support additional S3-compatible protocols (s3a://, s3n://) and AWS S3 HTTPS URLs (virtual-hosted/path-style) and S3 ARN
 // 0.2.3: improve parsing logic for S3 path
@@ -29,10 +30,9 @@
         UTILS_TIMEOUT: 10000,
         AWS_REGION: "us-east-2", // Default AWS region
         AWS_S3_CONSOLE_BASE_URL: "https://us-east-2.console.aws.amazon.com/s3/buckets",
-        BUTTON_POSITION: {
-            top: "10px",
-            right: "1600px",
-        },
+        BUTTON_ID: "aws-s3-path-redirector-btn",
+        BUTTON_POS_KEY: "aws_s3_path_redirector_btn_pos", // localStorage key for persisted position
+        BUTTON_DRAG_THRESHOLD: 4, // px moved before a mousedown counts as a drag (not a click)
         // Pages that show the floating "Parse S3 Path" button
         BUTTON_URL_PATTERNS: [
             /^https:\/\/[^/]*\.console\.aws\.amazon\.com\/s3\//i,
@@ -434,25 +434,117 @@
         });
     }
 
-    // Create floating button to trigger dialog
+    // Load persisted button position from localStorage; returns {left, top} px or null
+    function loadFloatingButtonPos() {
+        try {
+            const raw = localStorage.getItem(CONFIG.BUTTON_POS_KEY);
+            if (!raw) return null;
+            const pos = JSON.parse(raw);
+            if (pos && Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+                return { left: pos.left, top: pos.top };
+            }
+        } catch (e) {
+            console.error("Failed to load button position:", e);
+        }
+        return null;
+    }
+
+    function saveFloatingButtonPos(pos) {
+        try {
+            localStorage.setItem(CONFIG.BUTTON_POS_KEY, JSON.stringify(pos));
+        } catch (e) {
+            console.error("Failed to save button position:", e);
+        }
+    }
+
+    // Clamp {left, top} so the button stays fully inside the viewport
+    function clampToViewport(left, top, el) {
+        const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
+        return {
+            left: Math.max(0, Math.min(left, maxLeft)),
+            top: Math.max(0, Math.min(top, maxTop)),
+        };
+    }
+
+    // Make the button draggable; persists position on drop and suppresses the
+    // click that would otherwise fire at the end of a drag.
+    function makeFloatingButtonDraggable(button) {
+        let dragging = false;
+        let moved = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        button.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            dragging = true;
+            moved = false;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = button.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (!moved && Math.abs(dx) < CONFIG.BUTTON_DRAG_THRESHOLD && Math.abs(dy) < CONFIG.BUTTON_DRAG_THRESHOLD) {
+                return;
+            }
+            moved = true;
+            const pos = clampToViewport(startLeft + dx, startTop + dy, button);
+            button.style.left = pos.left + "px";
+            button.style.top = pos.top + "px";
+        });
+
+        document.addEventListener("mouseup", () => {
+            if (!dragging) return;
+            dragging = false;
+            if (moved) {
+                saveFloatingButtonPos({
+                    left: parseFloat(button.style.left),
+                    top: parseFloat(button.style.top),
+                });
+            }
+        });
+
+        // Swallow the click that ends a drag so it doesn't open the dialog
+        button.addEventListener(
+            "click",
+            (e) => {
+                if (moved) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    moved = false;
+                }
+            },
+            true
+        );
+    }
+
+    // Create floating (draggable) button to trigger dialog
     function createFloatingButton() {
         const button = document.createElement("button");
         button.textContent = "Parse S3 Path";
-        button.id = "aws-s3-path-redirector-btn";
+        button.id = CONFIG.BUTTON_ID;
         button.style.cssText = `
             position: fixed;
-            top: ${CONFIG.BUTTON_POSITION.top};
-            right: ${CONFIG.BUTTON_POSITION.right};
             z-index: 9999;
             padding: 10px 16px;
             background: #009688;
             color: white;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
+            cursor: move;
             font-size: 14px;
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
         `;
 
         button.addEventListener("mouseenter", () => {
@@ -468,6 +560,20 @@
         };
 
         return button;
+    }
+
+    // Position the button (persisted position if present, else centered) and
+    // enable dragging. Must run after the button is in the DOM so offsetWidth
+    // and offsetHeight are measurable.
+    function positionAndEnableDrag(button) {
+        const saved = loadFloatingButtonPos();
+        const initial = saved
+            ? clampToViewport(saved.left, saved.top, button)
+            : clampToViewport((window.innerWidth - button.offsetWidth) / 2, 10, button);
+        button.style.left = initial.left + "px";
+        button.style.top = initial.top + "px";
+
+        makeFloatingButtonDraggable(button);
     }
 
     // ========================================================================
@@ -655,6 +761,7 @@
             if (urlMatchesAnyPattern(currentUrl, CONFIG.BUTTON_URL_PATTERNS)) {
                 const button = createFloatingButton();
                 document.body.appendChild(button);
+                positionAndEnableDrag(button);
             }
 
             if (urlMatchesAnyPattern(currentUrl, CONFIG.LINKIFY_URL_PATTERNS)) {

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.0.1
+// @version             1.1.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,8 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.2.0: make "Go to Model" button draggable (position persisted via GM storage); default position centered
+// 1.1.0: add floating "Go to Model" button + dialog to jump to a model's LATEST overview by name
 // 1.0.1: add preapply/postapply shadow url pattern
 // 1.0.0: add copy buttons (ID/MD/href/diff) before model links on proctor overview pages
 // 0.6.4: remove US Apply, US CTR, US dislike buttons
@@ -46,6 +48,10 @@
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id",
         PROCTOR_BTN_MARKER: "data-butterfly-btn-added",
+        BASE_URL: "https://butterfly.sandbox.indeed.net",
+        MODEL_JUMP_BTN_ID: "butterfly-model-jump-btn",
+        MODEL_JUMP_BTN_POS_KEY: "butterfly_model_jump_btn_pos", // GM storage key for persisted position
+        MODEL_JUMP_DRAG_THRESHOLD: 4, // px moved before a mousedown counts as a drag (not a click)
         REQUIRED_UTILS: [
             "observeDOM",
             "shouldRunScript",
@@ -111,9 +117,304 @@
         return proctorPagePatterns.some((p) => p.test(window.location.href));
     }
 
+    // Build the model overview URL from a model name
+    function buildModelOverviewUrl(name) {
+        return `${CONFIG.BASE_URL}/model/${encodeURIComponent(name)}/LATEST/overview/`;
+    }
+
+    // Dialog to input a model name and jump to its LATEST overview page
+    function createModelJumpDialog() {
+        // Modal backdrop
+        const modal = document.createElement("div");
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+
+        // Dialog box
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90%;
+        `;
+
+        const titleElement = document.createElement("h3");
+        titleElement.textContent = "Go to Model";
+        titleElement.style.marginBottom = "15px";
+
+        const descElement = document.createElement("p");
+        descElement.textContent = "Enter model name to open its LATEST overview page";
+        descElement.style.cssText = "margin-bottom:15px;color:#666;font-size:14px;";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "model-name";
+        input.style.cssText = `
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+        `;
+
+        const errorMsg = document.createElement("div");
+        errorMsg.style.cssText = "color:red;font-size:12px;margin-bottom:15px;min-height:20px;display:none;";
+
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.cssText = "display:flex;justify-content:flex-end;gap:10px;";
+
+        function getUrl() {
+            const name = input.value.trim();
+            if (!name) {
+                errorMsg.textContent = "Please enter a model name";
+                errorMsg.style.display = "block";
+                return null;
+            }
+            errorMsg.style.display = "none";
+            return buildModelOverviewUrl(name);
+        }
+
+        const cancelButton = document.createElement("button");
+        cancelButton.textContent = "Cancel";
+        cancelButton.style.cssText = `
+            padding: 8px 16px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+
+        function handleCancel() {
+            modal.remove();
+        }
+
+        // Open in a new tab
+        const openNewTabButton = document.createElement("button");
+        openNewTabButton.textContent = "Open in New Tab";
+        openNewTabButton.style.cssText = `
+            padding: 8px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+        openNewTabButton.onclick = () => {
+            const url = getUrl();
+            if (url) {
+                window.open(url, "_blank", "noopener,noreferrer");
+                modal.remove();
+            }
+        };
+
+        // Redirect current tab
+        const goButton = document.createElement("button");
+        goButton.textContent = "Go";
+        goButton.style.cssText = `
+            padding: 8px 16px;
+            background: #009688;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+        goButton.onclick = () => {
+            const url = getUrl();
+            if (url) {
+                modal.remove();
+                window.location.href = url;
+            }
+        };
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                goButton.click();
+            } else if (e.key === "Escape") {
+                handleCancel();
+            }
+        });
+
+        cancelButton.onclick = handleCancel;
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                handleCancel();
+            }
+        };
+
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(openNewTabButton);
+        buttonContainer.appendChild(goButton);
+        dialog.appendChild(titleElement);
+        dialog.appendChild(descElement);
+        dialog.appendChild(input);
+        dialog.appendChild(errorMsg);
+        dialog.appendChild(buttonContainer);
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+
+        input.focus();
+    }
+
+    // Load persisted button position from GM storage; returns {left, top} px or null
+    function loadModelJumpBtnPos() {
+        try {
+            const raw = GM_getValue(CONFIG.MODEL_JUMP_BTN_POS_KEY, null);
+            if (!raw) return null;
+            const pos = typeof raw === "string" ? JSON.parse(raw) : raw;
+            if (pos && Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+                return { left: pos.left, top: pos.top };
+            }
+        } catch (e) {
+            console.error("Failed to load button position:", e);
+        }
+        return null;
+    }
+
+    function saveModelJumpBtnPos(pos) {
+        try {
+            GM_setValue(CONFIG.MODEL_JUMP_BTN_POS_KEY, JSON.stringify(pos));
+        } catch (e) {
+            console.error("Failed to save button position:", e);
+        }
+    }
+
+    // Clamp {left, top} so the button stays fully inside the viewport
+    function clampToViewport(left, top, el) {
+        const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
+        return {
+            left: Math.max(0, Math.min(left, maxLeft)),
+            top: Math.max(0, Math.min(top, maxTop)),
+        };
+    }
+
+    // Make the button draggable; persists position on drop and suppresses the
+    // click that would otherwise fire at the end of a drag.
+    function makeModelJumpBtnDraggable(button) {
+        let dragging = false;
+        let moved = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        button.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            dragging = true;
+            moved = false;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = button.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (!moved && Math.abs(dx) < CONFIG.MODEL_JUMP_DRAG_THRESHOLD && Math.abs(dy) < CONFIG.MODEL_JUMP_DRAG_THRESHOLD) {
+                return;
+            }
+            moved = true;
+            const pos = clampToViewport(startLeft + dx, startTop + dy, button);
+            button.style.left = pos.left + "px";
+            button.style.top = pos.top + "px";
+        });
+
+        document.addEventListener("mouseup", () => {
+            if (!dragging) return;
+            dragging = false;
+            if (moved) {
+                saveModelJumpBtnPos({
+                    left: parseFloat(button.style.left),
+                    top: parseFloat(button.style.top),
+                });
+            }
+        });
+
+        // Swallow the click that ends a drag so it doesn't open the dialog
+        button.addEventListener(
+            "click",
+            (e) => {
+                if (moved) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    moved = false;
+                }
+            },
+            true
+        );
+    }
+
+    // Floating (draggable) button that opens the model-jump dialog
+    function createModelJumpButton() {
+        if (document.getElementById(CONFIG.MODEL_JUMP_BTN_ID)) {
+            return;
+        }
+        const button = document.createElement("button");
+        button.textContent = "Go to Model";
+        button.id = CONFIG.MODEL_JUMP_BTN_ID;
+        button.style.cssText = `
+            position: fixed;
+            z-index: 9999;
+            padding: 10px 16px;
+            background: #009688;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: move;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        `;
+        button.addEventListener("mouseenter", () => {
+            button.style.background = "#00796b";
+        });
+        button.addEventListener("mouseleave", () => {
+            button.style.background = "#009688";
+        });
+        button.onclick = () => {
+            createModelJumpDialog();
+        };
+        document.body.appendChild(button);
+
+        // Position: use persisted position if present, otherwise center of viewport
+        const saved = loadModelJumpBtnPos();
+        const initial = saved
+            ? clampToViewport(saved.left, saved.top, button)
+            : clampToViewport((window.innerWidth - button.offsetWidth) / 2, 10, button);
+        button.style.left = initial.left + "px";
+        button.style.top = initial.top + "px";
+
+        makeModelJumpBtnDraggable(button);
+    }
+
     async function initScript() {
         try {
             const utils = await waitForUtils();
+
+            // Floating "Go to Model" button is available on all Butterfly pages
+            createModelJumpButton();
 
             if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
                 return;
