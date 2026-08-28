@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.2.0
+// @version             1.3.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.3.0: 添加了model不存在时的修复链接
 // 1.2.0: make "Go to Model" button draggable (position persisted via GM storage); default position centered + refactoring
 // 1.1.0: add floating "Go to Model" button + dialog to jump to a model's LATEST overview by name
 // 1.0.1: add preapply/postapply shadow url pattern
@@ -132,6 +133,98 @@
         return `${CONFIG.BASE_URL}/model/${encodeURIComponent(name)}/LATEST/overview/`;
     }
 
+    // Build the model PUBLISHED config URL from a model name
+    function buildModelConfigUrl(name) {
+        return `${CONFIG.BASE_URL}/model/${encodeURIComponent(name)}/PUBLISHED/config/`;
+    }
+
+    // 翻转 model name 里的连接符: 含 "-" 则全部改成 "_", 否则全部改成 "-"
+    function flipSeparators(name) {
+        return name.includes("-") ? name.replace(/-/g, "_") : name.replace(/_/g, "-");
+    }
+
+    // "Model <name> doesn't exist." 提示的检测与修正
+    const MODEL_NOT_FOUND_MARKER = "data-model-fix-added";
+    // 支持直引号 ' 和弯引号 ’
+    const MODEL_NOT_FOUND_RE = /Model\s+([A-Za-z0-9._-]+)\s+doesn['’]t exist\./;
+
+    // 生成指向修正后 model config 页的超链接元素
+    function makeFixedModelLink(fixedName, fixedUrl) {
+        const link = document.createElement("a");
+        link.href = fixedUrl;
+        link.textContent = fixedName;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.style.color = "#0972d3";
+        link.style.textDecoration = "underline";
+        return link;
+    }
+
+    // 检测页面上 "Model <name> doesn't exist." 的提示, 提取 model name, 翻转连接符,
+    // 在原文的 name 之后插入一个指向修正后 model 的超链接:
+    //   Model preapply-hp-row-49e4613 doesn't exist.
+    //   -> Model preapply-hp-row-49e4613 (preapply_hp_row_49e4613) doesn't exist.
+    //
+    // 注意: Butterfly 是 React 页面, 整句可能被拆成多个文本节点 (model name 常被单独
+    // 包在子元素里), 因此这里在“元素”层面用 textContent 匹配整句, 再在后代文本节点里
+    // 按 name 定位插入, 以兼容跨节点的情况。
+    function addFixedModelLink() {
+        const elements = document.body.querySelectorAll("*");
+        for (const el of elements) {
+            const tag = el.tagName;
+            if (tag === "SCRIPT" || tag === "STYLE") continue;
+            if (el.hasAttribute(MODEL_NOT_FOUND_MARKER)) continue;
+
+            const tc = el.textContent;
+            if (!tc || tc.indexOf("exist") === -1) continue; // 便宜的预筛
+            const m = MODEL_NOT_FOUND_RE.exec(tc);
+            if (!m) continue;
+
+            // 只处理“最内层”包含整句的元素 (避免在祖先上重复插入)
+            let deeper = false;
+            for (const child of el.children) {
+                if (MODEL_NOT_FOUND_RE.test(child.textContent || "")) {
+                    deeper = true;
+                    break;
+                }
+            }
+            if (deeper) continue;
+
+            const name = m[1];
+            const fixedName = flipSeparators(name);
+            const fixedUrl = buildModelConfigUrl(fixedName);
+
+            // 在 el 的后代文本节点里找到含 name 的那个, 在 name 之后插入 " (<link>)"
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+            let inserted = false;
+            let tn;
+            while ((tn = walker.nextNode())) {
+                const idx = tn.nodeValue ? tn.nodeValue.indexOf(name) : -1;
+                if (idx === -1) continue;
+                const insertPos = idx + name.length;
+                const before = tn.nodeValue.slice(0, insertPos);
+                const after = tn.nodeValue.slice(insertPos);
+
+                const frag = document.createDocumentFragment();
+                frag.appendChild(document.createTextNode(before + " ("));
+                frag.appendChild(makeFixedModelLink(fixedName, fixedUrl));
+                frag.appendChild(document.createTextNode(")" + after));
+                tn.parentNode.replaceChild(frag, tn);
+                inserted = true;
+                break;
+            }
+
+            // 兜底: 没找到含 name 的单一文本节点 (name 被进一步拆分), 直接在句末追加链接
+            if (!inserted) {
+                el.appendChild(document.createTextNode(" ("));
+                el.appendChild(makeFixedModelLink(fixedName, fixedUrl));
+                el.appendChild(document.createTextNode(")"));
+            }
+
+            el.setAttribute(MODEL_NOT_FOUND_MARKER, "true");
+        }
+    }
+
     // GM-backed storage adapter so the button position persists via Tampermonkey storage
     const gmStorageAdapter = {
         get: (key) => {
@@ -230,10 +323,13 @@
             if (isModelPage()) {
                 const targetElementId = CONFIG.CONTAINER_ID;
                 utils.observeDOM(observeTarget, () => {
+                    // 先处理 "Model xxx doesn't exist." 提示 (main 在 model 不存在时会抛错, 放前面避免被阻断)
+                    addFixedModelLink();
                     if (!document.getElementById(targetElementId)) {
                         main(utils);
                     }
                 });
+                addFixedModelLink(); // 立即尝试一次 (错误提示可能已渲染)
             } else if (isProctorPage()) {
                 const selector = `.proctor-test-definition-view--allocation-table a[href^="/model/"]:not([${CONFIG.PROCTOR_BTN_MARKER}])`;
                 utils.observeDOM(observeTarget, () => {
