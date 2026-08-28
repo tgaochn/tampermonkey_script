@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gamer520 关键词提取器
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
+// @version      0.3.0
 // @description  提取该网页的指定关键词
 // @match        http*://*.gamer520.net/*
 // @match        http*://*.game520.net/*
@@ -15,6 +15,7 @@
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_game/Gamer520%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96%E5%99%A8/fetchKeywordOnGamer520.js
 // ==/UserScript==
+// 0.3.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // 0.2.0: added collapsible/draggable button container via utils.js
 // 0.1.4: add gamers520.com pattern
 // 0.1.3: add game520.com pattern
@@ -53,6 +54,7 @@
     ];
 
     const CONFIG = {
+        DEBUG: false, // set true to enable verbose console logging
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_gamer520",
         BUTTON_POSITION: { top: "20px", left: "1000px" },
@@ -191,9 +193,14 @@
     const exclusionPatterns = [];
     const url2title = [];
 
+    // Verbose logger gated by CONFIG.DEBUG (errors still use console.error directly)
+    function dbg(...args) {
+        if (CONFIG.DEBUG) console.log(...args);
+    }
+
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
+        dbg("Starting to wait for utils...");
         const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {

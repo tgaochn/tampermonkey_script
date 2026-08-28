@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.2.4
+// @version      1.3.0
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://visa.careerengine.us*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.3.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // 1.2.4: added visa.careerengine.us button
 // 1.2.3: added HSA button
 // 1.2.2: changed cash flow view to breakdown
@@ -63,6 +64,7 @@
 
     // Configuration constants
     const CONFIG = {
+        DEBUG: false, // set true to enable verbose console logging
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_non_work",
         BUTTON_POSITION: { top: "-10px", left: "1000px" },
@@ -192,36 +194,41 @@
     // !! custom url to title mapping (empty for non-work, all use custom buttons)
     const url2title = [];
 
+    // Verbose logger gated by CONFIG.DEBUG (errors still use console.error directly)
+    function dbg(...args) {
+        if (CONFIG.DEBUG) console.log(...args);
+    }
+
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
+        dbg("Starting to wait for utils...");
         const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log("Checking utils:", window.utils);
-                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
+                dbg("Checking utils:", window.utils);
+                dbg("Available functions:", window.utils ? Object.keys(window.utils) : "none");
 
                 if (
                     window.utils &&
                     requiredFunctions.every((func) => {
                         const hasFunc = typeof window.utils[func] === "function";
-                        console.log(`Checking function ${func}:`, hasFunc);
+                        dbg(`Checking function ${func}:`, hasFunc);
                         return hasFunc;
                     })
                 ) {
-                    console.log("All required functions found");
+                    dbg("All required functions found");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(
                         (func) => !window.utils || typeof window.utils[func] !== "function"
                     );
-                    console.log("Timeout reached. Missing functions:", missingFunctions);
+                    dbg("Timeout reached. Missing functions:", missingFunctions);
                     reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    console.log("Not all functions available yet, checking again in 100ms");
+                    dbg("Not all functions available yet, checking again in 100ms");
                     setTimeout(checkUtils, 100);
                 }
             }

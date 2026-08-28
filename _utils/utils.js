@@ -1,6 +1,7 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.3.4
+// version: 0.4.0
+// 0.4.0: add generic makeDraggable / createDraggableButton / createInputDialog helpers; makeDraggable supports drag handles / ignoreSelector; addBtn2AnyWebsite reuses it (single drag impl); copyHypertext uses navigator.clipboard; add createDraggableButtonGroup (floating draggable + foldable + multi-button toolbar)
 (function (window) {
     "use strict";
 
@@ -102,29 +103,60 @@
     };
 
     // ! button behaviors
+    // Copy a hyperlink as rich text so it pastes as a real link (e.g. into Docs/email).
+    // Uses the async Clipboard API (writes both text/html and text/plain flavors) and
+    // falls back to the legacy selection + execCommand("copy") path when unavailable.
     utils.copyHypertext = function (text, url, leftPart = "", rightPart = "") {
+        // Build the fragment via DOM so `text`/`url` are safely escaped
         const hyperlinkElem = document.createElement("a");
         hyperlinkElem.textContent = text;
         hyperlinkElem.href = url;
 
-        const tempContainerElem = document.createElement("span");
-        tempContainerElem.appendChild(document.createTextNode(leftPart));
-        tempContainerElem.appendChild(hyperlinkElem);
-        tempContainerElem.appendChild(document.createTextNode(rightPart));
+        const containerElem = document.createElement("span");
+        containerElem.appendChild(document.createTextNode(leftPart));
+        containerElem.appendChild(hyperlinkElem);
+        containerElem.appendChild(document.createTextNode(rightPart));
 
-        tempContainerElem.style.position = "absolute";
-        tempContainerElem.style.left = "-9999px";
-        document.body.appendChild(tempContainerElem);
+        const html = containerElem.innerHTML;
+        const plain = containerElem.textContent;
 
-        const range = document.createRange();
-        range.selectNode(tempContainerElem);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand("copy");
-        selection.removeAllRanges();
+        // Legacy fallback: off-screen selection + execCommand
+        const legacyCopy = () => {
+            containerElem.style.position = "absolute";
+            containerElem.style.left = "-9999px";
+            document.body.appendChild(containerElem);
 
-        document.body.removeChild(tempContainerElem);
+            const range = document.createRange();
+            range.selectNode(containerElem);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand("copy");
+            } catch (e) {
+                console.error("copyHypertext execCommand fallback failed:", e);
+            }
+            selection.removeAllRanges();
+            document.body.removeChild(containerElem);
+        };
+
+        // Modern path: write rich (text/html) + plain (text/plain) flavors
+        if (navigator.clipboard && typeof window.ClipboardItem === "function") {
+            try {
+                const item = new window.ClipboardItem({
+                    "text/html": new Blob([html], { type: "text/html" }),
+                    "text/plain": new Blob([plain], { type: "text/plain" }),
+                });
+                navigator.clipboard.write([item]).catch((err) => {
+                    console.error("clipboard.write failed, falling back to execCommand:", err);
+                    legacyCopy();
+                });
+                return;
+            } catch (err) {
+                console.error("ClipboardItem unavailable, falling back to execCommand:", err);
+            }
+        }
+        legacyCopy();
     };
 
     // ! create buttons
@@ -340,6 +372,541 @@
         ) {
             Array.from(node.childNodes).forEach((child) => utils.convertTextToLinks(child, patterns));
         }
+    };
+
+    /* !! -------------------------------------------------------------------------- */
+    /*                   !! Exposed functions - draggable button & dialog            */
+    /* !! -------------------------------------------------------------------------- */
+
+    // Default localStorage-backed storage adapter for persisting position.
+    // Values are JSON-serializable objects. Callers can pass a custom adapter
+    // (e.g. one backed by GM_getValue/GM_setValue) via the `storage` option.
+    const localStorageAdapter = {
+        get(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                console.error("localStorageAdapter.get failed:", e);
+                return null;
+            }
+        },
+        set(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {
+                console.error("localStorageAdapter.set failed:", e);
+            }
+        },
+    };
+
+    // Clamp {left, top} so an element stays fully inside the viewport
+    utils.clampToViewport = function (left, top, el) {
+        const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
+        return {
+            left: Math.max(0, Math.min(left, maxLeft)),
+            top: Math.max(0, Math.min(top, maxTop)),
+        };
+    };
+
+    // Resolve a default-position spec into {left, top} px for an (already-rendered) element.
+    // spec: "top-center" (default) | "center" | {left, top} | function(el) => {left, top}
+    function resolveDefaultPosition(el, spec) {
+        if (typeof spec === "function") return spec(el);
+        if (spec && typeof spec === "object") return { left: spec.left, top: spec.top };
+        const centerLeft = (window.innerWidth - el.offsetWidth) / 2;
+        if (spec === "center") {
+            return { left: centerLeft, top: (window.innerHeight - el.offsetHeight) / 2 };
+        }
+        return { left: centerLeft, top: 10 }; // "top-center"
+    }
+
+    // Make an existing element draggable via the mouse.
+    // options:
+    //   handle:         element that receives the mousedown listener (default: el itself)
+    //   threshold:      px moved before it counts as a drag, not a click (default 4)
+    //   clamp:          keep the element inside the viewport while dragging (default true)
+    //   onDragEnd:      ({left, top}) => void, called once after a real drag ends
+    //   suppressClick:  swallow the click that ends a drag so it won't trigger onclick (default true)
+    //   ignoreSelector: CSS selector; a mousedown on a matching element does NOT start a
+    //                   drag (so clicks on real buttons/links still work), UNLESS that element
+    //                   is flagged as a drag handle via dragHandleProp
+    //   dragHandleProp: property name marking an element as a drag handle (default "_isDragHandle")
+    // returns { wasDragged: () => boolean }
+    utils.makeDraggable = function (el, options = {}) {
+        const {
+            handle = el,
+            threshold = 4,
+            clamp = true,
+            onDragEnd = null,
+            suppressClick = true,
+            ignoreSelector = null,
+            dragHandleProp = "_isDragHandle",
+        } = options;
+
+        let dragging = false;
+        let moved = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        handle.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            // Don't hijack mousedowns on interactive elements unless they're drag handles
+            if (ignoreSelector) {
+                const interactive = e.target.closest(ignoreSelector);
+                if (interactive && !interactive[dragHandleProp]) return;
+            }
+            dragging = true;
+            moved = false;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = el.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (!moved && Math.abs(dx) < threshold && Math.abs(dy) < threshold) return;
+            moved = true;
+            let left = startLeft + dx;
+            let top = startTop + dy;
+            if (clamp) {
+                const c = utils.clampToViewport(left, top, el);
+                left = c.left;
+                top = c.top;
+            }
+            el.style.left = left + "px";
+            el.style.top = top + "px";
+        });
+
+        document.addEventListener("mouseup", () => {
+            if (!dragging) return;
+            dragging = false;
+            if (moved && onDragEnd) {
+                onDragEnd({ left: parseFloat(el.style.left), top: parseFloat(el.style.top) });
+            }
+        });
+
+        if (suppressClick) {
+            el.addEventListener(
+                "click",
+                (e) => {
+                    if (moved) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        moved = false;
+                    }
+                },
+                true
+            );
+        }
+
+        return { wasDragged: () => moved };
+    };
+
+    // Create a floating, draggable button. Appends it to <body>, positions it
+    // (persisted position if available, else `defaultPosition`), and wires up dragging.
+    // options:
+    //   id:               element id; if a button with this id already exists it is returned as-is
+    //   text:             button label
+    //   onClick:          click handler (not fired at the end of a drag)
+    //   storageKey:       key under which to persist {left, top}; omit to disable persistence
+    //   storage:          storage adapter { get(key), set(key, value) } (default: localStorage)
+    //   defaultPosition:  "top-center" (default) | "center" | {left, top} | fn(el)
+    //   threshold:        drag threshold px (default 4)
+    //   background/hoverBackground: colors (default teal)
+    //   styleOverrides:   object of camelCase style props applied after the defaults
+    // returns the button element
+    utils.createDraggableButton = function (options = {}) {
+        const {
+            id,
+            text = "Button",
+            onClick = null,
+            storageKey = null,
+            storage = localStorageAdapter,
+            defaultPosition = "top-center",
+            threshold = 4,
+            background = "#009688",
+            hoverBackground = "#00796b",
+            styleOverrides = {},
+        } = options;
+
+        if (id) {
+            const existing = document.getElementById(id);
+            if (existing) return existing;
+        }
+
+        const button = document.createElement("button");
+        if (id) button.id = id;
+        button.textContent = text;
+        button.style.cssText = `
+            position: fixed;
+            z-index: 9999;
+            padding: 10px 16px;
+            background: ${background};
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: move;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        `;
+        Object.assign(button.style, styleOverrides);
+
+        button.addEventListener("mouseenter", () => { button.style.background = hoverBackground; });
+        button.addEventListener("mouseleave", () => { button.style.background = background; });
+        if (onClick) button.onclick = onClick;
+
+        document.body.appendChild(button);
+
+        // Position: persisted (if valid) else default, both clamped to the viewport.
+        // Must run after append so offsetWidth/offsetHeight are measurable.
+        const saved = storageKey ? storage.get(storageKey) : null;
+        const target =
+            saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)
+                ? saved
+                : resolveDefaultPosition(button, defaultPosition);
+        const initial = utils.clampToViewport(target.left, target.top, button);
+        button.style.left = initial.left + "px";
+        button.style.top = initial.top + "px";
+
+        utils.makeDraggable(button, {
+            threshold,
+            onDragEnd: storageKey ? (pos) => storage.set(storageKey, pos) : null,
+        });
+
+        return button;
+    };
+
+    // Generic modal input dialog: a title, description, single-line input, error
+    // line, optional extra content, and a configurable row of buttons. Fire-and-forget;
+    // each button defines its own behavior via onClick(api, btn).
+    // options:
+    //   title, description, placeholder, initialValue
+    //   width:            dialog width (default "600px")
+    //   extraContent:     optional DOM node inserted between the error line and the buttons
+    //   escToCancel:      close on Esc (default true)
+    //   backdropToCancel: close on backdrop click (default true)
+    //   enterButton:      label of the button clicked on Enter (default: the last button)
+    //   buttons: [{ label, kind, background, color, onClick(api, btn) }]
+    //       kind: "primary"(teal) | "accent"(blue) | "secondary"(orange) | "cancel"(grey)
+    //   styleOverrides:   { modal, dialog, input, error, title, description, buttonRow } (cssText strings)
+    // api passed to onClick: { value(), rawValue(), input, showError(msg), clearError(), close(), modal, dialog }
+    // returns { modal, dialog, input, close }
+    utils.createInputDialog = function (options = {}) {
+        const {
+            title = "",
+            description = "",
+            placeholder = "",
+            initialValue = "",
+            width = "600px",
+            extraContent = null,
+            escToCancel = true,
+            backdropToCancel = true,
+            enterButton = null,
+            buttons = [],
+            styleOverrides = {},
+        } = options;
+
+        const KIND_BG = { primary: "#009688", accent: "#2196F3", secondary: "#FF9800", cancel: "#e0e0e0" };
+        const KIND_COLOR = { primary: "white", accent: "white", secondary: "white", cancel: "#333" };
+
+        const modal = document.createElement("div");
+        modal.style.cssText =
+            styleOverrides.modal ||
+            `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+
+        const dialog = document.createElement("div");
+        dialog.style.cssText =
+            styleOverrides.dialog ||
+            `
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: ${width};
+                max-width: 90%;
+            `;
+
+        const titleEl = document.createElement("h3");
+        titleEl.textContent = title;
+        titleEl.style.cssText = styleOverrides.title || "margin-bottom:15px;";
+
+        const descEl = document.createElement("p");
+        descEl.textContent = description;
+        descEl.style.cssText = styleOverrides.description || "margin-bottom:15px;color:#666;font-size:14px;";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = placeholder;
+        input.value = initialValue;
+        input.style.cssText =
+            styleOverrides.input ||
+            `
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-family: monospace;
+                font-size: 14px;
+                box-sizing: border-box;
+            `;
+
+        const errorEl = document.createElement("div");
+        errorEl.style.cssText =
+            styleOverrides.error || "color:red;font-size:12px;margin-bottom:15px;min-height:20px;display:none;";
+
+        const buttonRow = document.createElement("div");
+        buttonRow.style.cssText = styleOverrides.buttonRow || "display:flex;justify-content:flex-end;gap:10px;";
+
+        function close() {
+            modal.remove();
+        }
+
+        const api = {
+            value: () => input.value.trim(),
+            rawValue: () => input.value,
+            input,
+            showError: (msg) => {
+                errorEl.textContent = msg;
+                errorEl.style.display = "block";
+            },
+            clearError: () => {
+                errorEl.style.display = "none";
+            },
+            close,
+            modal,
+            dialog,
+        };
+
+        let enterBtnEl = null;
+        buttons.forEach((cfg) => {
+            const btn = document.createElement("button");
+            btn.textContent = cfg.label;
+            const bg = cfg.background || KIND_BG[cfg.kind] || KIND_BG.primary;
+            const color = cfg.color || KIND_COLOR[cfg.kind] || "white";
+            btn.style.cssText = `
+                padding: 8px 16px;
+                background: ${bg};
+                color: ${color};
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            `;
+            btn.onclick = () => {
+                if (cfg.onClick) cfg.onClick(api, btn);
+            };
+            if (enterButton && cfg.label === enterButton) enterBtnEl = btn;
+            buttonRow.appendChild(btn);
+        });
+        if (!enterBtnEl) enterBtnEl = buttonRow.lastElementChild; // default Enter target
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                if (enterBtnEl) enterBtnEl.click();
+            } else if (e.key === "Escape" && escToCancel) {
+                close();
+            }
+        });
+
+        if (backdropToCancel) {
+            modal.onclick = (e) => {
+                if (e.target === modal) close();
+            };
+        }
+
+        dialog.appendChild(titleEl);
+        if (description) dialog.appendChild(descEl);
+        dialog.appendChild(input);
+        dialog.appendChild(errorEl);
+        if (extraContent) dialog.appendChild(extraContent);
+        dialog.appendChild(buttonRow);
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+
+        input.focus();
+
+        return { modal, dialog, input, close };
+    };
+
+    // Create a floating, draggable, optionally-foldable button group (a small toolbar).
+    // A toggle on the left folds/unfolds the row of buttons; both the position and the
+    // fold state are persisted through the storage adapter. Reuses makeDraggable, so
+    // dragging works from the toggle (a drag handle) or empty space, while clicks on the
+    // real buttons pass through.
+    // options:
+    //   id:              container element id (dedupe: returns existing if present)
+    //   buttons:         array of HTMLElement, or {label, onClick, title, background, hoverBackground}
+    //   foldable:        show the fold toggle (default true)
+    //   folded:          initial fold state when nothing is persisted (default false)
+    //   orientation:     "row" (default) or "column" for the button area
+    //   gap:             gap between buttons (default "4px")
+    //   storageKey:      key to persist {left, top}
+    //   foldStorageKey:  key to persist fold state (default `${storageKey||id}_folded`)
+    //   storage:         adapter { get(key), set(key, value) } (default localStorage)
+    //   defaultPosition: "top-center" (default) | "center" | {left, top} | fn(el)
+    //   threshold, clamp: forwarded to makeDraggable
+    //   background/hoverBackground: default colors for {label, onClick} button descriptors
+    // returns { container, toggle, setFolded }
+    utils.createDraggableButtonGroup = function (options = {}) {
+        const {
+            id,
+            buttons = [],
+            foldable = true,
+            folded = false,
+            orientation = "row",
+            gap = "4px",
+            storageKey = null,
+            foldStorageKey = storageKey ? `${storageKey}_folded` : (id ? `${id}_folded` : null),
+            storage = localStorageAdapter,
+            defaultPosition = "top-center",
+            threshold = 4,
+            clamp = true,
+            background = "#009688",
+            hoverBackground = "#00796b",
+        } = options;
+
+        if (id) {
+            const existing = document.getElementById(id);
+            if (existing) return { container: existing, toggle: null, setFolded: () => {} };
+        }
+
+        // Outer floating container: [toggle][button area]
+        const container = document.createElement("div");
+        if (id) container.id = id;
+        container.style.cssText = `
+            position: fixed;
+            z-index: 9999;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 4px;
+        `;
+
+        // Button area
+        const area = document.createElement("div");
+        area.style.cssText = `
+            display: flex;
+            flex-direction: ${orientation};
+            flex-wrap: wrap;
+            gap: ${gap};
+        `;
+
+        // Build a button from a plain descriptor (or pass through an existing element)
+        const buildBtn = (b) => {
+            if (b instanceof HTMLElement) return b;
+            const btn = document.createElement("button");
+            btn.textContent = b.label;
+            if (b.title) btn.title = b.title;
+            const bg = b.background || background;
+            const hbg = b.hoverBackground || hoverBackground;
+            btn.style.cssText = `
+                padding: 10px 16px;
+                background: ${bg};
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                user-select: none;
+                white-space: nowrap;
+            `;
+            btn.addEventListener("mouseenter", () => { btn.style.background = hbg; });
+            btn.addEventListener("mouseleave", () => { btn.style.background = bg; });
+            if (b.onClick) btn.onclick = b.onClick;
+            return btn;
+        };
+
+        buttons.forEach((b) => area.appendChild(buildBtn(b)));
+
+        // Fold toggle (also acts as a drag handle)
+        let toggle = null;
+        const applyFold = (isFolded) => {
+            area.style.display = isFolded ? "none" : "flex";
+            if (toggle) {
+                toggle.textContent = isFolded ? "▶" : "▼";
+                toggle.title = isFolded ? "Show" : "Hide";
+            }
+        };
+        const setFolded = (isFolded) => {
+            applyFold(isFolded);
+            if (foldStorageKey) storage.set(foldStorageKey, isFolded);
+        };
+
+        if (foldable) {
+            toggle = document.createElement("button");
+            toggle._isDragHandle = true; // allow dragging the toolbar by its toggle
+            toggle.style.cssText = `
+                background: #607D8B;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: move;
+                padding: 10px 8px;
+                font-size: 12px;
+                line-height: 1;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                user-select: none;
+            `;
+            // makeDraggable's suppressClick swallows the click that ends a drag,
+            // so dragging by the toggle won't also toggle the fold state.
+            toggle.addEventListener("click", () => {
+                setFolded(area.style.display !== "none");
+            });
+            container.appendChild(toggle);
+        }
+
+        container.appendChild(area);
+        document.body.appendChild(container);
+
+        // Initial fold state (persisted value overrides the `folded` default)
+        const savedFold = foldStorageKey ? storage.get(foldStorageKey) : null;
+        applyFold(typeof savedFold === "boolean" ? savedFold : folded);
+
+        // Position: persisted (if valid) else default, clamped to the viewport.
+        // Must run after append so offsetWidth/offsetHeight are measurable.
+        const savedPos = storageKey ? storage.get(storageKey) : null;
+        const target =
+            savedPos && Number.isFinite(savedPos.left) && Number.isFinite(savedPos.top)
+                ? savedPos
+                : resolveDefaultPosition(container, defaultPosition);
+        const initial = utils.clampToViewport(target.left, target.top, container);
+        container.style.left = initial.left + "px";
+        container.style.top = initial.top + "px";
+
+        // Drag from toggle (handle) or empty space; clicks on real buttons pass through
+        utils.makeDraggable(container, {
+            threshold,
+            clamp,
+            ignoreSelector: "button, a, input, select, textarea",
+            onDragEnd: storageKey ? (pos) => storage.set(storageKey, pos) : null,
+        });
+
+        return { container, toggle, setFolded };
     };
 
     /* !! -------------------------------------------------------------------------- */
@@ -1258,12 +1825,9 @@
 
             applyFoldState(isFolded);
 
-            // Use click event with drag guard so dragging doesn't trigger fold
+            // Toggle fold state on click. When DRAGGABLE, makeDraggable's suppressClick
+            // swallows the click that ends a drag, so dragging the handle won't fold.
             toggleBtn.addEventListener("click", () => {
-                if (btnContainer._wasDragged) {
-                    btnContainer._wasDragged = false;
-                    return;
-                }
                 const newFolded = btnSubContainer1.style.display !== "none";
                 applyFoldState(newFolded);
                 localStorage.setItem(storageKey, String(newFolded));
@@ -1289,43 +1853,20 @@
                 } catch (e) { /* ignore corrupted data */ }
             }
 
-            let isDragging = false;
-            let startX, startY, startLeft, startTop;
-            const DRAG_THRESHOLD = 3;
-
-            btnContainer.addEventListener("mousedown", (e) => {
-                // Allow drag from: empty space, or elements marked as drag handle
-                const clickedBtn = e.target.closest("button, a, input, select, textarea");
-                if (clickedBtn && !clickedBtn._isDragHandle) return;
-
-                isDragging = true;
-                btnContainer._wasDragged = false;
-                startX = e.clientX;
-                startY = e.clientY;
-                startLeft = parseInt(btnContainer.style.left) || 0;
-                startTop = parseInt(btnContainer.style.top) || 0;
-                e.preventDefault();
-            });
-
-            document.addEventListener("mousemove", (e) => {
-                if (!isDragging) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
-                    btnContainer._wasDragged = true;
-                    btnContainer.style.left = (startLeft + dx) + "px";
-                    btnContainer.style.top = (startTop + dy) + "px";
-                }
-            });
-
-            document.addEventListener("mouseup", () => {
-                if (isDragging && btnContainer._wasDragged) {
+            // Reuse the shared drag helper (single drag implementation). Drag starts
+            // from empty space or from elements flagged as a drag handle (e.g. the fold
+            // toggle); mousedowns on real buttons/links are left alone. clamp:false keeps
+            // the original free-positioning behavior for this multi-row container.
+            utils.makeDraggable(btnContainer, {
+                threshold: 3,
+                clamp: false,
+                ignoreSelector: "button, a, input, select, textarea",
+                onDragEnd: () => {
                     localStorage.setItem(posStorageKey, JSON.stringify({
                         top: btnContainer.style.top,
                         left: btnContainer.style.left,
                     }));
-                }
-                isDragging = false;
+                },
             });
         }
     }

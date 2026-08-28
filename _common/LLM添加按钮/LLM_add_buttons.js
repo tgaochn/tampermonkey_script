@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        LLM 添加按钮
 // @namespace   https://claude.ai/
-// @version     1.3.0
+// @version     1.4.0
 // @description 为Claude和Gemini添加按钮 (未来将支持更多LLM)
 // @author      gtfish
 // @match       https://claude.ai/*
@@ -13,6 +13,7 @@
 // @updateURL       https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // @downloadURL     https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_common/LLM%E6%B7%BB%E5%8A%A0%E6%8C%89%E9%92%AE/LLM_add_buttons.js
 // ==/UserScript==
+// LLM_add_buttons 1.4.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // LLM_add_buttons 1.3.0: add btnContainerParentLevels to support Claude
 // LLM_add_buttons 1.2.1: fix input box collapsing issue on Gemini by using a wrapper container
 // LLM_add_buttons 1.2.0: lazy storage creation - only create external storage when user edits config, otherwise use built-in defaults for easier updates
@@ -53,6 +54,7 @@
 
     // Configuration constants
     const CONFIG = {
+        DEBUG: false, // set true to enable verbose console logging
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id",
         REQUIRED_UTILS: [
@@ -390,9 +392,14 @@ Full conversation:
         ? GM_getValue(PROMPT_STORAGE_KEYS[3])
         : myPromptJson4_default;
 
+    // Verbose logger gated by CONFIG.DEBUG (errors still use console.error directly)
+    function dbg(...args) {
+        if (CONFIG.DEBUG) console.log(...args);
+    }
+
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
+        dbg("Starting to wait for utils...");
         const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
@@ -405,7 +412,7 @@ Full conversation:
                         return hasFunc;
                     })
                 ) {
-                    console.log("All required utils functions found for LLM_add_buttons");
+                    dbg("All required utils functions found for LLM_add_buttons");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(
@@ -639,7 +646,7 @@ To reset to default, you can save an empty JSON object like {}
                 btnContainer.appendChild(buttonWrapper);
             }
 
-            console.log("Buttons added successfully for", currentConfig.hostnames[0]);
+            dbg("Buttons added successfully for", currentConfig.hostnames[0]);
             isButtonsAdded = true;
         } catch (error) {
             console.error("Failed to add buttons:", error);

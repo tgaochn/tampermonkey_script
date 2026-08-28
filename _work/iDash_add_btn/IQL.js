@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         IQLAddBtn
 // @namespace    IQLAddBtn
-// @version      0.4.3
+// @version      0.5.0
 // @description  任意网站右边加入相关链接 - IQL 页面增加 link
 // @author       gtfish
 // @include      *://idash.sandbox.indeed.net/*
@@ -11,6 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/iDash_add_btn/IQL.js
 
 // ==/UserScript==
+// 0.5.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // 0.4.3: adjust the button position
 // 0.4.2: add workspace link
 // 0.4.1: extract CONFIG constants for better maintainability
@@ -29,6 +30,7 @@
 
     // Configuration constants
     const CONFIG = {
+        DEBUG: false, // set true to enable verbose console logging
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id",
         BUTTON_POSITION: { top: "-10px", left: "550px" },
@@ -57,35 +59,40 @@
         },
     };
 
+    // Verbose logger gated by CONFIG.DEBUG (errors still use console.error directly)
+    function dbg(...args) {
+        if (CONFIG.DEBUG) console.log(...args);
+    }
+
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
+        dbg("Starting to wait for utils...");
         const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log("Checking utils:", window.utils);
-                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
+                dbg("Checking utils:", window.utils);
+                dbg("Available functions:", window.utils ? Object.keys(window.utils) : "none");
 
                 if (
                     window.utils &&
                     requiredFunctions.every((func) => {
                         const hasFunc = typeof window.utils[func] === "function";
-                        console.log(`Checking function ${func}:`, hasFunc);
+                        dbg(`Checking function ${func}:`, hasFunc);
                         return hasFunc;
                     })
                 ) {
-                    console.log("All required functions found");
+                    dbg("All required functions found");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(
                         (func) => !window.utils || typeof window.utils[func] !== "function"
                     );
-                    console.log("Timeout reached. Missing functions:", missingFunctions);
+                    dbg("Timeout reached. Missing functions:", missingFunctions);
                     reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    console.log("Not all functions available yet, checking again in 100ms");
+                    dbg("Not all functions available yet, checking again in 100ms");
                     setTimeout(checkUtils, 100);
                 }
             }

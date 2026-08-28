@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AWS S3 Path Redirector
 // @namespace    aws_s3_path_redirector
-// @version      0.5.0
+// @version      0.6.0
 // @description  Convert S3 path to AWS S3 Console URL and redirect; auto-linkify S3 paths on supported pages
 // @author       gtfish
 // @match        https://*.console.aws.amazon.com/s3/*
@@ -13,6 +13,7 @@
 
 
 // ==/UserScript==
+// 0.6.0: refactor draggable button + dialog to shared utils helpers (createDraggableButton / createInputDialog)
 // 0.5.0: make "Parse S3 Path" button draggable (position persisted via localStorage); default position centered
 // 0.4.0: auto-linkify plain-text S3 paths (s3://, s3a://, s3n://, ARN) into clickable AWS S3 console links on supported pages (SageMaker, S3); add @match for SageMaker
 // 0.3.0: support additional S3-compatible protocols (s3a://, s3n://) and AWS S3 HTTPS URLs (virtual-hosted/path-style) and S3 ARN
@@ -157,260 +158,97 @@
     }
 
     // Create input dialog for S3 path
-    function createS3PathDialog() {
-        return new Promise((resolve) => {
-            // Create modal container
-            const modal = document.createElement("div");
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 10000;
-            `;
+    function createS3PathDialog(utils) {
+        // Parsed-URL display area (shown by Parse / Copy / Redirect actions)
+        const parsedUrlDisplay = document.createElement("div");
+        parsedUrlDisplay.style.cssText = `
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        `;
 
-            // Create dialog box
-            const dialog = document.createElement("div");
-            dialog.style.cssText = `
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: 600px;
-                max-width: 90%;
-            `;
+        const parsedUrlLabel = document.createElement("div");
+        parsedUrlLabel.textContent = "Parsed URL:";
+        parsedUrlLabel.style.cssText = "font-size:12px;color:#666;margin-bottom:5px;font-weight:bold;";
 
-            // Add title
-            const titleElement = document.createElement("h3");
-            titleElement.textContent = "AWS S3 Path Redirector";
-            titleElement.style.marginBottom = "15px";
+        const parsedUrlText = document.createElement("div");
+        parsedUrlText.style.cssText = "font-family:monospace;font-size:12px;color:#333;word-break:break-all;user-select:all;";
 
-            // Add description
-            const descElement = document.createElement("p");
-            descElement.textContent = "Enter S3 path (s3://, s3a://, s3n://, AWS S3 HTTPS URL, or arn:aws:s3:::...)";
-            descElement.style.marginBottom = "15px";
-            descElement.style.color = "#666";
-            descElement.style.fontSize = "14px";
+        parsedUrlDisplay.appendChild(parsedUrlLabel);
+        parsedUrlDisplay.appendChild(parsedUrlText);
 
-            // Add input field
-            const input = document.createElement("input");
-            input.type = "text";
-            input.placeholder = "s3://bucket-name/path/to/file";
-            input.style.cssText = `
-                width: 100%;
-                padding: 8px;
-                margin-bottom: 15px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                font-family: monospace;
-                font-size: 14px;
-                box-sizing: border-box;
-            `;
-
-            // Add error message area
-            const errorMsg = document.createElement("div");
-            errorMsg.style.cssText = `
-                color: red;
-                font-size: 12px;
-                margin-bottom: 15px;
-                min-height: 20px;
-                display: none;
-            `;
-
-            // Add parsed URL display area
-            const parsedUrlDisplay = document.createElement("div");
-            parsedUrlDisplay.style.cssText = `
-                margin-bottom: 15px;
-                padding: 10px;
-                background: #f5f5f5;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                display: none;
-            `;
-
-            const parsedUrlLabel = document.createElement("div");
-            parsedUrlLabel.textContent = "Parsed URL:";
-            parsedUrlLabel.style.cssText = `
-                font-size: 12px;
-                color: #666;
-                margin-bottom: 5px;
-                font-weight: bold;
-            `;
-
-            const parsedUrlText = document.createElement("div");
-            parsedUrlText.style.cssText = `
-                font-family: monospace;
-                font-size: 12px;
-                color: #333;
-                word-break: break-all;
-                user-select: all;
-            `;
-
-            parsedUrlDisplay.appendChild(parsedUrlLabel);
-            parsedUrlDisplay.appendChild(parsedUrlText);
-
-            // Add buttons
-            const buttonContainer = document.createElement("div");
-            buttonContainer.style.cssText = `
-                display: flex;
-                justify-content: flex-end;
-                gap: 10px;
-            `;
-
-            // Helper function to validate and parse S3 path
-            function validateAndParseS3Path(showUrl = false) {
-                const s3Path = input.value.trim();
-                if (!s3Path) {
-                    errorMsg.textContent = "Please enter an S3 path";
-                    errorMsg.style.display = "block";
-                    parsedUrlDisplay.style.display = "none";
-                    return null;
-                }
-
-                const parsed = parseS3Path(s3Path);
-                if (!parsed) {
-                    errorMsg.textContent = "Invalid S3 path. Supported: s3://, s3a://, s3n://, https://...amazonaws.com/..., arn:aws:s3:::...";
-                    errorMsg.style.display = "block";
-                    parsedUrlDisplay.style.display = "none";
-                    return null;
-                }
-
-                errorMsg.style.display = "none";
-                const url = buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
-                
-                if (showUrl) {
-                    parsedUrlText.textContent = url;
-                    parsedUrlDisplay.style.display = "block";
-                }
-                
-                return url;
+        // Validate the current input; optionally reveal the parsed URL. Returns the URL or null.
+        function validateAndParse(api, showUrl) {
+            const s3Path = api.value();
+            if (!s3Path) {
+                api.showError("Please enter an S3 path");
+                parsedUrlDisplay.style.display = "none";
+                return null;
             }
-
-            // Parse button
-            const parseButton = document.createElement("button");
-            parseButton.textContent = "Parse";
-            parseButton.style.cssText = `
-                padding: 8px 16px;
-                background: #FF9800;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-            `;
-
-            parseButton.onclick = () => {
-                validateAndParseS3Path(true);
-            };
-
-            // Redirect button
-            const redirectButton = document.createElement("button");
-            redirectButton.textContent = "Redirect";
-            redirectButton.style.cssText = `
-                padding: 8px 16px;
-                background: #009688;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-            `;
-
-            redirectButton.onclick = () => {
-                const url = validateAndParseS3Path(true);
-                if (url) {
-                    modal.remove();
-                    window.location.href = url;
-                    resolve(url);
-                }
-            };
-
-            // Copy URL button
-            const copyUrlButton = document.createElement("button");
-            copyUrlButton.textContent = "Copy URL";
-            copyUrlButton.style.cssText = `
-                padding: 8px 16px;
-                background: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-            `;
-
-            copyUrlButton.onclick = async () => {
-                const url = validateAndParseS3Path(true);
-                if (url) {
-                    try {
-                        await navigator.clipboard.writeText(url);
-                        // Show success feedback
-                        const originalText = copyUrlButton.textContent;
-                        copyUrlButton.textContent = "Copied!";
-                        copyUrlButton.style.background = "#4CAF50";
-                        setTimeout(() => {
-                            copyUrlButton.textContent = originalText;
-                            copyUrlButton.style.background = "#2196F3";
-                        }, 2000);
-                    } catch (err) {
-                        console.error("Failed to copy URL:", err);
-                        errorMsg.textContent = "Failed to copy URL to clipboard";
-                        errorMsg.style.display = "block";
-                    }
-                }
-            };
-
-            const cancelButton = document.createElement("button");
-            cancelButton.textContent = "Cancel";
-            cancelButton.style.cssText = `
-                padding: 8px 16px;
-                background: #e0e0e0;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-            `;
-
-            function handleCancel() {
-                modal.remove();
-                resolve(null);
+            const parsed = parseS3Path(s3Path);
+            if (!parsed) {
+                api.showError(
+                    "Invalid S3 path. Supported: s3://, s3a://, s3n://, https://...amazonaws.com/..., arn:aws:s3:::..."
+                );
+                parsedUrlDisplay.style.display = "none";
+                return null;
             }
+            api.clearError();
+            const url = buildS3ConsoleUrl(parsed.bucket, parsed.prefix);
+            if (showUrl) {
+                parsedUrlText.textContent = url;
+                parsedUrlDisplay.style.display = "block";
+            }
+            return url;
+        }
 
-            // Handle Enter key - default to redirect
-            input.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    redirectButton.click();
-                }
-            });
-
-            cancelButton.onclick = handleCancel;
-
-            // Close on background click
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    handleCancel();
-                }
-            };
-
-            // Assemble and show dialog
-            buttonContainer.appendChild(cancelButton);
-            buttonContainer.appendChild(parseButton);
-            buttonContainer.appendChild(copyUrlButton);
-            buttonContainer.appendChild(redirectButton);
-            dialog.appendChild(titleElement);
-            dialog.appendChild(descElement);
-            dialog.appendChild(input);
-            dialog.appendChild(errorMsg);
-            dialog.appendChild(parsedUrlDisplay);
-            dialog.appendChild(buttonContainer);
-            modal.appendChild(dialog);
-            document.body.appendChild(modal);
-
-            // Focus input field
-            input.focus();
+        utils.createInputDialog({
+            title: "AWS S3 Path Redirector",
+            description: "Enter S3 path (s3://, s3a://, s3n://, AWS S3 HTTPS URL, or arn:aws:s3:::...)",
+            placeholder: "s3://bucket-name/path/to/file",
+            extraContent: parsedUrlDisplay,
+            enterButton: "Redirect",
+            buttons: [
+                { label: "Cancel", kind: "cancel", onClick: (api) => api.close() },
+                { label: "Parse", kind: "secondary", onClick: (api) => validateAndParse(api, true) },
+                {
+                    label: "Copy URL",
+                    kind: "accent",
+                    onClick: async (api, btn) => {
+                        const url = validateAndParse(api, true);
+                        if (!url) return;
+                        try {
+                            await navigator.clipboard.writeText(url);
+                            // Show success feedback on the button itself
+                            const originalText = btn.textContent;
+                            const originalBg = btn.style.background;
+                            btn.textContent = "Copied!";
+                            btn.style.background = "#4CAF50";
+                            setTimeout(() => {
+                                btn.textContent = originalText;
+                                btn.style.background = originalBg;
+                            }, 2000);
+                        } catch (err) {
+                            console.error("Failed to copy URL:", err);
+                            api.showError("Failed to copy URL to clipboard");
+                        }
+                    },
+                },
+                {
+                    label: "Redirect",
+                    kind: "primary",
+                    onClick: (api) => {
+                        const url = validateAndParse(api, true);
+                        if (url) {
+                            api.close();
+                            window.location.href = url;
+                        }
+                    },
+                },
+            ],
         });
     }
 
@@ -434,146 +272,17 @@
         });
     }
 
-    // Load persisted button position from localStorage; returns {left, top} px or null
-    function loadFloatingButtonPos() {
-        try {
-            const raw = localStorage.getItem(CONFIG.BUTTON_POS_KEY);
-            if (!raw) return null;
-            const pos = JSON.parse(raw);
-            if (pos && Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
-                return { left: pos.left, top: pos.top };
-            }
-        } catch (e) {
-            console.error("Failed to load button position:", e);
-        }
-        return null;
-    }
-
-    function saveFloatingButtonPos(pos) {
-        try {
-            localStorage.setItem(CONFIG.BUTTON_POS_KEY, JSON.stringify(pos));
-        } catch (e) {
-            console.error("Failed to save button position:", e);
-        }
-    }
-
-    // Clamp {left, top} so the button stays fully inside the viewport
-    function clampToViewport(left, top, el) {
-        const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
-        const maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
-        return {
-            left: Math.max(0, Math.min(left, maxLeft)),
-            top: Math.max(0, Math.min(top, maxTop)),
-        };
-    }
-
-    // Make the button draggable; persists position on drop and suppresses the
-    // click that would otherwise fire at the end of a drag.
-    function makeFloatingButtonDraggable(button) {
-        let dragging = false;
-        let moved = false;
-        let startX = 0;
-        let startY = 0;
-        let startLeft = 0;
-        let startTop = 0;
-
-        button.addEventListener("mousedown", (e) => {
-            if (e.button !== 0) return;
-            dragging = true;
-            moved = false;
-            startX = e.clientX;
-            startY = e.clientY;
-            const rect = button.getBoundingClientRect();
-            startLeft = rect.left;
-            startTop = rect.top;
-            e.preventDefault();
+    // Create the floating (draggable) button that opens the S3 path dialog.
+    // Position is persisted in localStorage (default: top-center) via shared utils.
+    function createFloatingButton(utils) {
+        return utils.createDraggableButton({
+            id: CONFIG.BUTTON_ID,
+            text: "Parse S3 Path",
+            storageKey: CONFIG.BUTTON_POS_KEY,
+            defaultPosition: "top-center",
+            threshold: CONFIG.BUTTON_DRAG_THRESHOLD,
+            onClick: () => createS3PathDialog(utils),
         });
-
-        document.addEventListener("mousemove", (e) => {
-            if (!dragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            if (!moved && Math.abs(dx) < CONFIG.BUTTON_DRAG_THRESHOLD && Math.abs(dy) < CONFIG.BUTTON_DRAG_THRESHOLD) {
-                return;
-            }
-            moved = true;
-            const pos = clampToViewport(startLeft + dx, startTop + dy, button);
-            button.style.left = pos.left + "px";
-            button.style.top = pos.top + "px";
-        });
-
-        document.addEventListener("mouseup", () => {
-            if (!dragging) return;
-            dragging = false;
-            if (moved) {
-                saveFloatingButtonPos({
-                    left: parseFloat(button.style.left),
-                    top: parseFloat(button.style.top),
-                });
-            }
-        });
-
-        // Swallow the click that ends a drag so it doesn't open the dialog
-        button.addEventListener(
-            "click",
-            (e) => {
-                if (moved) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    moved = false;
-                }
-            },
-            true
-        );
-    }
-
-    // Create floating (draggable) button to trigger dialog
-    function createFloatingButton() {
-        const button = document.createElement("button");
-        button.textContent = "Parse S3 Path";
-        button.id = CONFIG.BUTTON_ID;
-        button.style.cssText = `
-            position: fixed;
-            z-index: 9999;
-            padding: 10px 16px;
-            background: #009688;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: move;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            user-select: none;
-        `;
-
-        button.addEventListener("mouseenter", () => {
-            button.style.background = "#00796b";
-        });
-
-        button.addEventListener("mouseleave", () => {
-            button.style.background = "#009688";
-        });
-
-        button.onclick = () => {
-            createS3PathDialog();
-        };
-
-        return button;
-    }
-
-    // Position the button (persisted position if present, else centered) and
-    // enable dragging. Must run after the button is in the DOM so offsetWidth
-    // and offsetHeight are measurable.
-    function positionAndEnableDrag(button) {
-        const saved = loadFloatingButtonPos();
-        const initial = saved
-            ? clampToViewport(saved.left, saved.top, button)
-            : clampToViewport((window.innerWidth - button.offsetWidth) / 2, 10, button);
-        button.style.left = initial.left + "px";
-        button.style.top = initial.top + "px";
-
-        makeFloatingButtonDraggable(button);
     }
 
     // ========================================================================
@@ -755,13 +464,15 @@
     // Initialize script
     async function initScript() {
         try {
-            await waitForUtils();
+            const utils = await waitForUtils();
             const currentUrl = window.location.href;
 
             if (urlMatchesAnyPattern(currentUrl, CONFIG.BUTTON_URL_PATTERNS)) {
-                const button = createFloatingButton();
-                document.body.appendChild(button);
-                positionAndEnableDrag(button);
+                if (utils) {
+                    createFloatingButton(utils); // appends + positions + wires drag internally
+                } else {
+                    console.error("utils not loaded; floating button unavailable");
+                }
             }
 
             if (urlMatchesAnyPattern(currentUrl, CONFIG.LINKIFY_URL_PATTERNS)) {

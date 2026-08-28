@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.1.4
+// @version      1.2.0
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.2.0: gate verbose logging behind CONFIG.DEBUG (waitForUtils polling + [AWS Debug] + 3s setInterval)
 // 1.1.4: add AWS console jump button for sagemaker and cloudwatch
 // 1.1.3: add AWS console jump button
 // 1.1.2: add preapply/postapply shadow url pattern
@@ -65,6 +66,7 @@
 
     // Configuration constants
     const CONFIG = {
+        DEBUG: false, // set true to enable verbose console logging
         UTILS_TIMEOUT: 10000,
         CONTAINER_ID: "container_id_work",
         BUTTON_POSITION: { top: "-10px", left: "1200px" },
@@ -99,7 +101,7 @@
             pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/((console)|(sagemaker)|(cloudwatch))\/home\?region=us-east-2.*$/,
             buttonPosition: { top: "60px", left: "500px" },
             customButtons: (url, utils) => {
-                console.log("[AWS Debug] customButtons called with URL:", url);
+                dbg("[AWS Debug] customButtons called with URL:", url);
                 return [
                     // utils.createButtonOpenUrl(
                         // "Sagemaker Studio Trigger",
@@ -505,36 +507,41 @@
         };
     }
 
+    // Verbose logger gated by CONFIG.DEBUG (errors still use console.error directly)
+    function dbg(...args) {
+        if (CONFIG.DEBUG) console.log(...args);
+    }
+
     // Wait for utils to load
     function waitForUtils(timeout = CONFIG.UTILS_TIMEOUT) {
-        console.log("Starting to wait for utils...");
+        dbg("Starting to wait for utils...");
         const requiredFunctions = CONFIG.REQUIRED_UTILS;
 
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             function checkUtils() {
-                console.log("Checking utils:", window.utils);
-                console.log("Available functions:", window.utils ? Object.keys(window.utils) : "none");
+                dbg("Checking utils:", window.utils);
+                dbg("Available functions:", window.utils ? Object.keys(window.utils) : "none");
 
                 if (
                     window.utils &&
                     requiredFunctions.every((func) => {
                         const hasFunc = typeof window.utils[func] === "function";
-                        console.log(`Checking function ${func}:`, hasFunc);
+                        dbg(`Checking function ${func}:`, hasFunc);
                         return hasFunc;
                     })
                 ) {
-                    console.log("All required functions found");
+                    dbg("All required functions found");
                     resolve(window.utils);
                 } else if (Date.now() - startTime >= timeout) {
                     const missingFunctions = requiredFunctions.filter(
                         (func) => !window.utils || typeof window.utils[func] !== "function"
                     );
-                    console.log("Timeout reached. Missing functions:", missingFunctions);
+                    dbg("Timeout reached. Missing functions:", missingFunctions);
                     reject(new Error(`Timeout waiting for utils. Missing functions: ${missingFunctions.join(", ")}`));
                 } else {
-                    console.log("Not all functions available yet, checking again in 100ms");
+                    dbg("Not all functions available yet, checking again in 100ms");
                     setTimeout(checkUtils, 100);
                 }
             }
@@ -546,12 +553,6 @@
     async function initScript() {
         try {
             const utils = await waitForUtils();
-
-            // Debug: Log current URL and pattern match status
-            const currentUrl = window.location.href;
-            const awsPattern = /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2.*$/;
-            console.log("[AWS Debug] Current URL:", currentUrl);
-            console.log("[AWS Debug] AWS pattern matches:", awsPattern.test(currentUrl));
 
             const scriptConfig = {
                 CONFIG,
@@ -565,12 +566,18 @@
 
             utils.initAddBtn2AnyWebsite(scriptConfig);
 
-            // Debug: Monitor URL changes
-            setInterval(() => {
-                const newUrl = window.location.href;
-                const containerExists = document.getElementById(CONFIG.CONTAINER_ID);
-                console.log("[AWS Debug] Periodic check - URL:", newUrl, "| Pattern matches:", awsPattern.test(newUrl), "| Container exists:", !!containerExists);
-            }, 3000);
+            // Verbose debugging: log URL/pattern status and periodically re-check the container.
+            // Only runs (and only creates the interval) when CONFIG.DEBUG is enabled.
+            if (CONFIG.DEBUG) {
+                const awsPattern = /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/console\/home\?region=us-east-2.*$/;
+                dbg("[AWS Debug] Current URL:", window.location.href);
+                dbg("[AWS Debug] AWS pattern matches:", awsPattern.test(window.location.href));
+                setInterval(() => {
+                    const newUrl = window.location.href;
+                    const containerExists = document.getElementById(CONFIG.CONTAINER_ID);
+                    dbg("[AWS Debug] Periodic check - URL:", newUrl, "| Pattern matches:", awsPattern.test(newUrl), "| Container exists:", !!containerExists);
+                }, 3000);
+            }
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
