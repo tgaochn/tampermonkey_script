@@ -165,6 +165,13 @@
             opener(buildModelOverviewUrl(name));
         };
 
+        // 把 model name 里的所有连接符 (- 和 _) 统一替换成 sep, 结果写回输入框
+        const normalizeSeparators = (api, sep) => {
+            api.input.value = api.input.value.replace(/[-_]/g, sep);
+            api.clearError();
+            api.input.focus();
+        };
+
         utils.createInputDialog({
             title: "Go to Model",
             description: "Enter model name to open its LATEST overview page",
@@ -172,6 +179,8 @@
             enterButton: "Go",
             buttons: [
                 { label: "Cancel", kind: "cancel", onClick: (api) => api.close() },
+                { label: "format with -", kind: "secondary", onClick: (api) => normalizeSeparators(api, "-") },
+                { label: "format with _", kind: "secondary", onClick: (api) => normalizeSeparators(api, "_") },
                 {
                     label: "Open in New Tab",
                     kind: "accent",
@@ -200,12 +209,6 @@
                     label: "Go to Model",
                     title: "输入 model name 跳转到 LATEST overview 页面",
                     onClick: () => createModelJumpDialog(utils),
-                },
-                // 示例第二个入口：可换成任何功能，改这里即可
-                {
-                    label: "DNH tool",
-                    title: "打开 me-core-metrics",
-                    onClick: () => window.open("https://me-core-metrics.sandbox.indeed.net/", "_blank", "noopener,noreferrer"),
                 },
             ],
         });
