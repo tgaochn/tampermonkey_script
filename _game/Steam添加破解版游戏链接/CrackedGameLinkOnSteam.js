@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.8
+// @version 0.7.9
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 // changelog:
+// 0.7.9: fixed gamers520 url
 // 0.7.7: Add 3DM forum mod buttons (visit + URL mapping) next to nexusmods
 // 0.7.6: Add Google search buttons for Chinese and English game names
 // 0.7.5: Refactor parseGameName to data-driven pattern array (NAME_SPLIT_PATTERNS) for extensibility; share separator chars constant
@@ -1152,7 +1153,7 @@
                 var button520 = createButton(
                     "gamer520",
                     "#007037",
-                    "https://www.gamer520.com/?s=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
+                    "https://www.gamers520.com/?s=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
                 );
 
                 // Replace 3DM button with one using Chinese name
