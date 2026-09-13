@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.4.0
+// @version             0.4.1
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.4.1: 修复总金额消失: 页面改版后金额选择器由 CashFlowCurrency__Root 变为 BreakdownItem__Price
 // 0.4.0: 修复切换月份时偶发的 React removeChild 报错 (不再移动/改写 React 管理的 DOM 节点)
 // 0.3.2: Sankey Diagram 节点支持中键/Ctrl+点击在新标签页打开
 // 0.3.1: Income 部分也支持多选框/总金额/中键Ctrl+点击
@@ -114,7 +115,7 @@
 
     // ! 获取每个分类行的金额
     function getAmountFromItem(item) {
-        const priceEl = item.querySelector('[class*="CashFlowCurrency__Root"]');
+        const priceEl = item.querySelector('[class*="BreakdownItem__Price"], [class*="CashFlowCurrency__Root"]');
         if (!priceEl) return 0;
         const amount = parseFloat(priceEl.textContent.replace(/[$,]/g, ""));
         return isNaN(amount) ? 0 : amount;
