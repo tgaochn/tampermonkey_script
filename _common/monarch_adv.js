@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.4.1
+// @version             0.5.0
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.5.0: Account Overview 页面添加账户分组多选框/全选/清空/反选 + 选中账户总金额
 // 0.4.1: 修复总金额消失: 页面改版后金额选择器由 CashFlowCurrency__Root 变为 BreakdownItem__Price
 // 0.4.0: 修复切换月份时偶发的 React removeChild 报错 (不再移动/改写 React 管理的 DOM 节点)
 // 0.3.2: Sankey Diagram 节点支持中键/Ctrl+点击在新标签页打开
@@ -71,6 +72,8 @@
         color: #555;
         margin-right: 4px;
     `;
+
+    const ACCOUNT_ACCENT_COLOR = "#4a90e2";
 
     // ! 为元素添加中键/Ctrl+点击在新标签页打开的功能
     function addNewTabClickHandlers(el) {
@@ -249,6 +252,135 @@
         }
     }
 
+    // ! 获取账户行的余额 (余额 = "最后更新" StatusSubText 的前一个兄弟节点)
+    function getAccountAmount(item) {
+        const status = item.querySelector('[class*="AccountListItem__StatusSubText"]');
+        const priceEl = status ? status.previousElementSibling : null;
+        if (!priceEl) return 0;
+        const amount = parseFloat(priceEl.textContent.replace(/[$,]/g, ""));
+        return isNaN(amount) ? 0 : amount;
+    }
+
+    // ! 更新账户分组标题: 选中金额 / 总金额 (百分比)
+    function updateAccountGroupTotal(card) {
+        const title = card.querySelector('[class*="CardTitle"]');
+        if (!title) return;
+
+        const items = card.querySelectorAll('[class*="AccountListItem__Root"]');
+        let total = 0;
+        let selected = 0;
+        let checkedCount = 0;
+
+        items.forEach((item) => {
+            const amount = getAccountAmount(item);
+            total += amount;
+            const cb = item.querySelector(".monarch-adv-account-checkbox");
+            if (cb && cb.checked) {
+                selected += amount;
+                checkedCount++;
+            }
+        });
+
+        if (items.length > 0 && total !== 0) {
+            let suffix;
+            const allChecked = checkedCount === items.length;
+            const noneChecked = checkedCount === 0;
+            if (allChecked || noneChecked) {
+                suffix = ` (${formatMoney(total)})`;
+            } else {
+                const pct = ((selected / total) * 100).toFixed(1);
+                suffix = ` (${formatMoney(selected)} / ${formatMoney(total)} = ${pct}%)`;
+            }
+
+            let span = title.querySelector(".monarch-adv-account-total");
+            if (!span) {
+                span = document.createElement("span");
+                span.className = "monarch-adv-account-total";
+                title.appendChild(span);
+            }
+            if (span.textContent !== suffix) {
+                span.textContent = suffix;
+            }
+        }
+    }
+
+    // ! Account Overview 页面: 每个账户分组添加多选框/全选/清空/反选 + 选中账户总金额
+    function addAccountOverviewTotal() {
+        const groupCards = document.querySelectorAll('[class*="AccountGroupCard__Root"]');
+        for (const card of groupCards) {
+            const title = card.querySelector('[class*="CardTitle"]');
+            if (!title) continue;
+
+            // 在标题前添加 全选/清空/反选 按钮
+            if (!card.querySelector(".monarch-adv-account-select-all")) {
+                const btnContainer = document.createElement("span");
+                btnContainer.style.cssText = "margin-right: 8px; white-space: nowrap;";
+
+                const selectAllBtn = document.createElement("button");
+                selectAllBtn.textContent = "All";
+                selectAllBtn.className = "monarch-adv-account-select-all";
+                selectAllBtn.style.cssText = BTN_STYLE;
+                selectAllBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = true));
+                    updateAccountGroupTotal(card);
+                });
+
+                const clearBtn = document.createElement("button");
+                clearBtn.textContent = "Clear";
+                clearBtn.className = "monarch-adv-account-clear";
+                clearBtn.style.cssText = BTN_STYLE;
+                clearBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = false));
+                    updateAccountGroupTotal(card);
+                });
+
+                const invertBtn = document.createElement("button");
+                invertBtn.textContent = "Invert";
+                invertBtn.className = "monarch-adv-account-invert";
+                invertBtn.style.cssText = BTN_STYLE;
+                invertBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = !cb.checked));
+                    updateAccountGroupTotal(card);
+                });
+
+                btnContainer.appendChild(selectAllBtn);
+                btnContainer.appendChild(clearBtn);
+                btnContainer.appendChild(invertBtn);
+
+                // 插到标题所在列之前 (标题左侧)
+                const titleContainer = title.parentNode;
+                if (titleContainer && titleContainer.parentNode) {
+                    titleContainer.parentNode.insertBefore(btnContainer, titleContainer);
+                }
+            }
+
+            // 为每个账户行添加 checkbox
+            const items = card.querySelectorAll('[class*="AccountListItem__Root"]');
+            items.forEach((item) => {
+                // 已经添加过则跳过
+                if (item.querySelector(":scope > .monarch-adv-account-checkbox")) return;
+
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.className = "monarch-adv-account-checkbox";
+                cb.checked = true; // 默认全部选中
+                cb.style.cssText = CHECKBOX_BASE_STYLE + `accent-color: ${ACCOUNT_ACCENT_COLOR};`;
+                // 阻止点击冒泡, 避免触发账户行本身的行为
+                cb.addEventListener("click", (e) => e.stopPropagation());
+                cb.addEventListener("change", () => updateAccountGroupTotal(card));
+
+                item.style.position = "relative";
+                item.style.paddingLeft = "24px";
+                item.insertBefore(cb, item.firstChild);
+            });
+
+            updateAccountGroupTotal(card);
+        }
+    }
+
     // ! Sankey Diagram 节点: 添加中键/Ctrl+点击在新标签页打开
     function addSankeyNewTabSupport() {
         const sankeyNodes = document.querySelectorAll('g.node.is-clickable');
@@ -259,12 +391,14 @@
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             addExpenseTotal();
+            addAccountOverviewTotal();
             addSankeyNewTabSupport();
         }, 300);
     }
 
     function initScript() {
         addExpenseTotal();
+        addAccountOverviewTotal();
         addSankeyNewTabSupport();
 
         const observer = new MutationObserver(debouncedUpdate);
