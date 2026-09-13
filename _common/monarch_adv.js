@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.5.0
+// @version             0.5.1
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.5.1: 账户复选框状态持久化 (localStorage), 刷新页面后保持选中/未选中
 // 0.5.0: Account Overview 页面添加账户分组多选框/全选/清空/反选 + 选中账户总金额
 // 0.4.1: 修复总金额消失: 页面改版后金额选择器由 CashFlowCurrency__Root 变为 BreakdownItem__Price
 // 0.4.0: 修复切换月份时偶发的 React removeChild 报错 (不再移动/改写 React 管理的 DOM 节点)
@@ -261,6 +262,33 @@
         return isNaN(amount) ? 0 : amount;
     }
 
+    const ACCOUNT_CHECK_STORAGE_KEY = "monarch_adv_account_checks";
+
+    // ! 从 localStorage 读取账户复选框状态
+    function loadAccountCheckMap() {
+        try {
+            const raw = localStorage.getItem(ACCOUNT_CHECK_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : {};
+            return parsed && typeof parsed === "object" ? parsed : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // ! 保存账户复选框状态到 localStorage
+    function saveAccountCheckMap(map) {
+        try {
+            localStorage.setItem(ACCOUNT_CHECK_STORAGE_KEY, JSON.stringify(map));
+        } catch (e) {}
+    }
+
+    // ! 从账户行链接中提取账户 id 作为持久化的 key
+    function getAccountKey(item) {
+        const href = item.getAttribute("href") || "";
+        const parts = href.split("/").filter(Boolean);
+        return parts[parts.length - 1] || "";
+    }
+
     // ! 更新账户分组标题: 选中金额 / 总金额 (百分比)
     function updateAccountGroupTotal(card) {
         const title = card.querySelector('[class*="CardTitle"]');
@@ -306,6 +334,7 @@
 
     // ! Account Overview 页面: 每个账户分组添加多选框/全选/清空/反选 + 选中账户总金额
     function addAccountOverviewTotal() {
+        const checkMap = loadAccountCheckMap();
         const groupCards = document.querySelectorAll('[class*="AccountGroupCard__Root"]');
         for (const card of groupCards) {
             const title = card.querySelector('[class*="CardTitle"]');
@@ -323,6 +352,11 @@
                 selectAllBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = true));
+                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                        const key = getAccountKey(item);
+                        if (key) checkMap[key] = true;
+                    });
+                    saveAccountCheckMap(checkMap);
                     updateAccountGroupTotal(card);
                 });
 
@@ -333,6 +367,11 @@
                 clearBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = false));
+                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                        const key = getAccountKey(item);
+                        if (key) checkMap[key] = false;
+                    });
+                    saveAccountCheckMap(checkMap);
                     updateAccountGroupTotal(card);
                 });
 
@@ -343,6 +382,12 @@
                 invertBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = !cb.checked));
+                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                        const key = getAccountKey(item);
+                        const cb = item.querySelector(".monarch-adv-account-checkbox");
+                        if (key && cb) checkMap[key] = cb.checked;
+                    });
+                    saveAccountCheckMap(checkMap);
                     updateAccountGroupTotal(card);
                 });
 
@@ -363,14 +408,20 @@
                 // 已经添加过则跳过
                 if (item.querySelector(":scope > .monarch-adv-account-checkbox")) return;
 
+                const key = getAccountKey(item);
                 const cb = document.createElement("input");
                 cb.type = "checkbox";
                 cb.className = "monarch-adv-account-checkbox";
-                cb.checked = true; // 默认全部选中
+                const saved = checkMap[key];
+                cb.checked = saved === undefined ? true : !!saved; // 有记录按记录, 否则默认选中
                 cb.style.cssText = CHECKBOX_BASE_STYLE + `accent-color: ${ACCOUNT_ACCENT_COLOR};`;
                 // 阻止点击冒泡, 避免触发账户行本身的行为
                 cb.addEventListener("click", (e) => e.stopPropagation());
-                cb.addEventListener("change", () => updateAccountGroupTotal(card));
+                cb.addEventListener("change", () => {
+                    if (key) checkMap[key] = cb.checked;
+                    saveAccountCheckMap(checkMap);
+                    updateAccountGroupTotal(card);
+                });
 
                 item.style.position = "relative";
                 item.style.paddingLeft = "24px";
