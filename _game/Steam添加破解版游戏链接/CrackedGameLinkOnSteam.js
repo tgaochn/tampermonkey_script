@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.7.9
+// @version 0.8.1
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,8 @@
 // ==/UserScript==
 
 // changelog:
+// 0.8.1: Fix gamer520 link going to homepage without search term (domain should be gamer520.com, not gamers520.com which redirects and drops ?s=); replace full-width colon ： with a space in the gamer520 search keyword
+// 0.8.0: Fix buttons missing on new-layout pages: appdetails may return data under a different appid key (e.g. 4348910 -> 5113870), so fall back to the first entry; add .highlight_ctn as an insertion anchor for the new layout
 // 0.7.9: fixed gamers520 url
 // 0.7.7: Add 3DM forum mod buttons (visit + URL mapping) next to nexusmods
 // 0.7.6: Add Google search buttons for Chinese and English game names
@@ -1027,8 +1029,11 @@
                     finalGameNameInEng = customNames.english.replace(/_/g, "+");
                 } else {
                     const json = await response.json();
-                    const data = json[appid];
-                    if (data.success !== true) {
+                    // Steam may return appdetails under a different appid key than the one
+                    // requested (e.g. appids=4348910 returns key 5113870), so fall back to
+                    // the first entry instead of crashing on an undefined json[appid].
+                    const data = json[appid] || Object.values(json)[0];
+                    if (!data || data.success !== true) {
                         gameName = window.location.pathname.split("/")[3];
                     } else {
                         gameName = data.data.name;
@@ -1134,9 +1139,9 @@
                     finalGameNameInChn = customNames.chinese.replace(/_/g, "+");
                 } else {
                     const json = await response.json();
-                    const data = json[appid];
+                    const data = json[appid] || Object.values(json)[0];
                     var gameName;
-                    if (data.success !== true) {
+                    if (!data || data.success !== true) {
                         gameName = window.location.pathname.split("/")[3];
                     } else {
                         gameName = data.data.name;
@@ -1153,7 +1158,7 @@
                 var button520 = createButton(
                     "gamer520",
                     "#007037",
-                    "https://www.gamers520.com/?s=" + encodeURIComponent(finalGameNameInChn).replace(/%2B/g, "+")
+                    "https://www.gamer520.com/?s=" + encodeURIComponent(finalGameNameInChn.replace(/：/g, " ")).replace(/%2B/g, "+")
                 );
 
                 // Replace 3DM button with one using Chinese name
@@ -1532,19 +1537,28 @@
         buttonContainer.appendChild(row2);
         buttonContainer.appendChild(row3);
 
-        // Try to insert after #game_highlights > div.leftcol > div
-        let insertTarget = document.querySelector("#game_highlights > div.leftcol > div");
-
-        if (insertTarget && insertTarget.parentNode) {
-            // Insert after the target element
-            if (insertTarget.nextSibling) {
-                insertTarget.parentNode.insertBefore(buttonContainer, insertTarget.nextSibling);
-            } else {
-                insertTarget.parentNode.appendChild(buttonContainer);
+        // Steam has (at least) two store layouts: the classic one (with #game_highlights)
+        // and a newer one that drops semantic ids in favor of hashed class names. Insert
+        // the container after the first anchor that actually exists on the page.
+        const insertAfter = (anchor) => {
+            if (anchor && anchor.parentNode) {
+                if (anchor.nextSibling) {
+                    anchor.parentNode.insertBefore(buttonContainer, anchor.nextSibling);
+                } else {
+                    anchor.parentNode.appendChild(buttonContainer);
+                }
+                return true;
             }
-        } else {
+            return false;
+        };
+
+        const inserted =
+            insertAfter(document.querySelector("#game_highlights > div.leftcol > div")) ||
+            insertAfter(document.querySelector(".highlight_ctn"));
+
+        if (!inserted) {
             // Fallback: use fixed position at top of viewport
-            console.warn("#game_highlights > div.leftcol > div not found, using fixed position");
+            console.warn("No known insertion anchor found, using fixed position");
             buttonContainer.style.position = "fixed";
             buttonContainer.style.top = "80px"; // Below Steam header
             buttonContainer.style.left = "50%";
