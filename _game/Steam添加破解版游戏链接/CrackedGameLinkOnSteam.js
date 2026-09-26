@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Steam 添加破解版游戏链接
 // @description Adds buttons to Steam pages that searches for them on SkidrowReloaded, gamer520, IGG-Games, or x1337x on a new tab.
-// @version 0.8.1
+// @version 0.8.4
 // @license MIT
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -11,6 +11,9 @@
 // ==/UserScript==
 
 // changelog:
+// 0.8.4: Give the 3DM mapping a dedicated minimal dialog (no CN/EN fill buttons)
+// 0.8.3: NexusMods mapping accepts either a game slug or a full URL; add a dedicated dialog (no CN/EN fill buttons)
+// 0.8.2: Add GAMER520_SITE_MAP at the top so the frequently-changing gamer520 domain is edited in one place; the button now uses the mapped value
 // 0.8.1: Fix gamer520 link going to homepage without search term (domain should be gamer520.com, not gamers520.com which redirects and drops ?s=); replace full-width colon ： with a space in the gamer520 search keyword
 // 0.8.0: Fix buttons missing on new-layout pages: appdetails may return data under a different appid key (e.g. 4348910 -> 5113870), so fall back to the first entry; add .highlight_ctn as an insertion anchor for the new layout
 // 0.7.9: fixed gamers520 url
@@ -60,6 +63,10 @@
         return;
     }
 
+    // ==== gamer520 站点映射 ====
+    // gamer520 的网址经常变动。更换网址时，把 base 改成新网址即可。
+    const GAMER520_SEARCH_BASE = "https://www.gamer520.com"; // 当前可用网址
+
     // Helper function to apply consistent inline styles to custom buttons
     function applyButtonStyles(button) {
         button.style.display = "inline-block";
@@ -105,6 +112,18 @@
         const mapping = getNexusModsMapping();
         delete mapping[steamId];
         saveNexusModsMapping(mapping);
+    }
+
+    // Build the final NexusMods URL from a stored mapping value. The value is either
+    // a game slug (e.g. "probablystolen") or a full URL (e.g.
+    // "https://www.nexusmods.com/games/probablystolen").
+    function nexusModsUrl(value) {
+        if (!value) return null;
+        const trimmed = value.trim();
+        if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed; // already a full URL, use as-is
+        }
+        return `https://www.nexusmods.com/games/${trimmed}/mods?sort=updatedAt`;
     }
 
     // Bilibili mapping storage functions using GM_getValue/GM_setValue for cross-device sync
@@ -441,15 +460,69 @@
         input.focus();
     }
 
-    // Function to show mapping input dialog for NexusMods
+    // Dedicated NexusMods mapping dialog. Accepts either a game slug or a full
+    // NexusMods URL. Does not reuse the generic mapping dialog since the CN/EN
+    // fill buttons are meaningless here.
     function showMappingDialog() {
-        showMappingInputDialog({
-            title: "请输入NexusMods上的游戏名称用于直接访问",
-            placeholder: "例如: hollowknightsilksong",
-            onSubmit: (value) => addNexusModsMapping(appid, value),
-            onSuccessMessage: "映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。",
-            onUpdateButton: updateAddMappingButton
-        });
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            min-width: 480px;
+        `;
+
+        const hint = document.createElement("div");
+        hint.style.cssText = "font-size: 12px; color: #666; margin: 4px 0;";
+        hint.textContent = "支持两种输入：① 游戏名，如 probablystolen；② NexusMods 完整链接，如 https://www.nexusmods.com/games/probablystolen";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "游戏名 或 https://www.nexusmods.com/games/...";
+        input.style.cssText = "width: 100%; padding: 10px; font-size: 14px; margin: 10px 0; box-sizing: border-box;";
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "确认";
+        confirmBtn.style.cssText = "background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "取消";
+        cancelBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;";
+
+        const closeDialog = () => document.body.removeChild(dialog);
+
+        confirmBtn.onclick = () => {
+            const value = input.value.trim();
+            if (value) {
+                addNexusModsMapping(appid, value);
+                showToast("映射已添加！现在可以点击nexusmods按钮直接访问该游戏的mod页面。");
+                updateAddMappingButton();
+                closeDialog();
+            }
+        };
+
+        cancelBtn.onclick = closeDialog;
+
+        dialog.innerHTML = `<h3 style="margin-top: 0; color: #333;">请输入NexusMods游戏名称或完整链接</h3>`;
+        dialog.appendChild(hint);
+        dialog.appendChild(input);
+
+        const btnRow = document.createElement("div");
+        btnRow.style.marginTop = "15px";
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        dialog.appendChild(btnRow);
+
+        document.body.appendChild(dialog);
+        input.focus();
     }
 
     // Function to show bilibili mapping input dialog
@@ -463,15 +536,68 @@
         });
     }
 
-    // Function to show 3DM mapping input dialog
+    // Dedicated 3DM mapping dialog: just asks for the 3DM forum mod page URL.
+    // Does not reuse the generic mapping dialog since the CN/EN fill buttons are useless here.
     function show3DMMappingDialog() {
-        showMappingInputDialog({
-            title: "请输入3DM论坛的Mod页面URL",
-            placeholder: "例如: https://bbs.3dmgame.com/forum-xxx-1.html",
-            onSubmit: (value) => add3DMMapping(appid, value),
-            onSuccessMessage: "3DM映射已添加！现在可以点击3DM按钮直接访问该页面。",
-            onUpdateButton: updateAdd3DMMappingButton
-        });
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            min-width: 480px;
+        `;
+
+        const hint = document.createElement("div");
+        hint.style.cssText = "font-size: 12px; color: #666; margin: 4px 0;";
+        hint.textContent = "输入3DM论坛该游戏Mod页面的完整链接";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "例如: https://bbs.3dmgame.com/forum-xxx-1.html";
+        input.style.cssText = "width: 100%; padding: 10px; font-size: 14px; margin: 10px 0; box-sizing: border-box;";
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "确认";
+        confirmBtn.style.cssText = "background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "取消";
+        cancelBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;";
+
+        const closeDialog = () => document.body.removeChild(dialog);
+
+        confirmBtn.onclick = () => {
+            const value = input.value.trim();
+            if (value) {
+                add3DMMapping(appid, value);
+                showToast("3DM映射已添加！现在可以点击3DM按钮直接访问该页面。");
+                updateAdd3DMMappingButton();
+                closeDialog();
+            }
+        };
+
+        cancelBtn.onclick = closeDialog;
+
+        dialog.innerHTML = `<h3 style="margin-top: 0; color: #333;">请输入3DM论坛的Mod页面URL</h3>`;
+        dialog.appendChild(hint);
+        dialog.appendChild(input);
+
+        const btnRow = document.createElement("div");
+        btnRow.style.marginTop = "15px";
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        dialog.appendChild(btnRow);
+
+        document.body.appendChild(dialog);
+        input.focus();
     }
 
     // Dialog to set custom Chinese/English names (overrides API)
@@ -764,13 +890,13 @@
     }
 
     // Function to show nexusmods mapping verification dialog
-    function showNexusModsMappingVerificationDialog(nexusGameName) {
-        const fullUrl = `https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`;
+    function showNexusModsMappingVerificationDialog(value) {
+        const fullUrl = nexusModsUrl(value);
 
         showMappingVerificationDialog({
             title: "NexusMods 映射信息",
-            nameLabel: "游戏名称",
-            nameValue: nexusGameName,
+            nameLabel: "已保存内容",
+            nameValue: value,
             urlLabel: "完整URL",
             url: fullUrl,
             clearButtonId: "clearMapping",
@@ -1158,7 +1284,7 @@
                 var button520 = createButton(
                     "gamer520",
                     "#007037",
-                    "https://www.gamer520.com/?s=" + encodeURIComponent(finalGameNameInChn.replace(/：/g, " ")).replace(/%2B/g, "+")
+                    GAMER520_SEARCH_BASE + "/?s=" + encodeURIComponent(finalGameNameInChn.replace(/：/g, " ")).replace(/%2B/g, "+")
                 );
 
                 // Replace 3DM button with one using Chinese name
@@ -1200,17 +1326,17 @@
 
         const openNexusModsLink = function () {
             const mapping = getNexusModsMapping();
-            const nexusGameName = mapping[appid];
+            const url = nexusModsUrl(mapping[appid]);
 
-            if (nexusGameName) {
-                // Direct link to nexusmods game page
-                window.open(`https://www.nexusmods.com/games/${nexusGameName}/mods?sort=updatedAt`);
+            if (url) {
+                // Direct link: either the stored full URL or a slug-derived game page
+                window.open(url);
             } else {
-                // Fallback to Google search
+                // Fallback to keyword search
                 window.open(
                     // "https://www.google.com/search?q=nexusmods+mods+download+" +
                     "https://www.nexusmods.com/games?keyword=" +
-                        encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
+                    encodeURIComponent(modifiedGameName).replace(/%2B/g, "+")
                 );
             }
         };
@@ -1246,7 +1372,7 @@
                 // Fallback to Chinese name search (same as gamer520)
                 window.open(
                     "https://search.bilibili.com/all?keyword=" +
-                        encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
+                    encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
                 );
             }
         };
@@ -1326,7 +1452,7 @@
             } else {
                 window.open(
                     "https://www.google.com/search?q=3dm论坛+" +
-                        encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
+                    encodeURIComponent(searchKeyword).replace(/%2B/g, "+")
                 );
             }
         };
