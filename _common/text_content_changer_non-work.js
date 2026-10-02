@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.9
+// @version             1.1.10
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
@@ -9,6 +9,7 @@
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
 // @match               https://www.amazon.com/cpe/yourpayments*
+// @match               https://www.amazon.com/cpe/revisepayments*
 // @match               https://www.samsclub.com/account/*
 // @match               https://www.paypal.com/myaccount/*
 // @match               https://www.mydrivers.com/zhuanti/tianti/*
@@ -23,6 +24,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/text_content_changer_non-work.js
 
 // ==/UserScript==
+// 1.1.10: add Amazon revise payments url pattern
 // 1.1.9: add GM_addStyle and several matched URLs
 // 1.1.8: add AmEx BCE Tian
 // 1.1.7: add AmEx BCE Xuan
@@ -76,6 +78,7 @@
             urlRegex: [
                 /^https:\/\/www\.amazon\.com\/checkout.*/,
                 /^https:\/\/www\.amazon\.com\/cpe\/yourpayments.*/,
+                /^https:\/\/www\.amazon\.com\/cpe\/revisepayments.*/,
                 /^https:\/\/www\.samsclub\.com\/account\/.*/,
                 /^https:\/\/www\.paypal\.com\/myaccount\/.*/,
                 /^https:\/\/myaccount\.cleanskyenergy\.com.*/,
