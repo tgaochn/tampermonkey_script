@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name                text_content_changer_non-work - 文本高亮/替换
-// @version             1.1.10
+// @version             1.1.11
 // @description         Change text color/content for specific patterns using regex on non-work URLs
 // @author              gtfish
 // @license             MIT
 // @match               https://www.skidrowreloaded.com/*
 // @match               https://igg-games.com/*
+// @match               https://steamdb.info/*
 // @match               https://www.amazon.com/spr/returns/*
 // @match               https://www.amazon.com/checkout*
 // @match               https://www.amazon.com/cpe/yourpayments*
@@ -190,13 +191,18 @@
             ],
         },
 
-        // ! skidrow 高亮显示最好用的几个网盘
+        // ! skidrow/igg-games 高亮显示最好用的几个网盘
         {
             // https://igg-games.com/sophie-the-girl-from-the-zone-free-download.html
             urlRegex: /^https?:\/\/((www\.)?skidrowreloaded\.com|(www\.)?igg-games\.com)\/.*/,
             textPatterns: [
                 {
                     regex: /MEDIAFIRE/gi,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
+                },
+                {
+                    regex: /MegaUp\.net/gi,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,192,255)",
                 },
@@ -219,6 +225,24 @@
                     regex: /USERSCLOUD/gi,
                     textColor: "rgb(0,0,0)",
                     backColor: "rgb(255,255,128)",
+                },
+            ],
+        },
+
+        // ! steamdb 高亮RMB
+        {
+            // https://steamdb.info/
+            urlRegex: /^https?:\/\/((www\.)?steamdb\.info)\/.*/,
+            textPatterns: [
+                {
+                    regex: /Chinese Yuan/gi,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
+                },
+                {
+                    regex: /^U\.S\. Dollar$/gi,
+                    textColor: "rgb(0,0,0)",
+                    backColor: "rgb(255,192,255)",
                 },
             ],
         },
