@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                monarch advanced
-// @version             0.5.1
+// @version             0.5.2
 // @description         改进 monarch 的脚本
 // @author              gtfish
 // @license             MIT
@@ -13,6 +13,9 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/monarch_adv.js
 
 // ==/UserScript==
+// 0.5.2: 修复 2026-10-09 站点改版后账户页失效 (复选框/总金额消失):
+//        账户行选择器 AccountListItem__Root -> a[class*="group/account-row"]
+//        余额选择器 AccountListItem__StatusSubText.previousElementSibling -> span.fs-mask[data-mds="text"]
 // 0.5.1: 账户复选框状态持久化 (localStorage), 刷新页面后保持选中/未选中
 // 0.5.0: Account Overview 页面添加账户分组多选框/全选/清空/反选 + 选中账户总金额
 // 0.4.1: 修复总金额消失: 页面改版后金额选择器由 CashFlowCurrency__Root 变为 BreakdownItem__Price
@@ -75,6 +78,16 @@
     `;
 
     const ACCOUNT_ACCENT_COLOR = "#4a90e2";
+
+    // ! 2026-10-09 Monarch 站点改版: styled-components 类名 -> Tailwind 工具类 + data-external-id
+    // 账户行:   <a class="group/account-row ..." href="/accounts/details/<id>">
+    // 账户余额: <span class="... fs-mask" data-mds="text">$138,792.08</span> (每个账户行恰好一个, 全页 28 个)
+    // 最后更新: <span data-external-id="last-updated-text">, 被多包了两层 div, 不再是余额的兄弟节点
+    // 分组容器 AccountGroupCard__Root 和标题 CardTitle__DEPRECATEDCardTitle 改版后仍然存在, 不用动。
+    // 旧类名保留做兜底, querySelectorAll 对同一元素会自动去重。
+    const ACCOUNT_ROW_SELECTOR = 'a[class*="group/account-row"], [class*="AccountListItem__Root"]';
+    const ACCOUNT_AMOUNT_SELECTOR = 'span.fs-mask[data-mds="text"]';
+    const ACCOUNT_STATUS_SELECTOR = '[data-external-id="last-updated-text"], [class*="AccountListItem__StatusSubText"]';
 
     // ! 为元素添加中键/Ctrl+点击在新标签页打开的功能
     function addNewTabClickHandlers(el) {
@@ -253,10 +266,15 @@
         }
     }
 
-    // ! 获取账户行的余额 (余额 = "最后更新" StatusSubText 的前一个兄弟节点)
+    // ! 获取账户行的余额
+    // 旧结构: 余额是 "最后更新" StatusSubText 的前一个兄弟节点
+    // 新结构 (2026-10): 余额是 span.fs-mask[data-mds="text"], "最后更新" 被多包了两层 div, 不再是兄弟节点
     function getAccountAmount(item) {
-        const status = item.querySelector('[class*="AccountListItem__StatusSubText"]');
-        const priceEl = status ? status.previousElementSibling : null;
+        let priceEl = item.querySelector(ACCOUNT_AMOUNT_SELECTOR);
+        if (!priceEl) {
+            const status = item.querySelector(ACCOUNT_STATUS_SELECTOR);
+            priceEl = status ? status.previousElementSibling : null;
+        }
         if (!priceEl) return 0;
         const amount = parseFloat(priceEl.textContent.replace(/[$,]/g, ""));
         return isNaN(amount) ? 0 : amount;
@@ -294,7 +312,7 @@
         const title = card.querySelector('[class*="CardTitle"]');
         if (!title) return;
 
-        const items = card.querySelectorAll('[class*="AccountListItem__Root"]');
+        const items = card.querySelectorAll(ACCOUNT_ROW_SELECTOR);
         let total = 0;
         let selected = 0;
         let checkedCount = 0;
@@ -352,7 +370,7 @@
                 selectAllBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = true));
-                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                    card.querySelectorAll(ACCOUNT_ROW_SELECTOR).forEach((item) => {
                         const key = getAccountKey(item);
                         if (key) checkMap[key] = true;
                     });
@@ -367,7 +385,7 @@
                 clearBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = false));
-                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                    card.querySelectorAll(ACCOUNT_ROW_SELECTOR).forEach((item) => {
                         const key = getAccountKey(item);
                         if (key) checkMap[key] = false;
                     });
@@ -382,7 +400,7 @@
                 invertBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     card.querySelectorAll(".monarch-adv-account-checkbox").forEach((cb) => (cb.checked = !cb.checked));
-                    card.querySelectorAll('[class*="AccountListItem__Root"]').forEach((item) => {
+                    card.querySelectorAll(ACCOUNT_ROW_SELECTOR).forEach((item) => {
                         const key = getAccountKey(item);
                         const cb = item.querySelector(".monarch-adv-account-checkbox");
                         if (key && cb) checkMap[key] = cb.checked;
@@ -403,7 +421,7 @@
             }
 
             // 为每个账户行添加 checkbox
-            const items = card.querySelectorAll('[class*="AccountListItem__Root"]');
+            const items = card.querySelectorAll(ACCOUNT_ROW_SELECTOR);
             items.forEach((item) => {
                 // 已经添加过则跳过
                 if (item.querySelector(":scope > .monarch-adv-account-checkbox")) return;
