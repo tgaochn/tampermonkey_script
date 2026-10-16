@@ -1,192 +1,116 @@
 // ==UserScript==
 // @name            0_2_补全百度盘链接
 // @namespace       http://tampermonkey.net/
-// @description     补全贴吧的百度盘链接并打开, 借用了 桃源隐叟 的代码
-// @version         0.1.3
+// @description     补全贴吧的百度盘链接并打开 (自动清理中文/表情/同形字等混淆字符)
+// @version         0.2.0
 // @author          gtfish
 // @include         *
 // @grant           GM_openInTab
+// @grant           GM_getValue
+// @grant           GM_setValue
 // @run-at          context-menu
-// @homepageURL
-// @supportURL
+// @noframes
 // ==/UserScript==
 
 (function () {
     "use strict";
 
-    // These helpers produce better VM code in JS engines due to their
-    // explicitness and function inlining.
-    function isUndef(v) {
-        return v === undefined || v === null;
+    // 百度分享码的常见长度(1 + 22), 只用来判断"空格切段"型混淆
+    var CODE_LEN = 23;
+
+    // 不可见字符: 零宽空格/连接符、双向控制符、词连接符、软连字符、BOM
+    var INVISIBLE = /[\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
+
+    // 常见"同形字": 西里尔/希腊字母长得像拉丁字母, NFKC 处理不了, 只能手工映射
+    var HOMOGLYPH = {
+        // 西里尔
+        "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H", "О": "O",
+        "Р": "P", "С": "C", "Т": "T", "У": "Y", "Х": "X", "Ѕ": "S", "І": "I", "Ј": "J",
+        "а": "a", "в": "b", "е": "e", "к": "k", "м": "m", "н": "h", "о": "o",
+        "р": "p", "с": "c", "т": "t", "у": "y", "х": "x", "ѕ": "s", "і": "i", "ј": "j",
+
+        // 希腊
+        "Α": "A", "Β": "B", "Ε": "E", "Ζ": "Z", "Η": "H", "Ι": "I", "Κ": "K",
+        "Μ": "M", "Ν": "N", "Ο": "O", "Ρ": "P", "Τ": "T", "Υ": "Y", "Χ": "X",
+        "α": "a", "ε": "e", "ι": "i", "κ": "k", "ο": "o", "ρ": "p", "τ": "t",
+        "υ": "u", "χ": "x", "ν": "v"
+    };
+
+    // 把一段文本洗成"只可能属于分享码"的字符
+    function normalizeCode(str) {
+        var s = String(str)
+            // NFKC: 全角转半角(／→/、１→1、Ａ→A), ①→1, Ⓐ→A, 𝐀→A, ²→2 ...
+            .normalize("NFKC")
+            // 零宽字符、方向控制符、变体选择符等不可见字符
+            .replace(INVISIBLE, "")
+            // 其余非 ASCII: 能对上同形字的换成 ASCII, 中文/表情/生僻符号一律丢掉
+            .replace(/[^\x20-\x7e]/g, function (ch) {
+                return HOMOGLYPH[ch] || "";
+            })
+            // 只保留分享码的合法字符集
+            .replace(/[^A-Za-z0-9_-]/g, "");
+        // 百度短链的分享码固定以 1 开头, 被混淆成 l/I/i 的还原回去
+        return s.length === CODE_LEN ? s.replace(/^[lIi]/, "1") : s;
     }
 
-    function isDef(v) {
-        return v !== undefined && v !== null;
-    }
+    // 从选中文本里定位并取出分享码
+    function extractCode(raw) {
+        var text = String(raw).normalize("NFKC").replace(INVISIBLE, "");
 
-    function isTrue(v) {
-        return v === true;
-    }
+        // 老式 .../share/init?surl=xxxx
+        var m = text.match(/surl=([^\s&#]+)/i);
+        if (m) return normalizeCode(m[1]);
 
-    function isFalse(v) {
-        return v === false;
-    }
-
-    /**
-     * Check if value is primitive.
-     */
-    function isPrimitive(value) {
-        return (
-            typeof value === "string" ||
-            typeof value === "number" ||
-            // $flow-disable-line
-            typeof value === "symbol" ||
-            typeof value === "boolean"
-        );
-    }
-
-    /**
-     * Quick object check - this is primarily used to tell
-     * Objects from primitive values when we know the value
-     * is a JSON-compliant type.
-     */
-    function isObject(obj) {
-        return obj !== null && typeof obj === "object";
-    }
-
-    /**
-     * Get the raw type string of a value, e.g., [object Object].
-     */
-
-    function toRawType(value) {
-        return _toString.call(value).slice(8, -1);
-    }
-
-    /**
-     * Strict object type check. Only returns true
-     * for plain JavaScript objects.
-     */
-    function isPlainObject(obj) {
-        return _toString.call(obj) === "[object Object]";
-    }
-
-    function isRegExp(v) {
-        return _toString.call(v) === "[object RegExp]";
-    }
-
-    /**
-     * Check if val is a valid array index.
-     */
-    function isValidArrayIndex(val) {
-        var n = parseFloat(String(val));
-        return n >= 0 && Math.floor(n) === n && isFinite(val);
-    }
-
-    function isPromise(val) {
-        return isDef(val) && typeof val.then === "function" && typeof val.catch === "function";
-    }
-
-    /**
-     * Convert a value to a string that is actually rendered.
-     */
-    function toString(val) {
-        return val == null ? "" : Array.isArray(val) || (isPlainObject(val) && val.toString === _toString) ? JSON.stringify(val, null, 2) : String(val);
-    }
-
-    /**
-     * Convert an input value to a number for persistence.
-     * If the conversion fails, return original string.
-     */
-    function toNumber(val) {
-        var n = parseFloat(val);
-        return isNaN(n) ? val : n;
-    }
-
-    /**
-     * Make a map and return a function for checking if a key
-     * is in that map.
-     */
-    function makeMap(str, expectsLowerCase) {
-        var map = Object.create(null);
-        var list = str.split(",");
-        for (var i = 0; i < list.length; i++) {
-            map[list[i]] = true;
+        // 定位 "https://pan.baidu.com/s/xxxx" / "/s/xxxx" / "s/xxxx", 只取它后面的部分
+        var i = text.indexOf("/s/");
+        if (i >= 0) {
+            text = text.slice(i + 3);
+        } else {
+            m = text.match(/s\/(\S*)/i);
+            text = m ? m[1] : text;
         }
-        return expectsLowerCase
-            ? function (val) {
-                  return map[val.toLowerCase()];
-              }
-            : function (val) {
-                  return map[val];
-              };
+
+        // 切掉 "提取码 / 密码 / pwd / 链接" 之类的说明文字
+        text = text.split(/(?:提取码|提取碼|访问码|訪問碼|密码|密碼|pwd|pass(?:word)?|链接|鏈接|网址|網址)/i)[0];
+
+        // 空格/换行也可能被用来"防和谐": 拼起来正好是分享码长度就采用拼接结果
+        var joined = normalizeCode(text.replace(/\s+/g, ""));
+        if (joined.length === CODE_LEN) return joined;
+
+        // 否则只取第一段, 避免把后面的英文说明粘进来
+        return normalizeCode(text.split(/[\s?#]/)[0]);
     }
 
-    /**
-     * Check if a tag is a built-in tag.
-     */
+    // 取选中文本; 没有选区的 frame 直接退出, 避免每个 iframe 各开一个窗口
+    var sel = (window.getSelection() ? window.getSelection().toString() : "").trim();
+    if (!sel) return;
 
-    /**
-     * Check if an attribute is a reserved attribute.
-     */
-    var isReservedAttribute = makeMap("key,ref,slot,slot-scope,is");
-
-    /**
-     * Remove an item from an array.
-     */
-    function remove(arr, item) {
-        if (arr.length) {
-            var index = arr.indexOf(item);
-            if (index > -1) {
-                return arr.splice(index, 1);
-            }
-        }
+    var code = extractCode(sel);
+    if (code.length < 4) {
+        console.log("[百度盘] 选区里没找到分享码:", sel, "->", code);
+        return;
+    }
+    if (code.length !== CODE_LEN) {
+        console.log("[百度盘] 分享码长度 " + code.length + " (常见 " + CODE_LEN + "), 请确认:", code);
     }
 
-    /**
-     * Check whether an object has the property.
-     */
-    var hasOwnProperty = Object.prototype.hasOwnProperty;
-    function hasOwn(obj, key) {
-        return hasOwnProperty.call(obj, key);
+    // 提取码: ?pwd=1234 / 提取码: 1234 / 密码：1234 / code=1234 ...
+    var pwdM = sel
+        .normalize("NFKC")
+        .match(/(?:pwd|pass(?:word)?|code|提取码|提取碼|访问码|訪問碼|密码|密碼)\s*[:：=]?\s*([A-Za-z0-9]{4})/i);
+
+    var gotoSite = "https://pan.baidu.com/s/" + code;
+    if (pwdM) gotoSite += "?pwd=" + pwdM[1];
+
+    // 兜底去重: 万一脚本被重复注入/安装了多份, 1.5 秒内同一个 URL 只开一次
+    var now = Date.now();
+    if (GM_getValue("lastUrl", "") === gotoSite && now - GM_getValue("lastTime", 0) < 1500) {
+        console.log("[百度盘] 重复触发, 已忽略:", gotoSite);
+        return;
     }
+    GM_setValue("lastUrl", gotoSite);
+    GM_setValue("lastTime", now);
 
-    /**
-     * Create a cached version of a pure function.
-     */
-    function cached(fn) {
-        var cache = Object.create(null);
-        return function cachedFn(str) {
-            var hit = cache[str];
-            return hit || (cache[str] = fn(str));
-        };
-    }
-
-    /**
-     * Camelize a hyphen-delimited string.
-     */
-
-    var camelize = cached(function (str) {
-        return str.replace(camelizeRE, function (_, c) {
-            return c ? c.toUpperCase() : "";
-        });
-    });
-
-    /**
-     * Capitalize a string.
-     */
-    var capitalize = cached(function (str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    });
-
-    /**
-     * Hyphenate a camelCase string.
-     */
-    var hyphenateRE = /\B([A-Z])/g;
-    var hyphenate = cached(function (str) {
-        return str.replace(hyphenateRE, "-$1").toLowerCase();
-    });
-    var selection = window.getSelection().toString();
-    console.log(selection);
-    var gotoSite = `https://pan.baidu.com/s/${selection}`;
+    console.log("[百度盘] 打开:", gotoSite);
     GM_openInTab(gotoSite);
 })();
