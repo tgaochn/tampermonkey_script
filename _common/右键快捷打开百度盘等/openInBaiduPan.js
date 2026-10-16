@@ -10,6 +10,8 @@
 // @grant           GM_setValue
 // @run-at          context-menu
 // @noframes
+// @updateURL           https://github.com/tgaochn/tampermonkey_script/blob/master/_common/%E5%8F%B3%E9%94%AE%E5%BF%AB%E6%8D%B7%E6%89%93%E5%BC%80%E7%99%BE%E5%BA%A6%E7%9B%98%E7%AD%89/openInBaiduPan.js
+// @downloadURL         https://github.com/tgaochn/tampermonkey_script/blob/master/_common/%E5%8F%B3%E9%94%AE%E5%BF%AB%E6%8D%B7%E6%89%93%E5%BC%80%E7%99%BE%E5%BA%A6%E7%9B%98%E7%AD%89/openInBaiduPan.js
 // ==/UserScript==
 
 (function () {
