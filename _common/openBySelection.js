@@ -2,7 +2,7 @@
 // @name            0_选中文本快捷打开
 // @namespace       http://tampermonkey.net/
 // @description     选中文字 → 右键 → 脚本菜单: 补全蓝奏云链接 / 补全百度盘链接(含提取码) / 谷歌翻译 / 知乎搜索
-// @version         1.0.1
+// @version         1.0.2
 // @author          gtfish
 // @include         *
 // @grant           GM_openInTab
@@ -21,6 +21,15 @@
 //   - 脚本列表里从 4 项变成 1 项, 菜单里的 4 个命令仍各自独立, 用起来没有区别
 (function () {
     "use strict";
+
+    // ---------------- 可改的常量 ----------------
+
+    // 蓝奏云域名: 只写域名, 不要带路径和结尾斜杠。
+    // 蓝奏云的分发域名一直在换(lanzoux / lanzoue / lanzoui / lanzoum ...), 打不开时改这一行
+    var LANZOU_HOST = "https://www.lanzoux.com";
+
+    // 谷歌翻译的目标语言: 翻成英文用 en, 想翻成中文改成 zh-CN
+    var TRANS_TL = "en";
 
     // ---------------- 选区 ----------------
 
@@ -201,13 +210,10 @@
             return;
         }
 
-        openOnce("https://www.lanzoux.com/" + code, "[蓝奏云]");
+        openOnce(LANZOU_HOST + "/" + code, "[蓝奏云]");
     }
 
     // ---------------- 谷歌翻译 / 知乎搜索 ----------------
-
-    // 翻译目标语言: 翻成英文用 en, 想翻成中文改成 zh-CN
-    var TRANS_TL = "en";
 
     function openGoogleTrans() {
         var sel = usableSel();
