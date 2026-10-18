@@ -2,7 +2,7 @@
 // @name            0_选中文本快捷打开
 // @namespace       http://tampermonkey.net/
 // @description     选中文字 → 右键 → 脚本菜单: 补全蓝奏云链接 / 补全百度盘链接(含提取码) / 谷歌翻译 / 知乎搜索
-// @version         1.0.0
+// @version         1.0.1
 // @author          gtfish
 // @include         *
 // @grant           GM_openInTab
@@ -206,11 +206,15 @@
 
     // ---------------- 谷歌翻译 / 知乎搜索 ----------------
 
+    // 翻译目标语言: 翻成英文用 en, 想翻成中文改成 zh-CN
+    var TRANS_TL = "en";
+
     function openGoogleTrans() {
         var sel = usableSel();
         if (!sel) return noSelection("[谷歌翻译]");
+        // 当前正式参数格式; 老的 #view=home&op=translate 片段格式已废弃
         // 必须 encodeURIComponent: 选区里的 & # ? 空格会截断/污染 URL
-        openOnce("https://translate.google.cn/#view=home&op=translate&sl=auto&tl=en&text=" + encodeURIComponent(sel), "[谷歌翻译]");
+        openOnce("https://translate.google.com/?sl=auto&tl=" + TRANS_TL + "&op=translate&text=" + encodeURIComponent(sel), "[谷歌翻译]");
     }
 
     function openZhihuSearch() {
