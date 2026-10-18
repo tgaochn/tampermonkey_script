@@ -1,14 +1,11 @@
 // ==UserScript==
 // @name         网盘有效性检查
-// @namespace    https://github.com/Leon406/netdiskChecker
-// @version      2025.09.15
+// @version      0.1.0
 // @icon         https://pan.baidu.com/ppres/static/images/favicon.ico
-// @author       Leon406
+// @author       tgaochn (forked from Leon406)
 // @license      AGPL-3.0-or-later
 // @match        *://*/*
 // @description  网盘助手,自动识别并检查链接状态,自动填写密码并跳转。现已支持 ✅百度网盘 ✅蓝奏云 ✅腾讯微云 ✅阿里云盘 ✅天翼云盘 ✅123网盘 ✅迅雷云盘 ✅夸克网盘 ✅奶牛网盘 ✅文叔叔 ✅115网盘 ✅移动彩云
-// @note         支持百度云、蓝奏云、腾讯微云、阿里云盘、天翼云盘、123网盘、夸克网盘、迅雷网盘、奶牛网盘、文叔叔、115网盘
-// @note         2025.09.15 123网盘新域名 123912
 // @connect      lanzoue.com
 // @connect      baidu.com
 // @connect      weiyun.com
@@ -22,6 +19,12 @@
 // @connect      115cdn.com
 // @exclude 	 *://baike.baidu.com/*
 // @exclude 	 *://github.com/marketplace/*
+// @note 购物站黑名单: 这些站点基本不会出现网盘分享链接, 但页面 DOM/内联脚本极大,
+// @note 全文扫描性价比极低, 直接不注入。想恢复某个站点, 删掉对应那行即可。
+// @exclude      /^https?:\/\/(?:[^\/]+\.)?(?:amazon|ebay|aliexpress|alibaba|temu|shein|walmart|target|bestbuy|costco|etsy|homedepot|lowes|macys|ikea|wayfair|chewy|newegg|argos|fnac|idealo|cdiscount|shopee|lazada|rakuten|mercadolibre|flipkart|ozon|wildberries)\.[a-z.]{2,6}\//
+// @exclude      /^https?:\/\/(?:[^\/]+\.)?(?:1688|taobao|tmall|jd|yhd|suning|dangdang|dewu|poizon|smzdm|yangkeduo|pinduoduo|goofish|mogujie|kaola|jumei)\.(?:com|cn|net|hk|id|th|co)\//
+// @exclude      /^https?:\/\/(?:[^\/]+\.)?(?:meituan|dianping)\.(?:com|cn|net)\//
+// @exclude      /^https?:\/\/(?:[^\/]+\.)?(?:zhihu|slickdeals)\.[a-z.]{2,6}\//
 // @require      https://cdnjs.loli.net/ajax/libs/jquery/3.7.1/jquery.min.js
 // @require      https://cdnjs.loli.net/ajax/libs/findAndReplaceDOMText/0.4.6/findAndReplaceDOMText.min.js
 // @run-at       document-start
@@ -33,10 +36,9 @@
 // @grant        GM_notification
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
-// @homepageURL  https://github.com/Leon406/jsdelivr/tree/master/js/tampermonkey
 // @noframes
-// @downloadURL https://update.greasyfork.org/scripts/439266/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.user.js
-// @updateURL https://update.greasyfork.org/scripts/439266/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.meta.js
+// @downloadURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.js
+// @updateURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.js
 // ==/UserScript==
 (function () {
     'use strict';
@@ -50,8 +52,49 @@
         "options_page": "https://github.com/Leon406/jsdelivr/blob/master/js/tampermonkey/%E7%BD%91%E7%9B%98%E9%93%BE%E6%8E%A5%E6%B5%8B%E8%AF%95.md"
     };
     var passMap = {};
-    var panRule = /lanzou|115|baidu|weiyun|aliyundrive|alipan|123pan|123865|123684|123912|189|quark|caiyun|xunlei|cowtransfer|wss|anxia|/gi;
+    // 注意: 末尾的 "|" 会让它匹配任意字符串, 且 /g 会让 lastIndex 在多次 exec 之间残留,
+    // 因此这里去掉空分支和 g 标记
+    var panRule = /lanzou|115|baidu|weiyun|aliyundrive|alipan|123pan|123865|123684|123912|189|quark|caiyun|xunlei|cowtransfer|wss|anxia/i;
     var excludingPwdHosts = ["pan.baidu.com", "baike.baidu.com"];
+
+    // 页面是否需要扫描的"廉价探测": 全部是字面量子串, 用 indexOf 判断, 不做正则回溯。
+    // 绝大多数网站(购物站首页等)在这一步就会被排除, 不再触发全文扫描。
+    var panProbe = {
+        baidu: ["baidu.com/s/"],
+        baidu2: ["baidu.com/share/init", "baidu.com/wap/init"],
+        weiyun: ["weiyun.com/"],
+        lanzou: ["lanzou"],
+        aliyun: ["aliyundrive.com/s/", "alipan.com/s/"],
+        aliyun2: ["aliyundrive.com/t/", "alipan.com/t/"],
+        pan123: ["123pan.com/s/", "123865.com/s/", "123684.com/s/", "123912.com/s/"],
+        ty189: ["cloud.189.cn/"],
+        quark: ["quark.cn/s/"],
+        xunlei: ["xunlei.com/s/"],
+        nainiu: ["cowtransfer.com/s/"],
+        wenshushu: ["wss.ink/f/", "wss1.cn/f/"],
+        pan115: ["115.com/s/", "anxia.com/s/", "115cdn.com/s/"]
+    };
+    // 链接只出现在 <a href> 里的情况: 用一条 querySelectorAll 判断即可
+    var panAnchorSelector = [
+        'a[href*="baidu.com/s/"]', 'a[href*="baidu.com/share/init"]', 'a[href*="baidu.com/wap/init"]',
+        'a[href*="weiyun.com/"]', 'a[href*="lanzou"]',
+        'a[href*="aliyundrive.com/s/"]', 'a[href*="aliyundrive.com/t/"]', 'a[href*="alipan.com/s/"]',
+        'a[href*="123pan.com/s/"]', 'a[href*="123865.com/s/"]', 'a[href*="123684.com/s/"]', 'a[href*="123912.com/s/"]',
+        'a[href*="cloud.189.cn/"]', 'a[href*="quark.cn/s/"]', 'a[href*="xunlei.com/s/"]',
+        'a[href*="cowtransfer.com/s/"]', 'a[href*="wss.ink/f/"]',
+        'a[href*="115.com/s/"]', 'a[href*="anxia.com/s/"]', 'a[href*="115cdn.com/s/"]'
+    ].join(',');
+    // 把上面的字面量合成一条忽略大小写的正则, 全文只扫一遍(比 toLowerCase 后再逐个 indexOf 便宜)
+    var panProbeAll = (function () {
+        var list = [];
+        for (var key in panProbe) {
+            list = list.concat(panProbe[key]);
+        }
+        var escaped = list.map(function (s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        });
+        return new RegExp(escaped.join("|"), "i");
+    })();
 
     function getQuery(param) {
         return new URLSearchParams(location.search).get(param);
@@ -1092,8 +1135,10 @@
             // 网盘页面不提取密码
             $(document).ready(function () {
                 if (excludingPwdHosts.indexOf(location.host) == -1) {
-                    // 移除知乎错误的attr
-                    setTimeout(() => $("div").removeAttr("href"), 5000);
+                    // 移除知乎错误的attr(原实现是在所有站点上遍历全页 div, 开销大且会误删 href)
+                    if (/(^|\.)zhihu\.com$/.test(location.hostname)) {
+                        setTimeout(() => $("div").removeAttr("href"), 5000);
+                    }
                     var hasClicks = !!document.querySelector(".clicks");
                     var bodyEle = hasClicks ? $("body").clone(true) : $("body");
                     if (hasClicks)
@@ -1236,25 +1281,31 @@
         };
 
         obj.activeQueue = function () {
+            if (obj.timer) {
+                // 已经排好下一次处理了
+                return;
+            }
             if (!obj.active) {
                 obj.active = true;
                 obj.consumeQueue();
+            } else {
+                // 当前批次还在跑, 稍后接手新入队的链接
+                obj.timer = setTimeout(obj.consumeQueue, 100);
             }
         };
 
         obj.consumeQueue = function () {
-            if (obj.queues.length) {
-                obj.timer && clearTimeout(obj.timer);
-
-                var items = [];
-                while (obj.queues.length && items.length < 5) {
-                    items.push(obj.queues.shift());
-                }
-                obj.checkLinkBatch(items, obj.consumeQueue);
-            } else {
+            obj.timer = null;
+            if (!obj.queues.length) {
+                // 队列空就彻底停下, 不再像原来那样用 1 秒一次的定时器永久空转
                 obj.active = false;
-                obj.timer = setTimeout(obj.consumeQueue, 1000);
+                return;
             }
+            var items = [];
+            while (obj.queues.length && items.length < 5) {
+                items.push(obj.queues.shift());
+            }
+            obj.checkLinkBatch(items, obj.consumeQueue);
         };
 
         obj.checkLinkAsync = function (shareSource, shareId, pwd, bearTime, callback) {
@@ -1361,7 +1412,8 @@
     /** step 2 app_check_url **/
     container.define("app_check_url", ["constant", "checkManage", "findAndReplaceDOMText", "$", "logger"], function (constant, checkManage, findAndReplaceDOMText, $, logger) {
         var obj = {
-            index: 0
+            index: 0,
+            idle: 0
         };
 
         obj.run = function () {
@@ -1369,17 +1421,90 @@
             return false;
         };
 
-        obj.runMatch = function () {
+        // 廉价预筛选: 先看看本页有没有任何网盘链接的痕迹, 没有就不做全文扫描
+        obj.scanPage = function () {
+            if (!document.body) {
+                return null;
+            }
+            var anchorHit = false;
+            try {
+                anchorHit = !!document.querySelector(panAnchorSelector);
+            } catch (e) {
+                anchorHit = true;
+            }
 
-            // 创建链接span
+            var text = document.body.textContent || "";
+            panProbeAll.lastIndex = 0;
+            var any = panProbeAll.test(text);
+            if (!any && !anchorHit) {
+                return {
+                    hits: {},
+                    any: false,
+                    anchorHit: false
+                };
+            }
+
+            // 确实有痕迹了, 再细分是哪些网盘(只对命中的规则做全文替换, 不再固定 13 次)
+            var lower = text.toLowerCase();
+            var hits = {};
+            var hitCount = 0;
             for (var rule in constant) {
-                obj.replaceTextAsLink(constant[rule]["replaceReg"], rule, function (match) {
-                    return match[1];
-                });
+                var probes = panProbe[rule];
+                var hit = false;
+                if (!probes) {
+                    // 没有配置字面量探测的规则, 保守起见照旧扫描
+                    hit = true;
+                } else {
+                    for (var i = 0; i < probes.length; i++) {
+                        if (lower.indexOf(probes[i]) >= 0) {
+                            hit = true;
+                            break;
+                        }
+                    }
+                }
+                hits[rule] = hit;
+                if (hit) {
+                    hitCount++;
+                }
+            }
+            if (!hitCount && !anchorHit) {
+                // 大小写等特殊情况没细分开, 退回原来的全规则扫描
+                for (var rule2 in constant) {
+                    hits[rule2] = true;
+                }
+            }
+            return {
+                hits: hits,
+                any: true,
+                anchorHit: anchorHit
+            };
+        };
+
+        obj.runMatch = function () {
+            var gate = obj.scanPage();
+            if (!gate) {
+                return;
+            }
+            if (!gate.any && !gate.anchorHit) {
+                // 本页没有任何网盘链接的痕迹(购物站首页等绝大多数页面都是这样):
+                // 只做这一步廉价探测就结束本轮, 不再做 13 次全文遍历
+                obj.idle++;
+            } else {
+                obj.idle = 0;
+
+                // 创建链接span(只对字面量命中的规则执行, 避免固定 13 次全文扫描)
+                for (var rule in constant) {
+                    if (!gate.hits[rule]) {
+                        continue;
+                    }
+                    obj.replaceTextAsLink(constant[rule]["replaceReg"], rule, function (match) {
+                        return match[1];
+                    });
+                }
             }
 
             // 补超链接ATTR
-            $("a:not([one-link-mark])").each(function () {
+            if (gate.anchorHit) $("a:not([one-link-mark])").each(function () {
                 var $this = $(this);
                 var href = $this.attr("href");
                 if (panRule.exec(href) == null) {
@@ -1394,7 +1519,10 @@
                     }
 
                     for (var rule in constant) {
-                        if (constant[rule]["reg"].exec(href) && $this.find(".one-pan-tip").length == 0) {
+                        var ruleReg = constant[rule]["reg"];
+                        // 这些正则都带 g, 不清零 lastIndex 会隔次漏匹配
+                        ruleReg.lastIndex = 0;
+                        if (ruleReg.exec(href) && $this.find(".one-pan-tip").length == 0) {
                             $this.attr("one-link-mark", "yes");
                             logger.error(constant[rule]["reg"], href, constant[rule]["reg"].exec(href), "___")
 
@@ -1483,15 +1611,28 @@
                 });
             })
 
+            // 一直没有网盘链接迹象就放慢并最终停下, 避免整页周期性卡顿
+            if (obj.idle >= 6) {
+                logger.info("no netdisk link on this page, stop scanning");
+                return;
+            }
             let checkTimes = manifest["checkTimes"];
             if (checkTimes == 0 || obj.index < checkTimes) {
                 obj.index++;
-                setTimeout(obj.runMatch, 1000 * manifest["checkInterval"]);
+                let wait = 1000 * manifest["checkInterval"];
+                if (obj.idle >= 2) {
+                    wait = Math.max(wait, 15000);
+                }
+                setTimeout(obj.runMatch, wait);
             }
         };
 
         obj.replaceTextAsLink = function (shareMatch, shareSource, getShareId) {
             findAndReplaceDOMText(document.body, {
+                // preset: "prose" 会带来 filterElements(跳过 script/style/img/input 等非正文元素),
+                // 这是主要的性能收益来源; 保留下面的 forceContext 是为了不改变原有匹配语义
+                // (preset 只在同名选项缺失时才生效)
+                preset: "prose",
                 find: shareMatch,
                 replace: function (portion, match) {
                     let parentNode = portion.node.parentNode;
