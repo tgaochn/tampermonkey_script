@@ -2,7 +2,7 @@
 // @name            0_2_补全百度盘链接
 // @namespace       http://tampermonkey.net/
 // @description     补全贴吧的百度盘链接并打开 (自动清理中文/表情/同形字等混淆字符)
-// @version         0.5.0
+// @version         0.5.2
 // @author          gtfish
 // @include         *
 // @grant           GM_openInTab
@@ -17,9 +17,6 @@
 
 (function () {
     "use strict";
-
-    // 快捷键: Alt + 这个字母 (想换键位只改这里)
-    var HOTKEY = "b";
 
     // 百度分享码的常见长度(1 + 22), 只用来判断"空格切段"型混淆
     var CODE_LEN = 23;
@@ -76,6 +73,11 @@
             text = m ? m[1] : text;
         }
 
+        // 先切掉 URL 后缀(?pwd=... / #list/path=...): 分享码里不可能有 ? 和 #
+        // 这一步必须放在下面"去空格数长度"之前, 否则 #list/path=%2F 会被清洗成
+        // listpath2F 拼进分享码(短码 + 这段字符数正好凑成 23 时就会被误当成完整分享码)
+        text = text.split(/[?#]/)[0];
+
         // 切掉 "提取码 / 密码 / pwd / 链接" 之类的说明文字
         text = text.split(/(?:提取码|提取碼|访问码|訪問碼|密码|密碼|pwd|pass(?:word)?|链接|鏈接|网址|網址)/i)[0];
 
@@ -84,12 +86,10 @@
         if (joined.length === CODE_LEN) return joined;
 
         // 否则只取第一段, 避免把后面的英文说明粘进来
-        return normalizeCode(text.split(/[\s?#]/)[0]);
+        return normalizeCode(text.split(/\s/)[0]);
     }
 
-    // ---------------- 选区 ----------------
-
-    // 记住最近一次"非空选区": 点按钮/按快捷键时页面可能已经失焦或把选区清掉了
+    // 记住最近一次"非空选区": 点菜单时页面可能已经失焦或把选区清掉了
     var lastSel = "";
 
     function liveSel() {
@@ -104,16 +104,6 @@
     function rememberSelection() {
         var s = liveSel();
         if (s.trim()) lastSel = s;
-    }
-
-    // 选区在屏幕上的位置; 没有非空选区、或选区已滚出视野时返回 null
-    function selectionRect() {
-        var s = window.getSelection ? window.getSelection() : null;
-        if (!s || typeof s.getRangeAt !== "function" || s.rangeCount === 0 || s.isCollapsed) return null;
-        var r = s.getRangeAt(0).getBoundingClientRect();
-        if (!r || (!r.width && !r.height)) return null;
-        if (r.bottom < 0 || r.top > window.innerHeight) return null;
-        return r;
     }
 
     // ---------------- 打开 ----------------
@@ -134,13 +124,26 @@
             console.log("[百度盘] 分享码长度 " + code.length + " (常见 " + CODE_LEN + "), 请确认:", code);
         }
 
-        // 提取码: ?pwd=1234 / 提取码: 1234 / 密码：1234 / code=1234 ...
-        var pwdM = sel
-            .normalize("NFKC")
+        // 提取码有两个来源, 分开找: URL 里的 ?pwd=xxxx, 和正文里的 "提取码: xxxx"
+        var sel2 = sel.normalize("NFKC");
+
+        var urlM = sel2.match(/[?&]pwd=([A-Za-z0-9]{4})/i);
+        var urlPwd = urlM ? urlM[1] : null;
+
+        // 先把 URL 里的 ?pwd=xxxx 挖掉, 免得被下面的正文标签再命中一次
+        var textM = sel2
+            .replace(/[?&]pwd=[A-Za-z0-9]{4}/gi, " ")
             .match(/(?:pwd|pass(?:word)?|code|提取码|提取碼|访问码|訪問碼|密码|密碼)\s*[:：=]?\s*([A-Za-z0-9]{4})/i);
+        var textPwd = textM ? textM[1] : null;
+
+        // 两边不一致时以正文里的提取码为准(那是发帖人最终写下的值), 并明确告警
+        if (textPwd && urlPwd && textPwd !== urlPwd) {
+            console.warn("[百度盘] 提取码不一致: 正文=" + textPwd + " / URL=" + urlPwd + " -> 采用正文的 " + textPwd);
+        }
+        var pwd = textPwd || urlPwd;
 
         var gotoSite = "https://pan.baidu.com/s/" + code;
-        if (pwdM) gotoSite += "?pwd=" + pwdM[1];
+        if (pwd) gotoSite += "?pwd=" + pwd;
 
         // 兜底去重: 万一脚本被重复注入/安装了多份, 1.5 秒内同一个 URL 只开一次
         var now = Date.now();
@@ -155,151 +158,13 @@
         GM_openInTab(gotoSite);
     }
 
-    // ---------------- 页面内入口 1: 选区旁的小按钮 ----------------
-    // 用 Shadow DOM 装按钮, 免得被站点的 CSS 影响; 而且是"选中文字后才创建", 平时零 DOM 开销
+    // ---------------- 绑定 ----------------
 
-    var btnHost = null;
-    var btn = null;
-    var btnShown = false;
-
-    function ensureButton() {
-        if (btnHost) {
-            // 有些 SPA 会重建 body, 顺手挂回去
-            if (btnHost.isConnected === false && document.body) document.body.appendChild(btnHost);
-            return true;
-        }
-        if (!document.createElement || !document.body) return false;
-
-        btnHost = document.createElement("div");
-        var root = btnHost.attachShadow ? btnHost.attachShadow({ mode: "open" }) : btnHost;
-
-        btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = "百度盘";
-        btn.title = "补全并打开选中的百度盘链接 (Alt+" + HOTKEY.toUpperCase() + ")";
-        btn.style.cssText = [
-            "all: initial",
-            "position: fixed",
-            "z-index: 2147483647",
-            "display: none",
-            "padding: 3px 8px",
-            "border: 0",
-            "border-radius: 4px",
-            "background: #06a7ff",
-            "color: #fff",
-            "font: 12px/1.6 system-ui, -apple-system, 'Microsoft YaHei', sans-serif",
-            "cursor: pointer",
-            "box-shadow: 0 1px 4px rgba(0, 0, 0, .35)",
-            "user-select: none",
-            "white-space: nowrap"
-        ].join(";");
-
-        // 关键: 按下时 preventDefault, 否则浏览器会先清掉选区/挪走焦点
-        btn.addEventListener("mousedown", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }, true);
-        btn.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            hideButton();
-            openSelected();
-        }, true);
-
-        root.appendChild(btn);
-        document.body.appendChild(btnHost);
-        return true;
-    }
-
-    function showButton(rect) {
-        if (!ensureButton()) return;
-        var top = rect.bottom + 6;
-        if (top + 26 > window.innerHeight) top = Math.max(4, rect.top - 26);   // 下面放不下就放上面
-        var left = Math.min(Math.max(4, rect.right - 34), Math.max(4, window.innerWidth - 84));
-        btn.style.top = top + "px";
-        btn.style.left = left + "px";
-        btn.style.display = "block";
-        btnShown = true;
-    }
-
-    function hideButton() {
-        if (btn && btnShown) {
-            btn.style.display = "none";
-            btnShown = false;
-        }
-    }
-
-    function syncButton() {
-        var rect = selectionRect();
-        if (!rect) {
-            hideButton();
-            return;
-        }
-        showButton(rect);
-    }
-
-    // ---------------- 页面内入口 2: 快捷键 ----------------
-
-    function onKeyDown(e) {
-        if (e.key === "Escape") {
-            hideButton();
-            return;
-        }
-        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-        var key = String(e.key || "").toLowerCase();
-        if (key !== HOTKEY && e.code !== "Key" + HOTKEY.toUpperCase()) return;
-        if (!usableSel()) return;       // 没选中东西就不吞按键, 让站点照常处理
-        e.preventDefault();
-        e.stopPropagation();
-        hideButton();
-        openSelected();
-    }
-
-    // ---------------- 事件绑定 ----------------
-
-    document.addEventListener("selectionchange", function () {
-        rememberSelection();
-        if (!selectionRect()) hideButton();
-    }, true);
-
-    document.addEventListener("mouseup", function () {
-        rememberSelection();
-        syncButton();
-    }, true);
-
-    document.addEventListener("keyup", function () {
-        rememberSelection();
-        syncButton();
-    }, true);
-
-    // 点别处就把按钮收起来(点按钮本身不算; Shadow DOM 里的事件会被重定向到 host)
-    document.addEventListener("mousedown", function (e) {
-        var path = e.composedPath ? e.composedPath() : [];
-        if (path.indexOf(btn) < 0 && e.target !== btnHost) hideButton();
-    }, true);
-
-    document.addEventListener("keydown", onKeyDown, true);
-
-    // 滚动/缩放时重新定位, 选区滚出视野就收起来(用 rAF 节流, 避免滚动时频繁重排)
-    var scrollPending = false;
-    function onScrollOrResize() {
-        if (!btnShown || scrollPending) {
-            if (!btnShown) hideButton();
-            return;
-        }
-        scrollPending = true;
-        var raf = window.requestAnimationFrame || function (fn) { return setTimeout(fn, 16); };
-        raf(function () {
-            scrollPending = false;
-            syncButton();
-        });
-    }
-    window.addEventListener("scroll", onScrollOrResize, true);
-    window.addEventListener("resize", onScrollOrResize, true);
-
+    document.addEventListener("selectionchange", rememberSelection, true);
+    document.addEventListener("mouseup", rememberSelection, true);
     rememberSelection();    // 启动时先记一次, 以防注入前用户就已经选好了文字
 
-    // ---------------- 页面内入口 3(兼容): 油猴自己的菜单 ----------------
-    // 右键 → Tampermonkey → 本项; 或者打开油猴弹窗后按 accessKey(这里也是 b)
-    GM_registerMenuCommand("补全百度盘链接(用当前选区)", openSelected, HOTKEY);
+    // 菜单由脚本自己注册: 一次注册长期有效, 可以反复点,
+    // 不像 @run-at context-menu 那样"点一次就没了, 要刷新页面才回来"
+    GM_registerMenuCommand("补全百度盘链接(用当前选区)", openSelected);
 })();
