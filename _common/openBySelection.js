@@ -2,7 +2,7 @@
 // @name            0_选中文本快捷打开
 // @namespace       http://tampermonkey.net/
 // @description     选中文字 → 右键 → 脚本菜单: 补全蓝奏云链接 / 补全百度盘链接(含提取码) / 谷歌翻译 / 知乎搜索
-// @version         1.0.2
+// @version         1.1.0
 // @author          gtfish
 // @include         *
 // @grant           GM_openInTab
@@ -18,9 +18,18 @@
 // 合并自 openInLanzouyun.js / openInBaiduPan.js / openInGoogleTrans.js / openInZhihuSearch.js
 // 这四个脚本做的是同一件事: 拿当前选区拼一个 URL 打开。合并后
 //   - 每个页面只注入一次, 只需要一套 selectionchange/mouseup 监听(原来要 4 套)
-//   - 脚本列表里从 4 项变成 1 项, 菜单里的 4 个命令仍各自独立, 用起来没有区别
+//   - 脚本列表里从 4 项变成 1 项, 菜单命令各自独立, 用起来没有区别
+// 每个功能都有独立开关, 见下面"功能开关"一节; 没开的功能代码保留, 改回 true 即恢复
 (function () {
     "use strict";
+
+    // ---------------- 功能开关 ----------------
+
+    // true = 注册到右键菜单; false = 不注册。函数代码都还在, 想用时改回 true 即可
+    var ENABLE_BAIDU_PAN = true;        // 补全百度盘链接(含提取码)
+    var ENABLE_LANZOU = false;          // 补全蓝奏云链接
+    var ENABLE_GOOGLE_TRANS = false;    // 谷歌翻译
+    var ENABLE_ZHIHU = false;           // 知乎搜索
 
     // ---------------- 可改的常量 ----------------
 
@@ -238,8 +247,8 @@
 
     // 菜单由脚本自己注册: 一次注册长期有效, 可以反复点,
     // 不像 @run-at context-menu 那样"点一次就没了, 要刷新页面才回来"
-    GM_registerMenuCommand("补全蓝奏云链接(用当前选区)", openLanzouyun);
-    GM_registerMenuCommand("补全百度盘链接(用当前选区)", openBaiduPan);
-    GM_registerMenuCommand("谷歌翻译(用当前选区)", openGoogleTrans);
-    GM_registerMenuCommand("知乎搜索(用当前选区)", openZhihuSearch);
+    if (ENABLE_LANZOU) GM_registerMenuCommand("补全蓝奏云链接(用当前选区)", openLanzouyun);
+    if (ENABLE_BAIDU_PAN) GM_registerMenuCommand("补全百度盘链接(用当前选区)", openBaiduPan);
+    if (ENABLE_GOOGLE_TRANS) GM_registerMenuCommand("谷歌翻译(用当前选区)", openGoogleTrans);
+    if (ENABLE_ZHIHU) GM_registerMenuCommand("知乎搜索(用当前选区)", openZhihuSearch);
 })();
