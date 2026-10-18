@@ -1,12 +1,14 @@
 // ==UserScript==
-// @name         网盘有效性检查
-// @version      0.1.0
+// @name         网盘有效性检查与链接转换
+// @version      0.2.0
 // @icon         https://pan.baidu.com/ppres/static/images/favicon.ico
 // @author       tgaochn (forked from Leon406)
 // @license      AGPL-3.0-or-later
 // @match        *://*/*
-// @description  网盘助手,自动识别并检查链接状态,自动填写密码并跳转。现已支持 ✅百度网盘 ✅蓝奏云 ✅腾讯微云 ✅阿里云盘 ✅天翼云盘 ✅123网盘 ✅迅雷云盘 ✅夸克网盘 ✅奶牛网盘 ✅文叔叔 ✅115网盘 ✅移动彩云
+// @description  网盘助手:自动识别并检查链接状态,自动填写密码并跳转;并把蓝奏云失效域名转换为可用域名(页面链接、正文与复制内容均会改写)。现已支持 ✅百度网盘 ✅蓝奏云 ✅腾讯微云 ✅阿里云盘 ✅天翼云盘 ✅123网盘 ✅迅雷云盘 ✅夸克网盘 ✅奶牛网盘 ✅文叔叔 ✅115网盘 ✅移动彩云
+// @note 0.2.0: 合并"蓝奏云连接转换"脚本(域名统一为 lanzoux.com, 保留子域名); 新增购物站黑名单与扫描性能优化
 // @connect      lanzoue.com
+// @connect      lanzoux.com
 // @connect      baidu.com
 // @connect      weiyun.com
 // @connect      aliyundrive.com
@@ -37,8 +39,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @noframes
-// @downloadURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.js
-// @updateURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5.js
+// @downloadURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5%E4%B8%8E%E9%93%BE%E6%8E%A5%E8%BD%AC%E6%8D%A2.js
+// @updateURL https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/%E7%BD%91%E7%9B%98%E6%9C%89%E6%95%88%E6%80%A7%E6%A3%80%E6%9F%A5%E4%B8%8E%E9%93%BE%E6%8E%A5%E8%BD%AC%E6%8D%A2.js
 // ==/UserScript==
 (function () {
     'use strict';
@@ -95,6 +97,57 @@
         });
         return new RegExp(escaped.join("|"), "i");
     })();
+
+    /** 蓝奏云域名修复 **/
+    // 蓝奏云的分享域名(lanzoue/lanzous/lanzoux...)经常失效, woozooo.com 是其直链域名。
+    // 统一把"基础域名"换成 LANZOU_MIRROR, 子域名保持不变: wwt.lanzous.com/x -> wwt.lanzoux.com/x
+    // (原先由独立的"蓝奏云连接转换"脚本负责, 已并入本脚本)
+    var LANZOU_BASE = "lanzoux";              // 只含域名的前半段, aTagRepalce 需要这个形式
+    var LANZOU_MIRROR = LANZOU_BASE + ".com";
+    var lanzouDomainRegs = [
+        /(https?:\/\/)?([a-zA-Z0-9]+\.)?lanzou[a-z]?\.com/g,
+        /(https?:\/\/)?([a-zA-Z0-9]+\.)?woozooo\.com/g
+    ];
+    // 这些元素里的文本不是正文, 改了没意义还可能破坏页面逻辑
+    var LANZOU_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1 };
+
+    function fixLanzouDomain(str) {
+        if (typeof str !== "string") {
+            return str;
+        }
+        if (str.indexOf("lanzou") < 0 && str.indexOf("woozooo") < 0) {
+            return str;
+        }
+        for (var i = 0; i < lanzouDomainRegs.length; i++) {
+            // String.replace 使用 /g 正则时内部会重置 lastIndex, 可安全复用
+            str = str.replace(lanzouDomainRegs[i], "https://$2" + LANZOU_MIRROR);
+        }
+        return str;
+    }
+
+    function fixLanzouTextNodes(node) {
+        for (var n = node.firstChild; n; n = n.nextSibling) {
+            if (n.nodeType === 3) {
+                var fixed = fixLanzouDomain(n.data);
+                if (fixed !== n.data) {
+                    n.data = fixed;
+                }
+            } else if (n.nodeType === 1 && n.firstChild && !LANZOU_SKIP_TAGS[n.nodeName]) {
+                fixLanzouTextNodes(n);
+            }
+        }
+    }
+
+    // 链接只写在 <a href> 里的蓝奏云(正文里没有), 单独判断, 避免无关页面也跑一遍文本遍历
+    var LANZOU_ANCHOR_SELECTOR = 'a[href*="lanzou"],a[href*="woozooo"]';
+
+    function hasLanzouAnchor() {
+        try {
+            return !!document.querySelector(LANZOU_ANCHOR_SELECTOR);
+        } catch (e) {
+            return false;
+        }
+    }
 
     function getQuery(param) {
         return new URLSearchParams(location.search).get(param);
@@ -283,10 +336,10 @@
             lanzou: {
                 reg: /(?:https?:\/\/)?(?:[\w\-]+\.)?\blanzou.?\.com\/([\w\-]{7,})(?!\.)(?:\/)?/gi,
                 replaceReg: /(?:https?:\/\/)?(?:[\w\-]+\.)?lan(?:zou?|.v|z).?\.com\/([\w\-]{7,})(?!\.)(?:\/)?/gi,
-                aTagRepalce: [/(?:[\w\-]+\.)?lanzou.?/, "leon.lanzoue"],
-                prefix: "https://leon.lanzoue.com/",
+                aTagRepalce: [/(?:[\w\-]+\.)?lanzou.?/, "www." + LANZOU_BASE],
+                prefix: "https://www." + LANZOU_MIRROR + "/",
                 checkFun: (shareId, callback) => {
-                    let url = shareId.includes("http") ? shareId : "https://leon.lanzoue.com/" + shareId;
+                    let url = shareId.includes("http") ? shareId : "https://www." + LANZOU_MIRROR + "/" + shareId;
                     http.ajax({
                         type: "get",
                         url: url,
@@ -1440,7 +1493,8 @@
                 return {
                     hits: {},
                     any: false,
-                    anchorHit: false
+                    anchorHit: false,
+                    textLen: text.length
                 };
             }
 
@@ -1476,9 +1530,50 @@
             return {
                 hits: hits,
                 any: true,
-                anchorHit: anchorHit
+                anchorHit: anchorHit,
+                textLen: text.length
             };
         };
+
+        // 蓝奏云兜底: 把页面里已经渲染出来的链接/文本改写到可用域名(保留子域名)
+        // 只在页面确实有蓝奏云痕迹时才执行, 并用"元素数+文本长度"签名避免重复遍历
+        obj.fixLanzouInPage = function (textLen) {
+            if (!document.body) {
+                return;
+            }
+            var sig = textLen + "/" + document.body.getElementsByTagName("*").length;
+            if (sig === obj.lanzouSig) {
+                return;
+            }
+            obj.lanzouSig = sig;
+
+            var anchors = document.body.getElementsByTagName("a");
+            for (var i = 0; i < anchors.length; i++) {
+                var oldHref = anchors[i].getAttribute("href");
+                var newHref = fixLanzouDomain(oldHref);
+                if (newHref !== oldHref) {
+                    anchors[i].setAttribute("href", newHref);
+                }
+            }
+            fixLanzouTextNodes(document.body);
+        };
+
+        // 复制到剪贴板时顺带修正蓝奏云域名(只在复制含蓝奏云域名的内容时生效, 平时零开销)
+        document.addEventListener("copy", function (e) {
+            try {
+                var content = window.getSelection ? String(window.getSelection()) : "";
+                if (content.indexOf("lanzou") < 0 && content.indexOf("woozooo") < 0) {
+                    return;
+                }
+                var fixed = fixLanzouDomain(content);
+                if (fixed === content || !e.clipboardData) {
+                    return;
+                }
+                e.clipboardData.setData("text/plain", fixed);
+                e.preventDefault();
+            } catch (err) {
+            }
+        }, true);
 
         obj.runMatch = function () {
             var gate = obj.scanPage();
@@ -1491,6 +1586,11 @@
                 obj.idle++;
             } else {
                 obj.idle = 0;
+
+                // 蓝奏云域名兜底修复(原独立脚本的功能, 现在与扫描共用门禁)
+                if (gate.hits.lanzou || hasLanzouAnchor()) {
+                    obj.fixLanzouInPage(gate.textLen);
+                }
 
                 // 创建链接span(只对字面量命中的规则执行, 避免固定 13 次全文扫描)
                 for (var rule in constant) {
