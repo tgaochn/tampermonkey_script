@@ -1,6 +1,7 @@
 // utils.js
 // https://github.com/tgaochn/tampermonkey_script/raw/refs/heads/master/_utils/utils.js
-// version: 0.4.0
+// version: 0.5.0
+// 0.5.0: add showToast / copyToClipboard / legacyCopyText; all copy buttons (createButtonCopyText, copyHypertext) now show a 2s auto-dismiss toast of the copied content
 // 0.4.0: add generic makeDraggable / createDraggableButton / createInputDialog helpers; makeDraggable supports drag handles / ignoreSelector; addBtn2AnyWebsite reuses it (single drag impl); copyHypertext uses navigator.clipboard; add createDraggableButtonGroup (floating draggable + foldable + multi-button toolbar)
 (function (window) {
     "use strict";
@@ -102,6 +103,87 @@
         return btn;
     };
 
+    // ! toast notification: 右上角短暂提示, duration ms 后自动淡出消失 (默认 2000ms)。
+    // 多个 toast 会在同一个容器里堆叠。message 支持多行 (保留换行)。
+    utils.showToast = function (message, duration = 2000) {
+        const CONTAINER_ID = "utils-toast-container";
+        let container = document.getElementById(CONTAINER_ID);
+        if (!container) {
+            container = document.createElement("div");
+            container.id = CONTAINER_ID;
+            container.style.cssText =
+                "position:fixed;top:16px;right:16px;z-index:2147483647;" +
+                "display:flex;flex-direction:column;gap:8px;pointer-events:none;";
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement("div");
+        toast.textContent = message;
+        toast.style.cssText =
+            "background:rgba(33,33,33,0.95);color:#fff;padding:10px 14px;border-radius:6px;" +
+            "box-shadow:0 4px 12px rgba(0,0,0,0.3);font-family:Arial,sans-serif;font-size:13px;" +
+            "max-width:420px;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-all;" +
+            "opacity:0;transform:translateX(30px);transition:opacity .2s ease,transform .2s ease;";
+        container.appendChild(toast);
+
+        // 下一帧触发进入动画
+        requestAnimationFrame(() => {
+            toast.style.opacity = "1";
+            toast.style.transform = "translateX(0)";
+        });
+
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateX(30px)";
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+                if (container && !container.childNodes.length && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+            }, 200);
+        }, duration);
+
+        return toast;
+    };
+
+    // Legacy fallback: 用隐藏 textarea + execCommand("copy") 复制纯文本
+    utils.legacyCopyText = function (str) {
+        try {
+            const ta = document.createElement("textarea");
+            ta.value = str;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+        } catch (e) {
+            console.error("legacyCopyText failed:", e);
+        }
+    };
+
+    // ! 复制纯文本到剪贴板, 复制后默认弹一个 toast 显示复制内容。
+    // options: { toast=true 是否提示, label="Copied" 提示前缀, duration=2000 提示时长 }
+    utils.copyToClipboard = function (text, options = {}) {
+        const { toast = true, label = "Copied", duration = 2000 } = options;
+        const str = String(text);
+        const notify = () => {
+            if (toast) utils.showToast(label + ":\n" + str, duration);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(str).then(notify, (err) => {
+                console.error("copyToClipboard writeText failed, trying legacy:", err);
+                utils.legacyCopyText(str);
+                notify(); // 仍然提示, 让用户看到内容
+            });
+        } else {
+            utils.legacyCopyText(str);
+            notify();
+        }
+    };
+
     // ! button behaviors
     // Copy a hyperlink as rich text so it pastes as a real link (e.g. into Docs/email).
     // Uses the async Clipboard API (writes both text/html and text/plain flavors) and
@@ -119,6 +201,9 @@
 
         const html = containerElem.innerHTML;
         const plain = containerElem.textContent;
+
+        // 复制成功后提示复制的 (纯文本) 内容
+        const toastPlain = () => utils.showToast("Copied:\n" + plain);
 
         // Legacy fallback: off-screen selection + execCommand
         const legacyCopy = () => {
@@ -138,6 +223,7 @@
             }
             selection.removeAllRanges();
             document.body.removeChild(containerElem);
+            toastPlain();
         };
 
         // Modern path: write rich (text/html) + plain (text/plain) flavors
@@ -147,7 +233,7 @@
                     "text/html": new Blob([html], { type: "text/html" }),
                     "text/plain": new Blob([plain], { type: "text/plain" }),
                 });
-                navigator.clipboard.write([item]).catch((err) => {
+                navigator.clipboard.write([item]).then(toastPlain, (err) => {
                     console.error("clipboard.write failed, falling back to execCommand:", err);
                     legacyCopy();
                 });
@@ -277,7 +363,7 @@
 
     utils.createButtonCopyText = function (btnText, copyText, size = "normal") {
         return utils.createButtonFromCallback(btnText, () => {
-            navigator.clipboard.writeText(copyText);
+            utils.copyToClipboard(copyText);
         }, size);
     };
 

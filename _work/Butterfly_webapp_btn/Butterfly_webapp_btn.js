@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.4.1
+// @version             1.5.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.5.0: 所有复制按钮复制后弹 2s 自动消失的 toast 显示复制内容 (需 utils>=0.5.0); 新增 "reuse last job" 按钮 (读最新 SageMaker build 生成 reuse yaml)
 // 1.4.1: 支持 SPA 页面内跳转自动更新按钮 (常驻 observer + 按当前 URL 实时判断 + model 变化时重建), 不再需要刷新
 // 1.4.0: Rolling deployment 的 model set tag 文字变成指向 hub deployment 页的超链接
 // 1.3.0: 添加了model不存在时的修复链接
@@ -70,6 +71,8 @@
             "createDraggableButton",
             "createDraggableButtonGroup",
             "createInputDialog",
+            "copyToClipboard",
+            "showToast",
         ],
     };
 
@@ -669,6 +672,46 @@
         }
     }
 
+    // 读取 SageMaker Pipeline Status 行里最后一个 (= 最新) build 的 execution/job id。
+    // 每个 build 是 <a id="run-<jobId>" href="...executionArn=...execution%2F<jobId>">,
+    // 按时间升序排列, 最后一个即最新。优先用 id 属性, 兜底从 href 的 execution 段解析。
+    // 注意: 必须限定在 "SageMaker Pipeline Status" 行内 —— Version Timestamp 行也有同样
+    // 的 run-<id> 链接, 全文档匹配会把它算进来。
+    function getLastSagemakerJobId() {
+        // 定位 "SageMaker Pipeline Status" 行
+        let statusRow = null;
+        const rows = document.querySelectorAll(".table.table-sm.model-view--table tr");
+        for (const tr of rows) {
+            const firstCell = tr.querySelector("td");
+            if (firstCell && firstCell.textContent.trim().startsWith("SageMaker Pipeline Status")) {
+                statusRow = tr;
+                break;
+            }
+        }
+        if (!statusRow) return null;
+
+        const runLinks = statusRow.querySelectorAll(
+            'a[id^="run-"][href*="/api/sagemaker/runs/presigned-url"]'
+        );
+        if (!runLinks.length) return null;
+        const last = runLinks[runLinks.length - 1];
+        const fromId = last.id && last.id.startsWith("run-") ? last.id.slice(4) : "";
+        if (fromId) return fromId;
+        const m = /execution(?:%2F|\/)([^/?&]+)/i.exec(last.getAttribute("href") || "");
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    // 生成 reuse yaml 片段 (供 model.yaml 复用上一次 SageMaker 各 step 的产物)
+    function buildReuseYaml(modelId, jobId) {
+        return [
+            "reuse:",
+            `  uds_sampler: sm://${modelId}/${jobId}/uds_sampler`,
+            `  preprocess: sm://${modelId}/${jobId}/preprocess`,
+            `  train: sm://${modelId}/${jobId}/train`,
+            `  full_train_parallel: sm://${modelId}/${jobId}/full_train_parallel`,
+        ].join("\n");
+    }
+
     async function main(utils) {
         // ! add button in the container and define click func
         const modelInfoButtonContainer = utils.createButtonContainer();
@@ -702,13 +745,13 @@
             utils.createButtonFromCallback("current_version", () => {
                 const modelVersionSelector = 'div[class="model-version-selector-option-title"]';
                 const modelVersion = document.querySelector(modelVersionSelector).childNodes[0].textContent;
-                navigator.clipboard.writeText(modelVersion);
+                utils.copyToClipboard(modelVersion);
             }),
 
             utils.createButtonFromCallback("last_build_id", () => {
                 const buildsTags = document.querySelector(buildsTagsSelector).childNodes[0].childNodes;
                 const lastBuildId = buildsTags[buildsTags.length - 1].id;
-                navigator.clipboard.writeText(lastBuildId);
+                utils.copyToClipboard(lastBuildId);
             }),
 
             utils.createButtonFromCallback("all_build_id", () => {
@@ -720,7 +763,16 @@
                 });
 
                 const textToCopy = buildIds.join("\n");
-                navigator.clipboard.writeText(textToCopy);
+                utils.copyToClipboard(textToCopy);
+            }),
+
+            utils.createButtonFromCallback("reuse last job", () => {
+                const jobId = getLastSagemakerJobId();
+                if (!jobId) {
+                    alert("未找到 SageMaker build job id (SageMaker Pipeline Status 行里没有 build)");
+                    return;
+                }
+                utils.copyToClipboard(buildReuseYaml(modelId, jobId));
             }),
 
             utils.createTextNode("\tlinks: "),
