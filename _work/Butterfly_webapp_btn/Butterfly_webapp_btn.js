@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.3.0
+// @version             1.4.0
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.4.0: Rolling deployment 的 model set tag 文字变成指向 hub deployment 页的超链接
 // 1.3.0: 添加了model不存在时的修复链接
 // 1.2.0: make "Go to Model" button draggable (position persisted via GM storage); default position centered + refactoring
 // 1.1.0: add floating "Go to Model" button + dialog to jump to a model's LATEST overview by name
@@ -225,6 +226,264 @@
         }
     }
 
+    // ---- Rolling deployment tag -> hub deployment href + loaded_models ------
+    // tag 文本形如 triton_rnr_preapply_row_jsv3_prod / _qa
+    // 从 tag 派生两个名字 (均可在 ⚙ mapping 对话框里按 tag 覆盖, 默认 = 下面的逻辑):
+    //   1. deploy name  (hub deployment 路径末段)
+    //        triton_rnr_preapply_row_jsv3 -> genserve-triton-preapply-row-jsv3
+    //        (下划线转连字符, 删掉 "rnr" 段, 前面加 genserve-)
+    //   2. loaded_models subdomain (loaded_models 页面的子域名)
+    //        默认 = "infsp-" + deploy name
+    // prod / qa 对应不同域名。改默认规则只改 defaultDeployName() 即可。
+    const ROLLING_DEPLOY_MARKER = "data-rolling-deploy-link-added";
+    const ROLLING_DEPLOY_MAPPING_KEY = "butterfly_rolling_deploy_mapping"; // GM 存储 key
+    const ROLLING_DEPLOY_HOSTS = {
+        prod: "https://hub.indeed.tech",
+        qa: "https://hub.qa.indeed.tech",
+    };
+    const LOADED_MODELS_DOMAINS = {
+        prod: "sandbox.indeed.net",
+        qa: "sandbox.qa.indeed.net",
+    };
+
+    // 把 tag 文本拆成 { base, env }; 不符合 *_prod / *_qa 返回 null
+    function parseRollingTag(tagText) {
+        const m = /^(.*)_(prod|qa)$/.exec(tagText.trim());
+        if (!m) return null;
+        return { base: m[1], env: m[2] };
+    }
+
+    // 默认 deploy name: 下划线转连字符, 删掉 "rnr" 段, 前面加 genserve-
+    function defaultDeployName(base) {
+        return "genserve-" + base.replace(/_/g, "-").replace(/-rnr(?=-|$)/g, "");
+    }
+
+    // ---- 自定义 mapping 的 GM 存储 (参考 CrackedGameLinkOnSteam.js) ----------
+    // 结构: { [tagText]: { deploy?: string, loaded?: string } }
+    function getRollingMapping() {
+        try {
+            return JSON.parse(GM_getValue(ROLLING_DEPLOY_MAPPING_KEY, "{}"));
+        } catch (e) {
+            console.error("Failed to parse rolling-deploy mapping:", e);
+            return {};
+        }
+    }
+    function saveRollingMapping(mapping) {
+        GM_setValue(ROLLING_DEPLOY_MAPPING_KEY, JSON.stringify(mapping));
+    }
+
+    // 某个 tag 当前生效的值 (override 优先, 否则用默认)
+    function getRollingEffective(tagText) {
+        const p = parseRollingTag(tagText);
+        if (!p) return null;
+        const defDeploy = defaultDeployName(p.base);
+        const defLoaded = "infsp-" + defDeploy;
+        const override = getRollingMapping()[tagText] || {};
+        return {
+            env: p.env,
+            defDeploy,
+            defLoaded,
+            deploy: override.deploy || defDeploy,
+            loaded: override.loaded || defLoaded,
+            hasOverride: !!(override.deploy || override.loaded),
+        };
+    }
+
+    function buildHubDeployUrl(env, deploy) {
+        return `${ROLLING_DEPLOY_HOSTS[env]}/ai-foundry/infsp/deployments/${deploy}`;
+    }
+    function buildLoadedModelsUrl(env, loaded) {
+        return `https://${loaded}.${LOADED_MODELS_DOMAINS[env]}/private/poodlepants/#!/index/loaded_models_v2`;
+    }
+
+    // ⚙ 对话框: 按 tag 自定义 deploy name 和 loaded_models 子域名
+    function showRollingMappingDialog(tagText, onSaved) {
+        const eff = getRollingEffective(tagText);
+        if (!eff) return;
+
+        const overlay = document.createElement("div");
+        overlay.style.cssText =
+            "position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:100000;";
+
+        const dialog = document.createElement("div");
+        dialog.style.cssText =
+            "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;" +
+            "border:2px solid #333;border-radius:8px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.3);" +
+            "z-index:100001;font-family:Arial,sans-serif;min-width:480px;color:#000;";
+
+        const close = () => {
+            document.body.removeChild(overlay);
+            document.body.removeChild(dialog);
+        };
+
+        const mkInput = (value) => {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = value;
+            input.style.cssText =
+                "width:100%;padding:8px;font-size:13px;margin:4px 0;box-sizing:border-box;" +
+                "border:1px solid #ccc;border-radius:4px;";
+            return input;
+        };
+
+        const inputDeploy = mkInput(eff.deploy);
+        const inputLoaded = mkInput(eff.loaded);
+
+        const smallBtn = (label, bg) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.textContent = label;
+            b.style.cssText =
+                `background:${bg};color:#fff;border:none;padding:6px 12px;border-radius:4px;` +
+                "cursor:pointer;margin-right:8px;font-size:13px;";
+            return b;
+        };
+
+        const btnSave = smallBtn("Save", "#28a745");
+        btnSave.onclick = () => {
+            const deploy = inputDeploy.value.trim();
+            const loaded = inputLoaded.value.trim();
+            const mapping = getRollingMapping();
+            // 与默认相同的字段不存, 保持 mapping 精简
+            const entry = {};
+            if (deploy && deploy !== eff.defDeploy) entry.deploy = deploy;
+            if (loaded && loaded !== eff.defLoaded) entry.loaded = loaded;
+            if (Object.keys(entry).length) mapping[tagText] = entry;
+            else delete mapping[tagText];
+            saveRollingMapping(mapping);
+            onSaved();
+            close();
+        };
+
+        // 只把输入框填回默认值, 不保存也不关闭 (之后点 Save 才真正生效)
+        const btnReset = smallBtn("Reset to default", "#dc3545");
+        btnReset.onclick = () => {
+            inputDeploy.value = eff.defDeploy;
+            inputLoaded.value = eff.defLoaded;
+        };
+
+        const btnCancel = smallBtn("Cancel", "#6c757d");
+        btnCancel.onclick = close;
+
+        const label = (text) => {
+            const el = document.createElement("div");
+            el.textContent = text;
+            el.style.cssText = "font-size:13px;font-weight:bold;margin-top:12px;";
+            return el;
+        };
+        const hint = (text) => {
+            const el = document.createElement("div");
+            el.textContent = text;
+            el.style.cssText = "font-size:11px;color:#666;margin:2px 0;";
+            return el;
+        };
+
+        const title = document.createElement("h3");
+        title.textContent = "Custom mapping";
+        title.style.cssText = "margin:0 0 4px 0;color:#333;";
+
+        dialog.appendChild(title);
+        dialog.appendChild(hint("tag: " + tagText + "  (env: " + eff.env + ")"));
+
+        dialog.appendChild(label("deploy name (hub deployment path):"));
+        dialog.appendChild(inputDeploy);
+        dialog.appendChild(hint("default: " + eff.defDeploy));
+
+        dialog.appendChild(label("loaded_models subdomain:"));
+        dialog.appendChild(inputLoaded);
+        dialog.appendChild(hint("default: " + eff.defLoaded));
+
+        const resetRow = document.createElement("div");
+        resetRow.style.marginTop = "8px";
+        resetRow.appendChild(btnReset);
+        dialog.appendChild(resetRow);
+
+        const btnRow = document.createElement("div");
+        btnRow.style.cssText = "margin-top:16px;display:flex;";
+        btnRow.append(btnSave, btnCancel);
+        dialog.appendChild(btnRow);
+
+        overlay.onclick = close;
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialog);
+        inputDeploy.focus();
+    }
+
+    // 处理 Rolling deployment 行里的每个 tag:
+    //   - 把文字标签变成指向 hub deployment 的超链接
+    //   - 在后面加一组括号: (loaded_models 链接  ⚙ mapping 按钮)
+    function addRollingDeploymentLinks() {
+        const tags = document.querySelectorAll(
+            `.model-set-assignments--pills .model-set-assignments--tag:not([${ROLLING_DEPLOY_MARKER}])`
+        );
+        tags.forEach((tag) => {
+            const labelSpan = tag.firstElementChild; // 文字 span (在 remove 按钮之前)
+            if (!labelSpan || labelSpan.tagName !== "SPAN") {
+                tag.setAttribute(ROLLING_DEPLOY_MARKER, "true");
+                return;
+            }
+            const tagText = labelSpan.textContent.trim();
+            if (!getRollingEffective(tagText)) {
+                tag.setAttribute(ROLLING_DEPLOY_MARKER, "true"); // 不符合 pattern, 标记后跳过
+                return;
+            }
+
+            // 1. 文字标签 -> hub deployment 超链接
+            const hubLink = document.createElement("a");
+            hubLink.textContent = tagText;
+            hubLink.target = "_blank";
+            hubLink.rel = "noopener noreferrer";
+            hubLink.style.color = "inherit"; // badge 是蓝底白字, 继承原色
+            hubLink.style.textDecoration = "underline";
+            labelSpan.textContent = "";
+            labelSpan.appendChild(hubLink);
+
+            // 2. 括号组: (loaded_models  ⚙)
+            const group = document.createElement("span");
+            group.style.cssText = "margin-left:4px;margin-right:6px;font-size:12px;white-space:nowrap;";
+
+            const loadedLink = document.createElement("a");
+            loadedLink.textContent = "loaded_models";
+            loadedLink.target = "_blank";
+            loadedLink.rel = "noopener noreferrer";
+            loadedLink.style.color = "#0972d3";
+            loadedLink.style.textDecoration = "underline";
+
+            const mapBtn = document.createElement("button");
+            mapBtn.type = "button";
+            mapBtn.textContent = "⚙";
+            mapBtn.title = "自定义 mapping";
+            mapBtn.style.cssText =
+                "margin-left:4px;cursor:pointer;border:1px solid #aaa;border-radius:3px;" +
+                "background:#f5f5f5;font-size:11px;line-height:1;padding:1px 4px;";
+
+            group.append(
+                document.createTextNode("("),
+                loadedLink,
+                document.createTextNode(" "),
+                mapBtn,
+                document.createTextNode(")")
+            );
+
+            // 根据当前生效的 mapping 刷新两个链接 (初次 + 对话框保存后都会调用)
+            const applyValues = () => {
+                const e = getRollingEffective(tagText);
+                hubLink.href = buildHubDeployUrl(e.env, e.deploy);
+                hubLink.title = e.deploy + (e.hasOverride ? " (自定义)" : "");
+                loadedLink.href = buildLoadedModelsUrl(e.env, e.loaded);
+                loadedLink.title = e.loaded + (e.hasOverride ? " (自定义)" : "");
+                // 有自定义时按钮高亮
+                mapBtn.style.background = e.hasOverride ? "#ffe08a" : "#f5f5f5";
+            };
+            applyValues();
+
+            mapBtn.onclick = () => showRollingMappingDialog(tagText, applyValues);
+
+            tag.insertAdjacentElement("afterend", group);
+            tag.setAttribute(ROLLING_DEPLOY_MARKER, "true");
+        });
+    }
+
     // GM-backed storage adapter so the button position persists via Tampermonkey storage
     const gmStorageAdapter = {
         get: (key) => {
@@ -325,11 +584,13 @@
                 utils.observeDOM(observeTarget, () => {
                     // 先处理 "Model xxx doesn't exist." 提示 (main 在 model 不存在时会抛错, 放前面避免被阻断)
                     addFixedModelLink();
+                    addRollingDeploymentLinks(); // Rolling deployment tag -> hub deployment 超链接
                     if (!document.getElementById(targetElementId)) {
                         main(utils);
                     }
                 });
                 addFixedModelLink(); // 立即尝试一次 (错误提示可能已渲染)
+                addRollingDeploymentLinks();
             } else if (isProctorPage()) {
                 const selector = `.proctor-test-definition-view--allocation-table a[href^="/model/"]:not([${CONFIG.PROCTOR_BTN_MARKER}])`;
                 utils.observeDOM(observeTarget, () => {
