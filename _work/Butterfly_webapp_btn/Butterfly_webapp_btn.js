@@ -379,6 +379,37 @@
             return el;
         };
 
+        // 实时预览的 URL 链接 (随输入框内容即时更新, 可点击打开检查)
+        const previewLink = () => {
+            const a = document.createElement("a");
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.style.cssText =
+                "display:block;font-size:11px;color:#0972d3;margin:2px 0 2px;word-break:break-all;text-decoration:underline;";
+            return a;
+        };
+        const previewDeploy = previewLink();
+        const previewLoaded = previewLink();
+
+        // 根据两个输入框当前值刷新预览 URL
+        const updatePreviews = () => {
+            const deployUrl = buildHubDeployUrl(eff.env, inputDeploy.value.trim());
+            const loadedUrl = buildLoadedModelsUrl(eff.env, inputLoaded.value.trim());
+            previewDeploy.href = deployUrl;
+            previewDeploy.textContent = deployUrl;
+            previewLoaded.href = loadedUrl;
+            previewLoaded.textContent = loadedUrl;
+        };
+        inputDeploy.addEventListener("input", updatePreviews);
+        inputLoaded.addEventListener("input", updatePreviews);
+
+        // Reset 后预览也要跟着回到默认
+        const btnResetOrig = btnReset.onclick;
+        btnReset.onclick = () => {
+            btnResetOrig();
+            updatePreviews();
+        };
+
         const title = document.createElement("h3");
         title.textContent = "Custom mapping";
         title.style.cssText = "margin:0 0 4px 0;color:#333;";
@@ -389,10 +420,14 @@
         dialog.appendChild(label("deploy name (hub deployment path):"));
         dialog.appendChild(inputDeploy);
         dialog.appendChild(hint("default: " + eff.defDeploy));
+        dialog.appendChild(previewDeploy);
 
         dialog.appendChild(label("loaded_models subdomain:"));
         dialog.appendChild(inputLoaded);
         dialog.appendChild(hint("default: " + eff.defLoaded));
+        dialog.appendChild(previewLoaded);
+
+        updatePreviews(); // 初始填充
 
         const resetRow = document.createElement("div");
         resetRow.style.marginTop = "8px";
