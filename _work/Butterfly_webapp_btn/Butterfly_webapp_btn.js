@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.4.0
+// @version             1.4.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.4.1: 支持 SPA 页面内跳转自动更新按钮 (常驻 observer + 按当前 URL 实时判断 + model 变化时重建), 不再需要刷新
 // 1.4.0: Rolling deployment 的 model set tag 文字变成指向 hub deployment 页的超链接
 // 1.3.0: 添加了model不存在时的修复链接
 // 1.2.0: make "Go to Model" button draggable (position persisted via GM storage); default position centered + refactoring
@@ -566,6 +567,40 @@
         });
     }
 
+    // 当前 model 页头部显示的 model id (SPA 内跳转检测用); 读不到返回 null
+    function getCurrentModelId() {
+        const el = document.querySelector('div[class="model-view--header-model-name-row"]');
+        const inner = el && el.childNodes[0] && el.childNodes[0].childNodes[0];
+        return inner ? inner.innerText || null : null;
+    }
+
+    // SPA 跳转后最近一次处理的 model id, 用于判断是否跳到了不同的 model
+    let lastModelId = null;
+
+    // 处理 model 页: 修复链接 + rolling tag 链接都是幂等的 (靠 marker), 每次都跑;
+    // "My Btn to copy" 容器则在 model 变化时删旧重建, 保证按钮数据跟随当前 model。
+    function processModelPage(utils) {
+        // 先处理 "Model xxx doesn't exist." 提示 (model 不存在时 main 会抛错, 放前面避免被阻断)
+        addFixedModelLink();
+        addRollingDeploymentLinks(); // Rolling deployment tag -> hub deployment / loaded_models
+
+        const currentModelId = getCurrentModelId();
+        if (!currentModelId) return; // 头部还没渲染好
+        const table = document.querySelector(".table.table-sm.model-view--table");
+        if (!table) return; // 表格还没渲染好
+
+        // SPA 内跳到了不同的 model: 删掉旧按钮行, 用新 model 的数据重建
+        const existing = document.getElementById(CONFIG.CONTAINER_ID);
+        if (existing && currentModelId !== lastModelId) {
+            (existing.closest("tr") || existing).remove();
+        }
+
+        if (!document.getElementById(CONFIG.CONTAINER_ID)) {
+            lastModelId = currentModelId;
+            main(utils);
+        }
+    }
+
     async function initScript() {
         try {
             const utils = await waitForUtils();
@@ -573,32 +608,27 @@
             // Floating (foldable) toolbar is available on all Butterfly pages
             createModelToolbar(utils);
 
-            if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
-                return;
-            }
+            // Butterfly 是 React SPA: 页面内跳转不会重新执行脚本, 所以不能只在加载时
+            // 判断一次页面类型。改为挂一个常驻 observer, 每次 DOM 变化都按"当前 URL"
+            // 重新判断并处理 (debounce 避免频繁扫描)。
+            let debounceTimer = null;
+            const runProcess = () => {
+                if (!utils.shouldRunScript(inclusionPatterns, exclusionPatterns, window.location.href)) {
+                    return; // 非 model/proctor 页, 只保留悬浮工具栏
+                }
+                if (isModelPage()) {
+                    processModelPage(utils);
+                } else if (isProctorPage()) {
+                    mainProctor(utils); // 内部按 marker 幂等, 无匹配时自动 no-op
+                }
+            };
+            const scheduleProcess = () => {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(runProcess, 300);
+            };
 
-            const observeTarget = document.body;
-
-            if (isModelPage()) {
-                const targetElementId = CONFIG.CONTAINER_ID;
-                utils.observeDOM(observeTarget, () => {
-                    // 先处理 "Model xxx doesn't exist." 提示 (main 在 model 不存在时会抛错, 放前面避免被阻断)
-                    addFixedModelLink();
-                    addRollingDeploymentLinks(); // Rolling deployment tag -> hub deployment 超链接
-                    if (!document.getElementById(targetElementId)) {
-                        main(utils);
-                    }
-                });
-                addFixedModelLink(); // 立即尝试一次 (错误提示可能已渲染)
-                addRollingDeploymentLinks();
-            } else if (isProctorPage()) {
-                const selector = `.proctor-test-definition-view--allocation-table a[href^="/model/"]:not([${CONFIG.PROCTOR_BTN_MARKER}])`;
-                utils.observeDOM(observeTarget, () => {
-                    if (document.querySelectorAll(selector).length > 0) {
-                        mainProctor(utils);
-                    }
-                });
-            }
+            utils.observeDOM(document.body, scheduleProcess);
+            runProcess(); // 首屏可能已渲染好, 立即跑一次
         } catch (error) {
             console.error("Failed to initialize:", error);
         }
