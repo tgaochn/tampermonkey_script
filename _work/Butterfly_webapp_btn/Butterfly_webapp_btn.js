@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Butterfly_webapp_btn
-// @version             1.5.0
+// @version             1.5.1
 // @description         Add btn on Butterfly webapp
 // @author              gtfish
 // @license             MIT
@@ -14,6 +14,7 @@
 // @downloadURL         https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/Butterfly_webapp_btn/Butterfly_webapp_btn.js
 
 // ==/UserScript==
+// 1.5.1: 添加文本替换按钮; 改进default文本
 // 1.5.0: 所有复制按钮复制后弹 2s 自动消失的 toast 显示复制内容 (需 utils>=0.5.0); 新增 "reuse last job" 按钮 (读最新 SageMaker build 生成 reuse yaml)
 // 1.4.1: 支持 SPA 页面内跳转自动更新按钮 (常驻 observer + 按当前 URL 实时判断 + model 变化时重建), 不再需要刷新
 // 1.4.0: Rolling deployment 的 model set tag 文字变成指向 hub deployment 页的超链接
@@ -234,8 +235,8 @@
     // tag 文本形如 triton_rnr_preapply_row_jsv3_prod / _qa
     // 从 tag 派生两个名字 (均可在 ⚙ mapping 对话框里按 tag 覆盖, 默认 = 下面的逻辑):
     //   1. deploy name  (hub deployment 路径末段)
-    //        triton_rnr_preapply_row_jsv3 -> genserve-triton-preapply-row-jsv3
-    //        (下划线转连字符, 删掉 "rnr" 段, 前面加 genserve-)
+    //        triton_rnr_preapply_us -> genserve-triton-rnr-preapply-us
+    //        (下划线转连字符, 前面加 genserve-)
     //   2. loaded_models subdomain (loaded_models 页面的子域名)
     //        默认 = "infsp-" + deploy name
     // prod / qa 对应不同域名。改默认规则只改 defaultDeployName() 即可。
@@ -257,9 +258,9 @@
         return { base: m[1], env: m[2] };
     }
 
-    // 默认 deploy name: 下划线转连字符, 删掉 "rnr" 段, 前面加 genserve-
+    // 默认 deploy name: 下划线转连字符, 前面加 genserve- (不删任何段)
     function defaultDeployName(base) {
-        return "genserve-" + base.replace(/_/g, "-").replace(/-rnr(?=-|$)/g, "");
+        return "genserve-" + base.replace(/_/g, "-");
     }
 
     // ---- 自定义 mapping 的 GM 存储 (参考 CrackedGameLinkOnSteam.js) ----------
@@ -413,20 +414,52 @@
             updatePreviews();
         };
 
+        // 一行小按钮: 分隔符整体替换 ( -→_ / _→- ) + 删掉 -rnr, 并刷新预览
+        const sepRow = (input) => {
+            const row = document.createElement("div");
+            row.style.cssText = "margin:4px 0;display:flex;gap:6px;";
+            const btnStyle =
+                "cursor:pointer;border:1px solid #aaa;border-radius:3px;background:#f5f5f5;" +
+                "font-size:11px;line-height:1;padding:3px 8px;";
+            const apply = (text, fn) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.textContent = text;
+                b.style.cssText = btnStyle;
+                b.onclick = () => {
+                    input.value = fn(input.value);
+                    updatePreviews();
+                };
+                return b;
+            };
+            row.append(
+                apply("- → _", (v) => v.split("-").join("_")),
+                apply("_ → -", (v) => v.split("_").join("-")),
+                apply("del -rnr", (v) => v.split("-rnr").join(""))
+            );
+            return row;
+        };
+
         const title = document.createElement("h3");
         title.textContent = "Custom mapping";
         title.style.cssText = "margin:0 0 4px 0;color:#333;";
 
         dialog.appendChild(title);
-        dialog.appendChild(hint("tag: " + tagText + "  (env: " + eff.env + ")"));
+
+        const tagLine = document.createElement("div");
+        tagLine.textContent = "tag: " + tagText + "  (env: " + eff.env + ")";
+        tagLine.style.cssText = "font-size:14px;color:#333;margin:2px 0 6px;";
+        dialog.appendChild(tagLine);
 
         dialog.appendChild(label("deploy name (hub deployment path):"));
         dialog.appendChild(inputDeploy);
+        dialog.appendChild(sepRow(inputDeploy));
         dialog.appendChild(hint("default: " + eff.defDeploy));
         dialog.appendChild(previewDeploy);
 
         dialog.appendChild(label("loaded_models subdomain:"));
         dialog.appendChild(inputLoaded);
+        dialog.appendChild(sepRow(inputLoaded));
         dialog.appendChild(hint("default: " + eff.defLoaded));
         dialog.appendChild(previewLoaded);
 
@@ -791,7 +824,7 @@
             utils.createButtonOpenUrl(
                 "DNH tool",
                 `https://me-core-metrics.sandbox.indeed.net/`
-            ),            
+            ),
 
         );
 
