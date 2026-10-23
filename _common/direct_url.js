@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name             0_外链确认页自动跳过
+// @name             外链确认页自动跳过
 // @namespace        DirectUrl
 // @version          0.2.0
 // @description      自动跳过"您即将离开本站"这类外链确认页, 直接打开背后的真实 URL; 目前只对百度贴吧启用, 其它站点规则保留, 把对应 @match 加回来即可
