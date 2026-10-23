@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name             外链确认页自动跳过
 // @namespace        DirectUrl
-// @version          0.2.0
-// @description      自动跳过"您即将离开本站"这类外链确认页, 直接打开背后的真实 URL; 目前只对百度贴吧启用, 其它站点规则保留, 把对应 @match 加回来即可
+// @version          0.3.1
+// @description      自动跳过"您即将离开本站"这类外链确认页, 直接打开背后的真实 URL; 只在已知的确认页 URL 上运行, 其它页面完全不注入
 // @author           gtfish
-// @match            https://tieba.baidu.com/*
-// @match            http://tieba.baidu.com/*
+// @match            *://tieba.baidu.com/*checkurl*
 // @grant            GM_registerMenuCommand
 // @grant            GM_getValue
 // @grant            GM_setValue
@@ -16,11 +15,28 @@
 // @updateURL        https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/direct_url.js
 // @downloadURL      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/refs/heads/master/_common/direct_url.js
 // ==/UserScript==
+// 0.3.1: @match 合成一行 *://tieba.baidu.com/*checkurl*, 不再写死 /mo/q/ 前缀;
+//        通配符只能出现在 path 里 (scheme 只能是 * 或具体协议, 写成 http*:// 是无效规则)。
+// 0.3.0: 进一步收窄: @match 只写 "确认页" 的 URL (贴吧是 /mo/q/checkurl*), 普通网页和
+//        帖子页完全不注入, 连 URL 正则都不跑。想回到"点击时就地改写"的体验, 把 @match
+//        加宽到帖子页 / 或换回 *://*/* 即可, 代码不用改。
 // 0.2.0: 只对百度贴吧启用 (原来 @match *://*/*), 正常网页上不再注入, 也就没有每页一次的
 //        正文扫描开销; 其它站点的规则都还在, 想启用哪个就加一条 @match (或用回 *://*/*)。
 //        通用识别只对 "URL/标题看起来像确认页" 的页面做文本扫描, 普通页面直接跳过。
 // 0.1.0: 第一版: 站点规则 (贴吧/知乎/掘金/CSDN/简书/豆瓣/微博/QQ/Steam/Google/Facebook/Reddit/YouTube/Discord/Pinterest/VK/必应/领英/Slack)
 //        + 未知站点通用识别 + 点击链接就地改写 + 右键菜单手动打开/复制
+//
+// 运行范围 (提速的关键):
+//   只在确认页 URL 上注入, 不在全站注入。普通页面零注入、零监听、零文本扫描 ——
+//   不注入本身就比"注入后再判断"更快。
+//   @match 的写法: *:// 同时覆盖 http/https; path 里的 * 匹配任意字符 (包括 /),
+//   所以 *checkurl* 只要路径或 query 里出现 checkurl 就命中, 前缀 /mo/q/ 变了也不受影响。
+//   通配符只能出现在 path 部分, scheme 必须是 * 或具体协议 (http/https), host 只支持 *. 前缀。
+//   如果哪天贴吧连 "checkurl" 这个路径段都不用了, 就放宽成 *://tieba.baidu.com/* (全站),
+//   脚本里的 URL 判断依然会把普通页面跳过。
+//   代价: 点击帖子里的外链时, 浏览器还是会先请求一次确认页 URL, 脚本在 document-start
+//   立刻 replace 走 (用户基本无感, 但多一次请求)。想让点击时就地改写、连这次请求都省掉,
+//   把 @match 加宽到帖子页, 并保持 REWRITE_LINKS = true。
 //
 // 原理:
 //   贴吧的 "您即将离开贴吧跳转到如下网址" 页 (tieba.baidu.com/mo/q/checkurl?url=...) 之类
@@ -33,7 +49,7 @@
 //     1. 站点规则: 看 URL 就知道是不是跳转器, 参数解出来就跳 (document-start 就能跳, 几乎无感)
 //     2. 通用识别: 只有 URL/标题像确认页时才去扫正文, 按 "确认页" 特征 (即将离开 / 安全提示 /
 //        继续访问 + 很短的正文) 评分, 再从 参数 / 正文 / 外链 里找目标地址
-//     3. 兜底: 右键菜单手动打开 / 复制; 点击链接时也能就地把跳转器改写成真实地址
+//     3. 兜底: 右键菜单手动打开 / 复制; 把 @match 加宽到帖子页后, 点击链接也能就地改写
 //
 //   安全阀: 通用识别只认站外地址; 不跳当前页; 同一地址 2.5 秒内不重复跳, 8 秒内最多连跳 6 次
 //          (防环); 正文超过 MAX_TEXT_LEN 的页面 (像文章) 不做通用识别, 避免误伤正常页面。
@@ -47,7 +63,9 @@
     // 自动跳转的默认值 (右键菜单里可以改, 改完存进 GM 存储, 刷新页面生效)
     var AUTO_DEFAULT = true;
 
-    // 点击链接时就地改写: 把 .../checkurl?url=... 这类跳转器直接换成目标地址, 连确认页都不打开
+    // 点击链接时就地改写: 把 .../checkurl?url=... 这类跳转器直接换成目标地址, 连确认页都不打开。
+    // 注意: 默认的 @match 只覆盖确认页, 所以在帖子页上这段不会触发 (确认页上也用不到);
+    // 想要"点击即直达"就把 @match 加宽到帖子页, 这里保持 true 即可。
     var REWRITE_LINKS = true;
 
     // 通用识别: 正文超过这么多字符就当成正常文章, 不自动跳
