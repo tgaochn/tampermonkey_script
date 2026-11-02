@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.3.0
+// @version      1.3.1
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://visa.careerengine.us*
@@ -12,11 +12,13 @@
 // @match        https://www.atmosenergy.com/*
 // @match        https://www.energyogre.com/*
 // @match        https://www.amazon.com/gp/*
+// @match        https://steamcommunity.com/workshop/browse/*
 // @require      https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_utils/utils.js
 // @updateURL    https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.3.1: added steamcommunity workshop button (jump to items updated in the last 7 days)
 // 1.3.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // 1.2.4: added visa.careerengine.us button
 // 1.2.3: added HSA button
@@ -153,6 +155,18 @@
             buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
             customButtons: (url, utils) => {
                 return [utils.createButtonOpenUrl("US Bank", "https://www.usbank.com/index.html")];
+            },
+        },
+
+        // ! steamcommunity workshop: 跳转到最近 7 天更新的物品
+        // https://steamcommunity.com/workshop/browse/?appid=730
+        {
+            pattern: /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?.*\bappid=\d+/,
+            buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
+            customButtons: (url, utils) => {
+                const appid = new URL(url).searchParams.get("appid");
+                const targetUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&browsesort=lastupdated&section=readytouseitems&p=1&num_per_page=50&days=7`;
+                return [utils.createButtonOpenUrl("默认全mod", targetUrl)];
             },
         },
 
