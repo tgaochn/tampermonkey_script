@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_non-work - 任意网站加入链接按钮
 // @namespace    AddBtn2AnyWebsite_non-work
-// @version      1.3.1
+// @version      1.3.2
 // @description  任意网站加入相关链接 (non-work sites)
 // @author       gtfish
 // @match        https://visa.careerengine.us*
@@ -18,6 +18,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_common/AddBtn2AnyWebsite_non-work.js
 
 // ==/UserScript==
+// 1.3.2: steamcommunity workshop: added "my subscriptions" button, buttons stacked vertically (one per row)
 // 1.3.1: added steamcommunity workshop button (jump to items updated in the last 7 days)
 // 1.3.0: gate verbose waitForUtils logging behind CONFIG.DEBUG
 // 1.2.4: added visa.careerengine.us button
@@ -158,15 +159,24 @@
             },
         },
 
-        // ! steamcommunity workshop: 跳转到最近 7 天更新的物品
+        // ! steamcommunity workshop: 最近 7 天更新的物品 / 我订阅的 mod (竖直排布, 每个按钮单独一行)
         // https://steamcommunity.com/workshop/browse/?appid=730
         {
             pattern: /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?.*\bappid=\d+/,
             buttonPosition: { top: "-10px", left: "1000px" }, // Custom position
             customButtons: (url, utils) => {
-                const appid = new URL(url).searchParams.get("appid");
-                const targetUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&browsesort=lastupdated&section=readytouseitems&p=1&num_per_page=50&days=7`;
-                return [utils.createButtonOpenUrl("默认全mod", targetUrl)];
+                const STEAM_USERID = "76561198273583466"; // 我的 steam user id
+                const FALLBACK_APPID = "4348910"; // 当前页面取不到 appid 时的兜底
+                const appid = new URL(url).searchParams.get("appid") || FALLBACK_APPID;
+
+                const recentUrl = `https://steamcommunity.com/workshop/browse/?appid=${appid}&browsesort=lastupdated&section=readytouseitems&p=1&num_per_page=50&days=7`;
+                const subscribedUrl = `https://steamcommunity.com/profiles/${STEAM_USERID}/myworkshopfiles?appid=${appid}&browsefilter=mysubscriptions&numperpage=30`;
+
+                // 嵌套数组 = 多行; 每行只放一个按钮 => 按钮竖直排列 (放在同一行才是横排)
+                return [
+                    [utils.createButtonOpenUrl("默认全mod", recentUrl)],
+                    [utils.createButtonOpenUrl("我的订阅", subscribedUrl)],
+                ];
             },
         },
 
