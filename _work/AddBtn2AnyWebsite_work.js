@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.2.0
+// @version      1.3.0
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -17,6 +17,7 @@
 // @downloadURL  https://raw.githubusercontent.com/tgaochn/tampermonkey_script/master/_work/AddBtn2AnyWebsite_work.js
 
 // ==/UserScript==
+// 1.3.0: add S3 bucket URL buttons (copy current url + copy s3:// path derived from bucket + prefix)
 // 1.2.0: gate verbose logging behind CONFIG.DEBUG (waitForUtils polling + [AWS Debug] + 3s setInterval)
 // 1.1.4: add AWS console jump button for sagemaker and cloudwatch
 // 1.1.3: add AWS console jump button
@@ -96,6 +97,43 @@
     // !! custom button config for specific URL patterns
     // When a URL matches a pattern here, these custom buttons will be used instead of the default ones
     const customButtonMappings = [
+        // ! aws s3 bucket - copy current url + copy s3 path
+        {
+            pattern: /^https:\/\/[^/]*console\.aws\.amazon\.com\/s3\/buckets\/.*$/,
+            buttonPosition: { top: "60px", left: "500px" },
+            customButtons: (url, utils) => {
+                // Convert an AWS S3 console URL to an s3:// path.
+                // e.g. https://us-east-2.console.aws.amazon.com/s3/buckets/online-rankers?region=us-east-2&prefix=RJQ-5665/_raw/&showversions=false
+                //   -> s3://online-rankers/RJQ-5665/_raw/
+                const s3Path = (() => {
+                    try {
+                        const urlObj = new URL(url);
+                        const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+                        const bucketIndex = pathSegments.indexOf("buckets");
+                        if (bucketIndex < 0 || bucketIndex + 1 >= pathSegments.length) return null;
+                        const bucket = pathSegments[bucketIndex + 1];
+                        const prefix = urlObj.searchParams.get("prefix") || "";
+                        return `s3://${bucket}/${prefix}`;
+                    } catch (error) {
+                        console.error("Error building s3 path from url:", error);
+                        return null;
+                    }
+                })();
+
+                const buttonElements = [
+                    utils.createButtonCopyText("copy url", url),
+                ];
+
+                if (s3Path) {
+                    buttonElements.push(
+                        utils.createButtonCopyText(`copy current S3 path`, s3Path)
+                    );
+                }
+
+                return buttonElements;
+            },
+        },
+
         // ! aws console - only show jump button
         {
             pattern: /^https:\/\/us-east-2\.console\.aws\.amazon\.com\/((console)|(sagemaker)|(cloudwatch))\/home\?region=us-east-2.*$/,
@@ -103,22 +141,36 @@
             customButtons: (url, utils) => {
                 dbg("[AWS Debug] customButtons called with URL:", url);
                 return [
-                    // utils.createButtonOpenUrl(
+                    // ! sagemaker jobs
+                    [
+                        // utils.createButtonOpenUrl(
                         // "Sagemaker Studio Trigger",
                         // "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
-                    // ),
-                    utils.createButtonOpenUrl(
-                        "SM jobs (regular)",
-                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs"
-                    ),
-                    utils.createButtonOpenUrl(
-                        "SM jobs (model training)",
-                        "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/jobs"
-                    ),
-                    utils.createButtonOpenUrl(
-                        "SM job logs (cloudwatch)",
-                        "https://us-east-2.console.aws.amazon.com/cloudwatch/home?region=us-east-2#logsV2:log-groups"
-                    ),
+                        // ),
+                        createTextNode("Sagemaker Jobs: "),
+
+                        utils.createButtonOpenUrl(
+                            "SM jobs (regular)",
+                            "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs"
+                        ),
+                        utils.createButtonOpenUrl(
+                            "SM jobs (model training)",
+                            "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/jobs"
+                        ),
+                        utils.createButtonOpenUrl(
+                            "SM job logs (cloudwatch)",
+                            "https://us-east-2.console.aws.amazon.com/cloudwatch/home?region=us-east-2#logsV2:log-groups"
+                        ),
+                    ],
+
+                    // ! S3 buckets
+                    [
+                        createTextNode("S3 Buckets: "),
+                        utils.createButtonOpenUrl(
+                            "S3 online-rankers tmp data",
+                            "https://us-east-2.console.aws.amazon.com/s3/buckets/online-rankers?region=us-east-2"
+                        ),
+                    ]
                 ];
             },
         },
@@ -243,7 +295,7 @@
                     utils.createButtonOpenUrl(
                         "DNH tool",
                         `https://me-core-metrics.sandbox.indeed.net/`
-                    ),                    
+                    ),
 
                 ];
             },
