@@ -170,6 +170,10 @@
                             "S3 online-rankers tmp data",
                             "https://us-east-2.console.aws.amazon.com/s3/buckets/online-rankers?region=us-east-2"
                         ),
+                        utils.createButtonOpenUrl(
+                            "S3 Bloom skills data",
+                            "https://us-east-2.console.aws.amazon.com/s3/buckets/sagemaker-us-east-2-532975549164?region=us-east-2"
+                        ),
                     ]
                 ];
             },
