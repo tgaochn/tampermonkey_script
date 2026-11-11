@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AddBtn2AnyWebsite_work
 // @namespace    AddBtn2AnyWebsite_work
-// @version      1.3.0
+// @version      1.3.1
 // @description  任意网站加入相关链接 (work-related sites)
 // @author       gtfish
 // @match        https://teststats.sandbox.indeed.net/*
@@ -147,7 +147,7 @@
                         // "Sagemaker Studio Trigger",
                         // "https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/studio/open/d-s540s2kkemmj/tgao"
                         // ),
-                        createTextNode("Sagemaker Jobs: "),
+                        utils.createTextNode("Sagemaker Jobs: "),
 
                         utils.createButtonOpenUrl(
                             "SM jobs (regular)",
@@ -165,7 +165,7 @@
 
                     // ! S3 buckets
                     [
-                        createTextNode("S3 Buckets: "),
+                        utils.createTextNode("S3 Buckets: "),
                         utils.createButtonOpenUrl(
                             "S3 online-rankers tmp data",
                             "https://us-east-2.console.aws.amazon.com/s3/buckets/online-rankers?region=us-east-2"
